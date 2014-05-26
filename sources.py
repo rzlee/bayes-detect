@@ -7,9 +7,9 @@ from matplotlib.patches import Rectangle
 """This is a method for finding all the luminous sources in a
 an astronomical image in FITS format. It is based on the two pass
 4-connectivity connected component labelling algorithm. The method
-returns containing source objects and their pixels. The aim of this
-method is to get source positions before moving to fitting them
-to probabilistic models inorder to characterize them""" 
+returns a dictionary object containing source objects and their
+pixels. The aim of this method is to get source positions before
+moving to fitting them to probabilistic models inorder to characterize them""" 
 
 def findSources(fitsFile, plot=False):
     
@@ -33,7 +33,7 @@ def findSources(fitsFile, plot=False):
     labelMap  = np.zeros(scidata.shape, int)
     labelCount= 0
     
-    """Dictionary that stores label equivalency"""
+    """List that stores label equivalency"""
     equival   = []
     
     """Calculating the mean ans standard deviation of the
@@ -165,30 +165,6 @@ def findSources(fitsFile, plot=False):
 if __name__ == '__main__':
     fileRoot = "simulated_images/ufig_20_g_gal_sub_500.fits"
     sources  = findSources(fileRoot, plot=True)
-                        
-        
-    
-    
-        
-        
-            
-    
-        
-                    
-                         
-                
-    
-        
-        
-        
-    
-    
-                
-            
     
     
     
-    
-            
-    
-
