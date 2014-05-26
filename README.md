@@ -1,6 +1,6 @@
 # Bayesian Source Detection and Modeling
 
 ## Authors
-Krishna Chaithu  
+Krishna Chaitanya Chavati  
 Edward Kim  
 Robert J. Brunner
