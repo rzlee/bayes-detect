@@ -1,194 +1,105 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from astropy.io import fits
-import os
-from matplotlib.patches import Rectangle
+from math import *
+import random
+from nest import *
+from plot import *
 
-"""This is a method for finding all the luminous sources in a
-an astronomical image in FITS format. It is based on the two pass
-4-connectivity connected component labelling algorithm. The method
-returns containing source objects and their pixels. The aim of this
-method is to get source positions before moving to fitting them
-to probabilistic models inorder to characterize them""" 
+"""Reading the Image data from fits file"""
+fitsFile = "simulated_images/ufig_20_g_gal_sub_500_sub_small.fits"
 
-def findSources(fitsFile, plot=False):
-    
-    """reading the data of the fits file"""
-    hdulist   = fits.open(fitsFile)
-    scidata   = hdulist[0].data
-    
-    
-    height, width    = scidata.shape   
-    
-    """Object map which has the shape of image data initialized
-    with zeros. It will hold the object and background
-    information of the data. label "1" means an object and
-    label "0" indicates background."""
-    objectMap = np.zeros(scidata.shape, int)
-        
-    """Label map which is has the shape of image data initaialized
-    with zeros. It will hold the labels of the corresponding pixels
-    in the connected component labelling algorithm for object
-    detection. labelcount is the variable that holds label number"""
-    labelMap  = np.zeros(scidata.shape, int)
-    labelCount= 0
-    
-    """Dictionary that stores label equivalency"""
-    equival   = []
-    
-    """Calculating the mean ans standard deviation of the
-    data"""
-    Mean      = np.mean(scidata)
-    Stdev     = np.std(scidata)
-    
-    """ Threshold formula (temporary)"""
-    Threshold = Mean + Stdev
-    
-    """ Final object dictionary which contains object name and
-    pixels belong to it """
-    srcDict   = {}  
-    
-    """Preparing the object map"""
-    for i in range(height):
-        for j in range(width):
-            if scidata[i][j] >= Threshold :
-                objectMap[i][j] = 1
-    
-             
-    """Labelling the first row of the image matrix"""
-    for j in range(width-1):
-        if objectMap[0][j+1] == objectMap[0][j]:
-            labelMap[0][j+1] = labelMap[0][j]
-        if objectMap[0][j+1] != objectMap[0][j]:
-            labelCount = labelCount + 1
-            labelMap[0][j+1] = labelCount
-            
-    """Labelling the first column of the image matrix"""
-    for i in range(height-1):
-        if objectMap[i+1][0] == objectMap[i][0]:
-            labelMap[i+1][0] = labelMap[i][0]
-        if objectMap[i+1][0] != objectMap[i][0]:
-            labelCount = labelCount + 1
-            labelMap[i+1][0] = labelCount
-            
-    """Labelling the rest of the rows and columns"""
-    for i in range(height-1):
-        for j in range(width-1):
-            if objectMap[i+1][j+1] == objectMap[i+1][j] and objectMap[i+1][j+1] != objectMap[i][j+1]:
-                labelMap[i+1][j+1] = labelMap[i+1][j]
-            if objectMap[i+1][j+1] != objectMap[i+1][j] and objectMap[i+1][j+1] == objectMap[i][j+1]:
-                labelMap[i+1][j+1] = labelMap[i][j+1]
-            if objectMap[i+1][j+1] != objectMap[i+1][j] and objectMap[i+1][j+1] != objectMap[i][j+1]:
-                labelCount = labelCount + 1
-                labelMap[i+1][j+1] = labelCount
-            if objectMap[i+1][j+1] == objectMap[i][j+1] and objectMap[i+1][j+1] == objectMap[i+1][j]:
-                if labelMap[i][j+1] == labelMap[i+1][j]:
-                    labelMap[i+1][j+1] = labelMap[i][j+1]
-                else:
-                    """This is a special case where we suddenly find
-                    that some labels are equivalent to each other.
-                    Thats why we note the equivalency to resolve them
-                    in the second pass"""
-                    labelMap[i+1][j+1] = min(labelMap[i][j+1], labelMap[i+1][j])
-                    temp               = max(labelMap[i][j+1], labelMap[i+1][j])   
-                    equival.append([temp, labelMap[i+1][j+1]])
-                    
-    
-    maxlabel     = np.max(labelMap)
-    parentArray  = [i for i in range(maxlabel+1)]
-    
-    """ A find method to recursively find the parent
-    of a label in the noted equivalencies"""
-    def find(t, parent):
-        if parent[t] == t:
-            return t
-        else:
-            return find(parent[t], parent)
-    
-    """Sorting out the equivalencies in the array"""
-    for i in equival:
-        k,l     = i
-        kParent = find(k, parentArray)
-        lParent = find(l, parentArray)
-        parentArray[max(kParent, lParent)] = parentArray[min(kParent, lParent)]
-    
-    """Relabelling the image matrix after sorting out
-    the equivalencies. Second pass """
-    for i in range(height):
-        for j in range(width):
-            labelMap[i][j] = parentArray[labelMap[i][j]]
-            
-    """Set to learn unique labels of the image"""
-    finalLabelSet = set()
-    
-    for i in range(maxlabel+1):
-        finalLabelSet.add(parentArray[i])
-        
-    labelList = list(sorted(finalLabelSet))
-    
-    objectCount = 0
-    """writing the objects and their belonging pixels to the
-    source dictionary"""
-    for i in range(height):
-        for j in range(width):
-            if labelMap[i][j] == 0:
-                continue
-            else:
-                try:
-                    srcDict[labelList.index(labelMap[i][j])].append((i,j))
-                except KeyError:
-                    srcDict[labelList.index(labelMap[i][j])] = []
-                    srcDict[labelList.index(labelMap[i][j])].append((i,j))
-                    
-                            
-    """Plottint the objects on pyplot"""                        
-    if plot == True:
-        plt.imshow(scidata)
-        offset = 10
-        for i in srcDict:
-            allX = [x[1] for x in srcDict[i]]
-            allY = [x[0] for x in srcDict[i]]
-            minX = np.min(allX)
-            maxX = np.max(allX)
-            minY = np.min(allY)
-            maxY = np.max(allY)
-            currentAxis = plt.gca()
-            currentAxis.add_patch(Rectangle((minX -offset, minY -offset), maxX-minX+2*offset,
-                maxY-minY+2*offset, alpha=1, facecolor ='none', edgecolor='white'))
-            plt.text((minX+maxX)/2, (minY+maxY)/2, i, fontsize=8, color='white')
-        plt.show()
-    
-    hdulist.close()
-    return srcDict
+hdulist   = fits.open(fitsFile)
+data_map   = (hdulist[0].data)
+height, width = len(data_map), len(data_map[0])
+no_pixels = width*height
+
+"""Converting the data_map into a vector for likelihood calculations"""
+data_map = data_map.flatten()
+
+"""Bounds for the prior distribution of Amplitude """
+amplitude_upper = 1.4*np.max(data_map)
+amplitude_lower = np.mean(data_map) + 2*np.std(data_map)
+
+"""Bounds for the prior distribution of position """
+x_upper = 400
+y_upper = 100
+
+"""Bounds for the prior distribution of Spatial extent """
+R_upper = 3.0
+R_lower = 2.5
+
+PI = np.pi
+
+"""Incorporating RMS noise into the model"""    
+noise = 2.0 
+K = (no_pixels/2)*(np.log(2*PI) + 2*np.log(noise))
+
+"""Useful in likelihood evaluation for calculating the simulated object as the function of indices"""
+x_forcalc = np.arange(0, 400)
+y_forcalc = np.arange(0, 100)
+xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
+
+"""Number of live points"""
+n = 200
+
+"""Number of Iterations for nested_sampling method """
+max_iterations = 800
+
+"""Object Information"""
+class Source:
+    def __init__(self):
+        self.X = None
+        self.Y = None
+        self.A = None
+        self.R = None
+        self.logL = None
+        self.logWt = None
+
+def log_likelihood(Source):
+    simulated_map = Source.A*np.exp(-1*((xx-Source.X)**2+(yy-Source.Y)**2)/(2*(Source.R**2)))
+    diff_map = data_map - simulated_map.flatten()
+    return -0.5*np.dot(diff_map, np.transpose((1/(noise**2))*diff_map)) - K    
     
     
+def proposed_model(x, y, X, Y, A, R):
+    return A*np.exp(((x-X)**2 + (y-Y)**2)/(2*(R**2)))
+    
+"""Sampling the object from prior distribution"""
+def sample_from_prior():
+    src = Source()
+    src.X = random.uniform(0.0, x_upper)
+    src.Y = random.uniform(0.0, y_upper) 
+    src.A = random.uniform(amplitude_lower, amplitude_upper)
+    src.R = random.uniform(R_lower, R_upper)
+    src.logL = log_likelihood(src)
+    return src
+
+"""Method to replace the lowest likelihood object in each iteration of nested_sampling"""
+def explore(src, logLstar):
+    ret = Source()
+    ret.__dict__ = src.__dict__.copy()
+    Try = Source();
+
+    for m in range(20):  # pre-judged number of steps
+        Try = sample_from_prior()
+        # Accept if and only if within hard likelihood constraint
+        if Try.logL > logLstar:
+            ret.__dict__ = Try.__dict__.copy()
+    return ret
+
 if __name__ == '__main__':
-    fileRoot = "simulated_images/ufig_20_g_gal_sub_500.fits"
-    sources  = findSources(fileRoot, plot=True)
-                        
-        
-    
-    
-        
-        
-            
-    
-        
-                    
-                         
-                
-    
-        
-        
-        
-    
-    
-                
-            
-    
-    
-    
-    
-            
-    
+    a = nested_sampling(n, max_iterations, sample_from_prior, explore)
+    maxy = a["src"][0]
+    for i in a["src"]:
+        if i.logL>maxy:
+            maxy = i
+    print "max X coordinate: "+str(maxy.X)
+    print "max Y coordinate: "+str(maxy.Y)
+    print "max A value: "+str(maxy.A)
+    print "max R Value: "+str(maxy.R)
+    show_source(100, 400, a["src"])        
+       
+
+
 
