@@ -99,7 +99,3 @@ if __name__ == '__main__':
     print "max A value: "+str(maxy.A)
     print "max R Value: "+str(maxy.R)
     show_source(100, 400, a["src"])        
-       
-
-
-
