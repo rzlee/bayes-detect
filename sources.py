@@ -7,7 +7,7 @@ from nest import *
 from plot import *
 
 """Reading the Image data from fits file"""
-fitsFile = "simulated_images/ufig_20_g_gal_sub_500_sub_small.fits"
+fitsFile = "simulated_images/ufig_20_g_sub_500_sub_small.fits"
 
 hdulist   = fits.open(fitsFile)
 data_map   = (hdulist[0].data)

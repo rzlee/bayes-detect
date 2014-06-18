@@ -70,7 +70,7 @@ def nested_sampling(n, max_iterations, sample_from_prior, explore):
         logwidth -= 1.0 / n;
 
     sdev_H = H/log(2.)
-    sdev_logZ = sqrt(H/n)
+    sdev_logZ = sqrt(abs(H)/n)
     return {"src":Src,
             "samples":post_inferences, 
             "num_iterations":(nest+1), 
