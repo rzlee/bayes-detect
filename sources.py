@@ -40,11 +40,13 @@ x_forcalc = np.arange(0, 400)
 y_forcalc = np.arange(0, 100)
 xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
 
-"""Number of live points"""
-n = 200
+"""Number of objects used in nested_sampling"""
+n = 40
 
 """Number of Iterations for nested_sampling method """
-max_iterations = 800
+max_iterations = 1500
+
+
 
 """Object Information"""
 class Source:
@@ -80,22 +82,32 @@ def explore(src, logLstar):
     ret = Source()
     ret.__dict__ = src.__dict__.copy()
     Try = Source();
+    step = 40 # for (0,400)
+    hit = 0
+    miss = 0
+    for i in range(20):
+        # Trial object
+        Try.X = ret.X + step * (2.*random.uniform(0,1) - 1.);  # |move| < step
+        Try.Y = ret.Y + (step/4) * (2.*random.uniform(0,1) - 1.);  # |move| < step
+        if(Try.X >= width or Try.X < 0): Try.X = ret.X;
+        if(Try.Y >=height or Try.Y < 0): Try.Y = ret.Y
+        Try.A = random.uniform(amplitude_lower, amplitude_lower)
+        Try.R = random.uniform(R_lower, R_upper)
+        Try.logL = log_likelihood(Try);
 
-    for m in range(20):  # pre-judged number of steps
-        Try = sample_from_prior()
         # Accept if and only if within hard likelihood constraint
         if Try.logL > logLstar:
             ret.__dict__ = Try.__dict__.copy()
+            hit+=1
+        else:
+            miss+=1
+
+        # Refine step-size to let acceptance ratio converge around 50%
+        if( hit > miss ):   step *= exp(1.0 / hit);
+        if( hit < miss ):   step /= exp(1.0 / miss);
+
     return ret
 
 if __name__ == '__main__':
     a = nested_sampling(n, max_iterations, sample_from_prior, explore)
-    maxy = a["src"][0]
-    for i in a["src"]:
-        if i.logL>maxy:
-            maxy = i
-    print "max X coordinate: "+str(maxy.X)
-    print "max Y coordinate: "+str(maxy.Y)
-    print "max A value: "+str(maxy.A)
-    print "max R Value: "+str(maxy.R)
-    show_source(100, 400, a["src"])        
+    show_samples(100, 400, a["samples"])         

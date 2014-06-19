@@ -31,7 +31,7 @@ def nested_sampling(n, max_iterations, sample_from_prior, explore):
         
     logwidth = log(1.0 - exp(-1.0 / n));
     
-    a = set([0,100,200,300,400,500,600,700,800,900,999])
+    a = set([0,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000])
     for nest in range(max_iterations):
         """To check progress on command line"""
         if nest in a:
