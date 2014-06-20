@@ -1,4 +1,4 @@
-import numpy as np
+n nm import numpy as np
 from matplotlib import pyplot as plt
 from astropy.io import fits
 from math import *
@@ -68,7 +68,7 @@ def proposed_model(x, y, X, Y, A, R):
     return A*np.exp(((x-X)**2 + (y-Y)**2)/(2*(R**2)))
     
 """Sampling the object from prior distribution"""
-def sample_from_prior():
+def sample_source():
     src = Source()
     src.X = random.uniform(0.0, x_upper)
     src.Y = random.uniform(0.0, y_upper) 
@@ -77,37 +77,8 @@ def sample_from_prior():
     src.logL = log_likelihood(src)
     return src
 
-"""Method to replace the lowest likelihood object in each iteration of nested_sampling"""
-def explore(src, logLstar):
-    ret = Source()
-    ret.__dict__ = src.__dict__.copy()
-    Try = Source();
-    step = 40 # for (0,400)
-    hit = 0
-    miss = 0
-    for i in range(20):
-        # Trial object
-        Try.X = ret.X + step * (2.*random.uniform(0,1) - 1.);  # |move| < step
-        Try.Y = ret.Y + (step/4) * (2.*random.uniform(0,1) - 1.);  # |move| < step
-        if(Try.X >= width or Try.X < 0): Try.X = ret.X;
-        if(Try.Y >=height or Try.Y < 0): Try.Y = ret.Y
-        Try.A = random.uniform(amplitude_lower, amplitude_lower)
-        Try.R = random.uniform(R_lower, R_upper)
-        Try.logL = log_likelihood(Try);
-
-        # Accept if and only if within hard likelihood constraint
-        if Try.logL > logLstar:
-            ret.__dict__ = Try.__dict__.copy()
-            hit+=1
-        else:
-            miss+=1
-
-        # Refine step-size to let acceptance ratio converge around 50%
-        if( hit > miss ):   step *= exp(1.0 / hit);
-        if( hit < miss ):   step /= exp(1.0 / miss);
-
-    return ret
-
-if __name__ == '__main__':
-    a = nested_sampling(n, max_iterations, sample_from_prior, explore)
-    show_samples(100, 400, a["samples"])         
+def get_sources(no_active_points):
+    src_array = []
+    for i in range(no_active_points):
+        src_array.append(sample_source())
+    return src_array
