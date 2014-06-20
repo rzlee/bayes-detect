@@ -3,7 +3,7 @@ an improvement to detect modes in the posterior. This was proposed in multinest 
 and Hobson(2008). This method is closer in spirit to the recursive technique advocated in Shaw
 et al. 
 
-Refernces :
+References :
 ===========
 
 Multinest paper by Feroz and Hobson 2008.
@@ -19,29 +19,45 @@ import random
 
 class Clustered_Sampler(object):
 
-	"""Initialize using the information of current active samples and the object to evolve"""
-	def __init__(self, to_evolve, active_samples, likelihood_constraint):
+    """Initialize using the information of current active samples and the object to evolve"""
+    def __init__(self, to_evolve, active_samples, likelihood_constraint):
 
-		self.source = to_evolve
-		self.points = active_samples
-		self.LC     = likelihood_constraint
-		self.clustered_point_set = None
-		self.number_of_clusters = None
-		self.ellipsoid_set = None
+        self.source = to_evolve
+        self.points = active_samples
+        self.LC     = likelihood_constraint
+        self.clustered_point_set = None
+        self.number_of_clusters = None
+        self.ellipsoid_set = None
 
-	"""This method clusters the samples and return the mean points of each cluster"""
+    """This method clusters the samples and return the mean points of each cluster"""
 
-	def cluster(self):
-		return None
+    def cluster(self):
+        return None
 
-	"""This method builds ellipsoids enlarged by a factor, around each cluster of active samples
-	 from which we sample to evolve using the likelihood_constraint"""	
+    """This method builds ellipsoids enlarged by a factor, around each cluster of active samples
+     from which we sample to evolve using the likelihood_constraint"""  
 
-	def build_ellipsoids(self):
-		return None
+    def build_ellipsoids(self):
+        return None
 
     
     """This method is responsible for sampling from the enlarged ellipsoids with certain probability
     The method also checks if any ellipsoids are overlapping and behaves accordingly """
-	def sample(self):
-		return None
+    def sample(self):
+        return None
+
+
+
+"""Class for ellipsoids"""
+
+class Ellipsoid(object):
+
+    def __init__(self):
+
+        self.cov = []
+        self.eigen = []
+        self.enlarge = []
+
+
+
+
