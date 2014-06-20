@@ -15,6 +15,7 @@ import numpy as np
 from math import *
 from sources import *
 import random
+from scipy.cluster.vq import vq, kmeans
 
 
 class Clustered_Sampler(object):
@@ -29,10 +30,16 @@ class Clustered_Sampler(object):
         self.number_of_clusters = None
         self.ellipsoid_set = None
 
-    """This method clusters the samples and return the mean points of each cluster"""
+    """This method clusters the samples and return the mean points of each cluster. We will attempt
+    to do agglomerative clustering"""
 
     def cluster(self):
-        return None
+        array = []
+        for active_sample in self.points:
+            array.append([active_sample.X, active_sample.Y, active_sample.A, active_sample.R])
+        centroids = kmeans(obs=array, k_or_guess = 2)
+        return None    
+
 
     """This method builds ellipsoids enlarged by a factor, around each cluster of active samples
      from which we sample to evolve using the likelihood_constraint"""  
@@ -54,9 +61,10 @@ class Ellipsoid(object):
 
     def __init__(self):
 
-        self.cov = []
-        self.eigen = []
+        self.covariance_matrix = []
+        self.eigenvalues = []
         self.enlarge = []
+        self.axislengths = {}
 
 
 
