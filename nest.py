@@ -106,19 +106,22 @@ class Nested_Sampler(Object):
             """New likelihood constraint""" 
             likelihood_constraint = self.active_samples[smallest].logL
 
+            """Picking an object to evolve for next iteration"""
+            while True:
+                 k = int(self.no_active_samples*uniform.random(0,1))
+                 if k!=smallest:
+                    break
+            self.active_samples[smallest] = self.active_samples[k]
+
             """Drawing a new sample satisfying the likelihood constraint"""  
             
             if self.sample = "metropolis":
                 """Obtain new sample using Metropolis principle"""
-                self.active_samples[smallest] = self.metropolis_sampling(likelihood_constraint)
+                self.active_samples[smallest] = self.metropolis_sampling(obj = self.active_samples[smallest], LC = likelihood_constraint)
 
             if self.sample = "clustered_ellipsoidal":
                 """Obtain new sample using Clustered ellipsoidal sampling"""
-                self.active_samples[smallest] = self.clustered_sampling(likelihood_constraint)
-            
-            if self.sample = "random":
-                """Obtain sample in a random way from prior(is of less use when we need posterior_inferences)"""
-                self.active_samples[smallest] = self.random_sampling(likelihood_constraint)
+                self.active_samples[smallest] = self.clustered_sampling(obj = self.active_samples[smallest], LC = likelihood_constraint)
             
             """Shrink width"""  
             self.log_width -= 1.0 / self.no_active_samples;
@@ -128,7 +131,32 @@ class Nested_Sampler(Object):
         return {"samples":self.posterior_inferences, 
             "logZ":self.log_evidence,
             "Information":self.Information
-            }         
+            }
+
+
+    """ Method for drawing a new sample using the metropolis hastings principle """  
+
+    def metropolis_sampling(self, obj, LC):
+
+
+
+
+
+
+    """ Method for drawing a new sample using clustered ellipsoidal sampling"""
+    
+    def clustered_sampling(self, obj, LC):
+
+    
+
+
+
+
+
+
+
+
+
 
 
             
