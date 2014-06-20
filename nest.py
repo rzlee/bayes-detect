@@ -27,6 +27,7 @@ The Following is a class implementation of Nested_Sampler.
 
 References:
 ===========
+Multinest paper by Feroz and Hobson et al(2008)
 Nested Sampling by John Skilling et al
 http://www.inference.phy.cam.ac.uk/bayesys/
 """
@@ -35,10 +36,12 @@ http://www.inference.phy.cam.ac.uk/bayesys/
 import numpy as np
 from math import *
 from sources import *
+from metropolis import *
+import random
 
 
 
-class Nested_Sampler(Object):
+class Nested_Sampler(object):
 
 
     """Initialization for the Nested_Sampler"""
@@ -86,40 +89,48 @@ class Nested_Sampler(Object):
         self.Information = 0.0
 
         for iteration in range(self.maximum_iterations):
+            if iteration%100==0: print str(iteration);# temporary verbose
             smallest = 0 
+            
             """Finding the object with smallest likelihood"""
             for i in range(self.no_active_samples):
                 if self.active_samples[i].logL < self.active_samples[smallest].logL:
                     smallest = i
-            """Assigning log weights to the smallest sample"""
+            
+            """Assigning local evidence to the smallest sample"""
             self.active_samples[smallest].logWt = self.log_width + self.active_samples[smallest].logL;
+            
             """Calculating the updated evidence"""
             temp_evidence = np.logaddexp(self.log_evidence, self.active_samples[smallest].logWt)
+            
             """Calculating the information which will be helpful in calculating the uncertainity"""
             self.Information = exp(self.active_samples[smallest].logWt - temp_evidence) * self.active_samples[smallest].logL + \
             exp(self.log_evidence - temp_evidence) * (self.Information + self.log_evidence) - temp_evidence;
+            
             """assigning the updated evidence in this iteration"""
             if(temp_evidence-self.log_evidence <= self.convergence_threshold): break;
             self.log_evidence = temp_evidence
+            
             """storing posterior points"""
             self.posterior_inferences.append(self.active_samples[smallest])
+            
             """New likelihood constraint""" 
             likelihood_constraint = self.active_samples[smallest].logL
 
             """Picking an object to evolve for next iteration"""
             while True:
-                 k = int(self.no_active_samples*uniform.random(0,1))
+                 k = int(self.no_active_samples*random.uniform(0,1))
                  if k!=smallest:
                     break
             self.active_samples[smallest] = self.active_samples[k]
 
             """Drawing a new sample satisfying the likelihood constraint"""  
             
-            if self.sample = "metropolis":
+            if self.sample == "metropolis":
                 """Obtain new sample using Metropolis principle"""
                 self.active_samples[smallest] = self.metropolis_sampling(obj = self.active_samples[smallest], LC = likelihood_constraint)
 
-            if self.sample = "clustered_ellipsoidal":
+            if self.sample == "clustered_ellipsoidal":
                 """Obtain new sample using Clustered ellipsoidal sampling"""
                 self.active_samples[smallest] = self.clustered_sampling(obj = self.active_samples[smallest], LC = likelihood_constraint)
             
@@ -137,15 +148,16 @@ class Nested_Sampler(Object):
     """ Method for drawing a new sample using the metropolis hastings principle """  
 
     def metropolis_sampling(self, obj, LC):
-
-
-
-
+        "Instantiating the metropolis sampler object"
+        Metro = Metropolis_sampler(to_evolve = obj, likelihood_constraint = LC)
+        evolved = Metro.sample()
+        return evolved
 
 
     """ Method for drawing a new sample using clustered ellipsoidal sampling"""
     
     def clustered_sampling(self, obj, LC):
+        return None
 
     
 

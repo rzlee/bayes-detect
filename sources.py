@@ -1,4 +1,16 @@
-n nm import numpy as np
+"""Bayesian Source detection and characterization in astronomical images
+
+References:
+===========
+Multinest paper by Feroz and Hobson et al(2008) 
+Data Analysis: A Bayesian Tutorial by Sivia et al(2006)
+http://en.wikipedia.org/wiki/Metropolis-Hastings_algorithm
+http://www.inference.phy.cam.ac.uk/bayesys/ 
+
+"""
+
+
+import numpy as np
 from matplotlib import pyplot as plt
 from astropy.io import fits
 from math import *
@@ -7,7 +19,7 @@ from nest import *
 from plot import *
 
 """Reading the Image data from fits file"""
-fitsFile = "simulated_images/ufig_20_g_sub_500_sub_small.fits"
+fitsFile = "simulated_images/ufig_20_g_gal_sub_500_sub_small.fits"
 
 hdulist   = fits.open(fitsFile)
 data_map   = (hdulist[0].data)
@@ -44,11 +56,16 @@ xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
 n = 40
 
 """Number of Iterations for nested_sampling method """
-max_iterations = 1500
+max_iterations = 500
 
+"""Object Information 
+   X : x coordinate of the center of the object
+   Y : y coordinate of the center of the object
+   A : Amplitude of the object
+   R : Spatial extent of the object
+   logL : Log likelihood of the object
+   logWt: Local evidence of the object """
 
-
-"""Object Information"""
 class Source:
     def __init__(self):
         self.X = None
@@ -77,8 +94,30 @@ def sample_source():
     src.logL = log_likelihood(src)
     return src
 
+"""Method which helps the nested sampler to generate a number of active samples"""
 def get_sources(no_active_points):
     src_array = []
     for i in range(no_active_points):
         src_array.append(sample_source())
     return src_array
+
+"""This method returns the prior bounds of amplitude of a source"""
+def getPrior_A():
+    return amplitude_lower, amplitude_upper;
+
+"""This method returns the prior bounds of amplitude of a source"""
+def getPrior_R():
+    return R_lower, R_upper;
+
+""" This method returns the prior bounds of X value"""
+def getPrior_X():
+    return 0, width;
+
+""" This method returns the prior bounds of Y value"""
+def getPrior_Y():
+    return 0, height;
+
+if __name__ == '__main__':
+        nest = Nested_Sampler(no_active_samples = n, max_iter = max_iterations)
+        out = nest.fit()
+        show_samples(100, 400, out["samples"])    
