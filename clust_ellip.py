@@ -31,7 +31,11 @@ class Clustered_Sampler(object):
         self.ellipsoid_set = None
 
     """This method clusters the samples and return the mean points of each cluster. We will attempt
-    to do agglomerative clustering"""
+    to do agglomerative clustering as an improvement in coming days"""
+
+    # FIX ME: Change it to recursive clustering with the stopping criterion as the following
+    # 1) The combined volume of the ellipsoids is less than that of the previous state
+    # 2) The ellipsoids are properly seperated by a user defined value 
 
     def cluster(self):
         array = []
