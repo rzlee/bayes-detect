@@ -8,7 +8,7 @@ The method has the following steps:
 2)Loop under stopping criterion
   1) Find out the point with lowest likelihood-L(i)
   2) Assign Prior mass for this iteration-X(i) 
-  3) Set the values of weights using the trapezoidal rule-W(i)
+  3) Set the values of weights using the trapezoidal rule-W(i) or calculating the information
   4) Increment the evidence by lowest_likelihood- L(i)*W(i) and store the point as posterior inference.
   5) Check stopping criterion. If converged Increment the evidence by using the active_samples too
   6) If not converged, sample a point from prior with likelihood greater than L(i)
@@ -23,7 +23,13 @@ samples from these ellipsoids with a certain probability assigned to each ellips
 2) Metropolis nested sampling - Uses a proposal distribution generally a symmetric gaussian distribution with a 
 dispersion value which changes and drives the process to higher likelihood regions as we sample.
 We are going to try both the metropolis nested sampling and clustered ellipsoidal sampling for this approach.
-The Following is a class implementation of Nested_Sampler."""
+The Following is a class implementation of Nested_Sampler.
+
+References:
+===========
+Nested Sampling by John Skilling et al
+http://www.inference.phy.cam.ac.uk/bayesys/
+"""
 
 
 import numpy as np
@@ -63,10 +69,83 @@ class Nested_Sampler(Object):
         """ Posterior samples for evidence and plotting """
         self.posterior_inferences  = []
 
-        """ Prior volume which is used to calculate the weight of the point at each iteration"""
-        self.prior_volume          = None
+        """ Prior mass which is used to calculate the weight of the point at each iteration"""
+        self.log_width             = None
+
+        """ Information for calculating the uncertainity of calculating the evidence """
+        self.Information           = None
 
     
     """ Method that runs the main nested sampling loop"""
     
-    def fit(self):  
+    def fit(self):
+
+        """ Initializing evidence and prior mass """
+        self.log_evidence = -1e300
+        self.log_width = log(1.0 - exp(-1.0 / n))
+        self.Information = 0.0
+
+        for iteration in range(self.maximum_iterations):
+            smallest = 0 
+            """Finding the object with smallest likelihood"""
+            for i in range(self.no_active_samples):
+                if self.active_samples[i].logL < self.active_samples[smallest].logL:
+                    smallest = i
+            """Assigning log weights to the smallest sample"""
+            self.active_samples[smallest].logWt = self.log_width + self.active_samples[smallest].logL;
+            """Calculating the updated evidence"""
+            temp_evidence = np.logaddexp(self.log_evidence, self.active_samples[smallest].logWt)
+            """Calculating the information which will be helpful in calculating the uncertainity"""
+            self.Information = exp(self.active_samples[smallest].logWt - temp_evidence) * self.active_samples[smallest].logL + \
+            exp(self.log_evidence - temp_evidence) * (self.Information + self.log_evidence) - temp_evidence;
+            """assigning the updated evidence in this iteration"""
+            if(temp_evidence-self.log_evidence <= self.convergence_threshold): break;
+            self.log_evidence = temp_evidence
+            """storing posterior points"""
+            self.posterior_inferences.append(self.active_samples[smallest])
+            """New likelihood constraint""" 
+            likelihood_constraint = self.active_samples[smallest].logL
+
+            """Drawing a new sample satisfying the likelihood constraint"""  
+            
+            if self.sample = "metropolis":
+                """Obtain new sample using Metropolis principle"""
+                self.active_samples[smallest] = self.metropolis_sampling(likelihood_constraint)
+
+            if self.sample = "clustered_ellipsoidal":
+                """Obtain new sample using Clustered ellipsoidal sampling"""
+                self.active_samples[smallest] = self.clustered_sampling(likelihood_constraint)
+            
+            if self.sample = "random":
+                """Obtain sample in a random way from prior(is of less use when we need posterior_inferences)"""
+                self.active_samples[smallest] = self.random_sampling(likelihood_constraint)
+            
+            """Shrink width"""  
+            self.log_width -= 1.0 / self.no_active_samples;
+
+        # FIX ME: Incorporate the active samples into evidence calculation and information after the loop """
+
+        return {"samples":self.posterior_inferences, 
+            "logZ":self.log_evidence,
+            "Information":self.Information
+            }         
+
+
+            
+
+
+                
+
+
+
+                    
+
+
+
+
+
+
+
+
+
+
