@@ -25,5 +25,10 @@ def show_samples(height, width, samples):
 	for i in samples:
 		arr[int(i.Y)][int(i.X)] = i.logL + abs(min_likelihood)
 	plt.imshow(arr)
-	plt.show()	 
+	plt.show()
+
+
+def plot_ellipsoid(height, width, Ellipsoid, active_points):
+	return None
+
 

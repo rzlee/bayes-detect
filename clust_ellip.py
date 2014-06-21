@@ -104,7 +104,7 @@ class Clustered_Sampler(object):
 
 class Ellipsoid(object):
 
-    def __init__(self, centroid, points, enlargement_factor):
+    def __init__(self, centroid = None, points, enlargement_factor):
 
         self.centroid = centroid
         self.clpoints = points
@@ -138,3 +138,20 @@ class Ellipsoid(object):
         for i in semiaxes:
             i = i*self.enlargement_factor
         
+
+
+
+class SingleEllipsoidal_Sampler(object):
+
+    def __init__(self, to_evolve, activepoint_set, likelihood_constraint):
+
+        self.points = activepoint_set
+        self.source = to_evolve
+        self.LC = likelihood_constraint
+        self.ellipsoid = self.build_ellipsoid(points = activepoint_set, enlargement_factor = )
+
+    def build_ellipsoid(self, points, enlargement_factor):
+        return Ellipsoid(points = points, enlargement_factor = enlargement_factor)
+
+
+
