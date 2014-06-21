@@ -8,6 +8,7 @@ References :
 
 Multinest paper by Feroz and Hobson 2008.
 Shaw R., Bridges M., Hobson M.P., 2007, MNRAS, in press (astro-ph/0701867)
+A Nested Sampling Algorithm for Cosmological Model Selection(2006) Pia Mukherjee , David Parkinson , and Andrew R. Liddle 
 
 """
 
@@ -15,7 +16,7 @@ import numpy as np
 from math import *
 from sources import *
 import random
-from scipy.cluster.vq import vq, kmeans
+from scipy.cluster.vq import vq, kmeans2
 
 
 class Clustered_Sampler(object):
@@ -39,24 +40,34 @@ class Clustered_Sampler(object):
         
 
     """This method clusters the samples and return the mean points of each cluster. We will attempt
-    to do agglomerative clustering as an improvement in coming days"""
+    to do agglomerative clustering as an improvement in coming days""" 
 
-    # FIX ME: Change it to recursive clustering with the stopping criterion as the following
-    # 1) The combined volume of the ellipsoids is less than that of the previous state
-    # 2) The ellipsoids are properly seperated by a user defined value 
-
-    def cluster(self, number_of_clusters):
-        centroids = kmeans(obs=self.activepoint_set, k_or_guess = number_of_clusters)
-        return centroids    
+    def cluster(self, activepoint_set, number_of_clusters):
+        centroids, label = kmeans(obs=activepoint_set, k_or_guess = number_of_clusters)
+        return centroids, label, activepoint_set    
 
 
     """This method builds ellipsoids enlarged by a factor, around each cluster of active samples
      from which we sample to evolve using the likelihood_constraint"""  
 
     def optimal_ellipsoids(self):
-        #Loop
-            #Cluster and find centroids
+        volume_condition = False
+        overlap_condition = False
+        clust_points = None
+        ellipsoids = []
+        #clust_cent = self.cluster(self.tempClust,2)
+        while(volume_condition==False or overlap_condition ==False):
+            #volume = 
+            clust_cent, point_labels, pointset = self.cluster(self.tempClust,2)#Cluster and find centroids
+            clust_points = np.empty(len(clust_cent))
+            ellipsoids = np.empty(len(clust_cent))
+            #Find points for each cluster
+            for i in range(len(clust_cent)):
+                clust_points[i] = [pointset(x) for x in range(len(pointset)) if(label(x)==i) ]
             #Build ellipsoids
+            for i in range(len(clust_cent)):
+                ellipsoids[i] = self.build_ellipsoid(centroid=clust_cent[i], points=clust_points[i])
+
             #Check the combined volume of ellipsoids
             #Check if any ellipsoids are overlapping
             #If both conditions are satisfied return the ellipsoids
@@ -65,14 +76,10 @@ class Clustered_Sampler(object):
         return None
 
     
-    def build_ellipsoids(self):
-        return None
+    def build_ellipsoid(self, centroid, points):
+        return Ellipsoid(centroid = centroid, points = points, enlargement_factor=1.5)
 
-
-    def find_volume(self):
-        return None
-
-
+    
     def check_overlapping(self):
         return None
 
@@ -97,10 +104,37 @@ class Clustered_Sampler(object):
 
 class Ellipsoid(object):
 
-    def __init__(self):
+    def __init__(self, centroid, points, enlargement_factor):
 
-        self.covariance_matrix = []
-        
-    def enlarge(self):
-        return None
+        self.centroid = centroid
+        self.clpoints = points
+        self.enlargement_factor =enlargement_factor
+        self.covariance_matrix = self.build_cov(centroid, points)
+        self.eigenvalues = self.get_eigenvalues(self.covariance_matrix)
+        self.semi_axes = self.find_semiaxes(eigenvalues=self.eigenvalues)
+        self.volume = self.find_volume()
+
+    
+    def build_cov(self, center, clpoints):
+        return np.cov(m=clpoints, rowvar=0)
+
+
+    def get_eigenvalues(self,covariance_matrix):
+        return np.linalg.eigvals(self.covariance_matrix)
+
+    
+    def find_semiaxes(self, eigenvalues):
+        axes = np.reciprocal(np.sqrt(eigenvalues))
+        self.enlarge(semiaxes=axes)
+        return axes
+
+    def find_volume(self):
+        semi_axes = self.semi_axes
+        volume = 0.5*(np.pi**2)*(np.product(semi_axes)) 
+        return volume    
+
+
+    def enlarge(self,semiaxes):
+        for i in semiaxes:
+            i = i*self.enlargement_factor
         
