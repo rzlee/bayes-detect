@@ -67,7 +67,7 @@ class Nested_Sampler(object):
         self.active_samples        = get_sources(no_active_samples)
         
         """ Variable to hold evidence at each iteration"""
-        self.evidence              = None
+        self.log_evidence              = None
 
         """ Posterior samples for evidence and plotting """
         self.posterior_inferences  = []

@@ -35,11 +35,11 @@ class Metropolis_sampler(object):
         step = 40 # for X (0, 400) will be scaled down to 10 for Y
         hit = 0
         miss = 0
-        Trial = Source()
+        Trial = Source() #trial object
         x_l, x_u = getPrior_X()
         y_l, y_u = getPrior_Y()
         r_l, r_u = getPrior_R()
-        a_l, a_u = getPrior_A() #trial object
+        a_l, a_u = getPrior_A() 
 
         for i in range(20):
 
