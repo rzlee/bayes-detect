@@ -1,6 +1,20 @@
 """ Metropolis hastings sampler to be used in Multimodal nested sampling technique
 for source detection in astronomical images.
 
+Metropolis hastings principle helps in generating a point satisfying likelihood constraint
+as follows:
+1.Start with a point a
+2.Generate a point using a symmetric proposal distribution with a as center and a stepsize
+as the dispersion. In choosing a symmetric distribution we gain the advantage of transitional
+probabilities being equal.
+3.Accept the point with probability min(1., priorRatio*LikelihoodRatio)
+4.Since our prior is a uniform distribution in all dimensions we just accept the point if it has a
+greater likelihood
+5.We need to pass through the likelihood contours, Inorder restrict or increase the prior volume
+we choose an accept-reject ratio. We do this by running it in a loop of 20 steps.
+6.When the accept-reject ratio is good the stepsize is decreased to reduce the prior volume.
+If it is bad then stepsize is increased to facilitate for looking in other possible regions  
+
 References:
 ===========
 Multinest paper by Feroz and Hobson et al(2008) 
@@ -19,66 +33,60 @@ class Metropolis_sampler(object):
 
     """Initializing metropolis sampler"""
 
-    def __init__(self, to_evolve, likelihood_constraint):
+    def __init__(self, to_evolve, likelihood_constraint, no):
 
         self.source = to_evolve
         self.LC     = likelihood_constraint
-
-
-    """Sampling from the prior subject to constraints according to Metropolis method 
-    proposed by Sivia et al """
-
-    def sample(self):
-
-        metro = Source()
-        metro.__dict__ = self.source.__dict__.copy()
-        step = 40 # for X (0, 400) will be scaled down to 10 for Y
-        hit = 0
-        miss = 0
-        Trial = Source() #trial object
+        self.step   = 60.0
+        self.number = no
+        
+    """We use a symmetric normal distribution for generating new point"""
+    def generate_point(self, obj, step):
         x_l, x_u = getPrior_X()
         y_l, y_u = getPrior_Y()
         r_l, r_u = getPrior_R()
-        a_l, a_u = getPrior_A() 
+        a_l, a_u = getPrior_A()
+
+        stepX    = step
+        stepY    = (step/100.0)*(y_u-y_l)
+        stepA    = (step/100.0)*(a_u-a_l)
+        stepR    = (step/100.0)*(r_u-r_l)
+
+        new      = sample_source()
+        new.X    = np.random.normal(obj.X, (stepX))        
+        new.Y    = np.random.normal(obj.Y, (stepY))
+        new.A    = np.random.normal(obj.A, (stepA))
+        new.R    = np.random.normal(obj.R, (stepR))
+
+        if(new.X > x_u or new.X < x_l): new.X = obj.X;
+        if(new.Y > y_u or new.Y < y_l): new.Y = obj.Y;
+        if(new.A > a_u or new.A < a_l): new.A = obj.A;
+        if(new.R > r_u or new.R < r_l): new.R = obj.R;        
+        
+        new.logL = log_likelihood(new)
+
+        return new  
+
+    """Sampling from the prior subject to constraints according to Metropolis method 
+    proposed by Sivia et al discussed in Multinest paper by feroz and Hobson"""
+
+    def sample(self):
+        metro = self.source
+        self.number+=1
+        next  = None
+        hit   = 0
+        miss  = 0
 
         for i in range(20):
-
-            """ Evolving the chain from lower likelihood contour to higher likelihood contour"""
-            Trial.X = metro.X + step*(2.0*random.uniform(0,1)-1.0)
-            Trial.Y = metro.Y + ((step/x_u)*(y_u-y_l)) *(2.0*random.uniform(0,1)-1.0)
-            Trial.A = metro.A + ((step/x_u)*(a_u-a_l)) *(2.0*random.uniform(0,1)-1.0)
-            Trial.R = metro.R + ((step/x_u)*(r_u-r_l)) *(2.0*random.uniform(0,1)-1.0)
-
-            """Ensure source attributes stay with in prior"""
-            if(Trial.X > x_u or Trial.X < x_l): Trial.X = metro.X;
-            if(Trial.Y > y_u or Trial.Y < y_l): Trial.Y = metro.Y;
-            if(Trial.A > a_u or Trial.A < a_l): Trial.A = metro.A;
-            if(Trial.R > r_u or Trial.R < r_l): Trial.R = metro.R;
-            
-            """Calculating the likelihood of the evolved point"""
-            Trial.logL = log_likelihood(Trial)
-
-            """Accept if and only if within hard likelihood constraint"""
-            if Trial.logL > self.LC:
-                metro.__dict__ = Trial.__dict__.copy()
+            next = self.generate_point(metro,abs(self.step))
+            self.number+=2
+            if(next.logL > metro.logL):
+                metro.__dict__ = next.__dict__.copy()
                 hit+=1
             else:
                 miss+=1
 
-            """Refine step-size to let acceptance ratio converge around 50 percent as discussed in multinest paper"""
-            if( hit > miss ):   step *= exp(1.0 / hit);
-            if( hit < miss ):   step /= exp(1.0 / miss);
-
-        return metro     
-
-
-
-
-
-
-
-        
-    
-
-
-
+        if( hit > miss ):   self.step *= exp(1.0 / hit);
+        if( hit < miss ):   self.step /= exp(1.0 / miss);        
+                                
+        return metro, self.number
