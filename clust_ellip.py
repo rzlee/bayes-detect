@@ -8,7 +8,8 @@ References :
 
 Multinest paper by Feroz and Hobson 2008.
 Shaw R., Bridges M., Hobson M.P., 2007, MNRAS, in press (astro-ph/0701867)
-A Nested Sampling Algorithm for Cosmological Model Selection(2006) Pia Mukherjee , David Parkinson , and Andrew R. Liddle 
+A Nested Sampling Algorithm for Cosmological Model Selection(2006) Pia Mukherjee , David Parkinson , and Andrew R. Liddle
+http://www.sjsu.edu/faculty/watkins/ellipsoid.htm 
 
 """
 
@@ -39,8 +40,8 @@ class Clustered_Sampler(object):
         return array            
         
 
-    """This method clusters the samples and return the mean points of each cluster. We will attempt
-    to do agglomerative clustering as an improvement in coming days""" 
+    # FIX ME : This method clusters the samples and return the mean points of each cluster. We will attempt
+    #to do agglomerative clustering as an improvement in coming days""" 
 
     def cluster(self, activepoint_set, number_of_clusters):
         centroids, label = kmeans(obs=activepoint_set, k_or_guess = number_of_clusters)
@@ -48,32 +49,24 @@ class Clustered_Sampler(object):
 
 
     """This method builds ellipsoids enlarged by a factor, around each cluster of active samples
-     from which we sample to evolve using the likelihood_constraint"""  
+     from which we sample to evolve using the likelihood_constraint"""
+
+     """Note : Incomplete"""  
 
     def optimal_ellipsoids(self):
         volume_condition = False
         overlap_condition = False
         clust_points = None
         ellipsoids = []
-        #clust_cent = self.cluster(self.tempClust,2)
         while(volume_condition==False or overlap_condition ==False):
-            #volume = 
             clust_cent, point_labels, pointset = self.cluster(self.tempClust,2)#Cluster and find centroids
             clust_points = np.empty(len(clust_cent))
             ellipsoids = np.empty(len(clust_cent))
-            #Find points for each cluster
             for i in range(len(clust_cent)):
                 clust_points[i] = [pointset(x) for x in range(len(pointset)) if(label(x)==i) ]
-            #Build ellipsoids
             for i in range(len(clust_cent)):
                 ellipsoids[i] = self.build_ellipsoid(centroid=clust_cent[i], points=clust_points[i])
-
-            #Check the combined volume of ellipsoids
-            #Check if any ellipsoids are overlapping
-            #If both conditions are satisfied return the ellipsoids
-            #Else continue the process again until they satisfy
-
-        return None
+         return None
 
     
     def build_ellipsoid(self, centroid, points):
@@ -87,17 +80,10 @@ class Clustered_Sampler(object):
     def sample_from_ellipsoid(self):
         return None
         
-        
-        
-
-    
-
-
     """This method is responsible for sampling from the enlarged ellipsoids with certain probability
     The method also checks if any ellipsoids are overlapping and behaves accordingly """
     def sample(self):
         return None
-
 
 
 """Class for ellipsoids"""
@@ -139,7 +125,7 @@ class Ellipsoid(object):
             i = i*self.enlargement_factor
         
 
-
+"""Trying single ellipsoid sampler first before building clustered version"""
 
 class SingleEllipsoidal_Sampler(object):
 
@@ -152,6 +138,13 @@ class SingleEllipsoidal_Sampler(object):
 
     def build_ellipsoid(self, points, enlargement_factor):
         return Ellipsoid(points = points, enlargement_factor = enlargement_factor)
+
+
+    def sample_from_ellipsoid(self):
+        return None
+
+
+            
 
 
 
