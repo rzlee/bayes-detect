@@ -78,6 +78,9 @@ class Nested_Sampler(object):
         """ Information for calculating the uncertainity of calculating the evidence """
         self.Information           = None
 
+        """ Total number of likelihood calculations""" 
+        self.no_likelihood         = no_active_samples
+
     
     """ Method that runs the main nested sampling loop"""
     
@@ -90,12 +93,19 @@ class Nested_Sampler(object):
 
         for iteration in range(self.maximum_iterations):
             if iteration%100==0: print str(iteration);# temporary verbose
-            smallest = 0 
+            smallest = 0
+            largest = 0 
             
             """Finding the object with smallest likelihood"""
             for i in range(self.no_active_samples):
+                if self.active_samples[i].logL > self.active_samples[largest].logL:
+                    largest = i
                 if self.active_samples[i].logL < self.active_samples[smallest].logL:
                     smallest = i
+            
+            """if(self.active_samples[largest].logL + self.log_width < 0.1):
+                print str(self.active_samples[largest].logL + self.log_width)
+                break """
             
             """Assigning local evidence to the smallest sample"""
             self.active_samples[smallest].logWt = self.log_width + self.active_samples[smallest].logL;
@@ -107,8 +117,8 @@ class Nested_Sampler(object):
             self.Information = exp(self.active_samples[smallest].logWt - temp_evidence) * self.active_samples[smallest].logL + \
             exp(self.log_evidence - temp_evidence) * (self.Information + self.log_evidence) - temp_evidence;
             
-            """assigning the updated evidence in this iteration"""
-            if(temp_evidence-self.log_evidence <= self.convergence_threshold): break;
+            # FIX ME : Add a stopping criterion condition 
+
             self.log_evidence = temp_evidence
             
             """storing posterior points"""
@@ -117,19 +127,13 @@ class Nested_Sampler(object):
             """New likelihood constraint""" 
             likelihood_constraint = self.active_samples[smallest].logL
 
-            """Picking an object to evolve for next iteration"""
-            while True:
-                 k = int(self.no_active_samples*random.uniform(0,1))
-                 if k!=smallest:
-                    break
-            self.active_samples[smallest] = self.active_samples[k]
-
+            
             """Drawing a new sample satisfying the likelihood constraint"""  
             
             if self.sample == "metropolis":
                 """Obtain new sample using Metropolis principle"""
-                self.active_samples[smallest] = self.metropolis_sampling(obj = self.active_samples[smallest], LC = likelihood_constraint)
-
+                self.active_samples[smallest], number = self.metropolis_sampling(obj = self.active_samples[smallest], LC = likelihood_constraint, likelihood_calc =self.no_likelihood)
+                self.no_likelihood = number
             if self.sample == "clustered_ellipsoidal":
                 """Obtain new sample using Clustered ellipsoidal sampling"""
                 self.active_samples[smallest] = self.clustered_sampling(obj = self.active_samples[smallest], LC = likelihood_constraint)
@@ -139,19 +143,22 @@ class Nested_Sampler(object):
 
         # FIX ME: Incorporate the active samples into evidence calculation and information after the loop """
 
-        return {"samples":self.posterior_inferences, 
+        return { "src":self.active_samples,
+            "samples":self.posterior_inferences, 
             "logZ":self.log_evidence,
-            "Information":self.Information
+            "Information":self.Information,
+            "likelihood_calculations":self.no_likelihood,
+            "iterations":self.maximum_iterations 
             }
 
 
     """ Method for drawing a new sample using the metropolis hastings principle """  
 
-    def metropolis_sampling(self, obj, LC):
+    def metropolis_sampling(self, obj, LC, likelihood_calc):
         "Instantiating the metropolis sampler object"
-        Metro = Metropolis_sampler(to_evolve = obj, likelihood_constraint = LC)
-        evolved = Metro.sample()
-        return evolved
+        Metro = Metropolis_sampler(to_evolve = obj, likelihood_constraint = LC, no =likelihood_calc)
+        evolved, number = Metro.sample()
+        return evolved, number
 
 
     """ Method for drawing a new sample using clustered ellipsoidal sampling"""
