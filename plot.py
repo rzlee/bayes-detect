@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import font_manager
+from matplotlib.transforms import *
 from sources import *
 
 
@@ -28,7 +29,15 @@ def show_samples(height, width, samples):
 	plt.show()
 
 
-def plot_ellipsoid(height, width, Ellipsoid, active_points):
+def plot_histogram(data, bins):
+	plt.hist(data,bins)
+	plt.show()
 	return None
+
+# FIX ME : Figure out a way to embed information and
+# show on the plot to scale and also shouls be immune to interactive transformations
+def show_scatterplot(X,Y):
+	plt.scatter(X,Y, marker ="*")
+	plt.show()
 
 
