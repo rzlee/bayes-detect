@@ -5,8 +5,8 @@ References:
 Multinest paper by Feroz and Hobson et al(2008) 
 Data Analysis: A Bayesian Tutorial by Sivia et al(2006)
 http://en.wikipedia.org/wiki/Metropolis-Hastings_algorithm
-http://www.inference.phy.cam.ac.uk/bayesys/ 
-
+http://www.inference.phy.cam.ac.uk/bayesys/
+Hobson, Machlachlan, Bayesian object detection in astronomical images(2003)
 """
 
 
@@ -19,7 +19,7 @@ from nest import *
 from plot import *
 
 """Reading the Image data from fits file"""
-fitsFile = "simulated_images/ufig_20_g_gal_sub_500_sub_small.fits"
+fitsFile = "simulated_images/ufig_20_g_sub_500_sub_small.fits"
 
 hdulist   = fits.open(fitsFile)
 data_map   = (hdulist[0].data)
@@ -31,15 +31,15 @@ data_map = data_map.flatten()
 
 """Bounds for the prior distribution of Amplitude """
 amplitude_upper = 1.4*np.max(data_map)
-amplitude_lower = np.mean(data_map) + 2*np.std(data_map)
+amplitude_lower = np.mean(data_map) + np.std(data_map)
 
 """Bounds for the prior distribution of position """
 x_upper = 400
 y_upper = 100
 
 """Bounds for the prior distribution of Spatial extent """
-R_upper = 3.0
-R_lower = 2.5
+R_upper = 4.0
+R_lower = 1.0
 
 PI = np.pi
 
@@ -53,10 +53,11 @@ y_forcalc = np.arange(0, 100)
 xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
 
 """Number of objects used in nested_sampling"""
-n = 40
+n = 100
 
 """Number of Iterations for nested_sampling method """
-max_iterations = 500
+max_iterations = 700
+
 
 """Object Information 
    X : x coordinate of the center of the object
@@ -119,5 +120,13 @@ def getPrior_Y():
 
 if __name__ == '__main__':
         nest = Nested_Sampler(no_active_samples = n, max_iter = max_iterations)
-        out = nest.fit()
-        show_samples(100, 400, out["samples"])    
+        out  = nest.fit()
+        print "log evidence: "+str(out["logZ"])
+        print "number of iterations: "+str(out["iterations"])
+        print "likelihood calculations: "+str(out["likelihood_calculations"])
+        outX = [i.X for i in out["samples"]]
+        outY = [100-i.Y for i in out["samples"]]   
+        plot_histogram(data = outX, bins = 400)
+        plot_histogram(data = outY, bins = 100)
+        show_scatterplot(outX,outY)
+
