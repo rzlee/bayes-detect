@@ -17,9 +17,10 @@ from math import *
 import random
 from nest import *
 from plot import *
+import time
 
 """Reading the Image data from fits file"""
-fitsFile = "simulated_images/ufig_20_g_sub_500_sub_small.fits"
+fitsFile = "simulated_images/ufig_20_g_gal_sub_500_sub_small.fits"
 
 hdulist   = fits.open(fitsFile)
 data_map   = (hdulist[0].data)
@@ -53,10 +54,10 @@ y_forcalc = np.arange(0, 100)
 xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
 
 """Number of objects used in nested_sampling"""
-n = 100
+n = 1200
 
 """Number of Iterations for nested_sampling method """
-max_iterations = 700
+max_iterations = 10000
 
 
 """Object Information 
@@ -88,10 +89,10 @@ def proposed_model(x, y, X, Y, A, R):
 """Sampling the object from prior distribution"""
 def sample_source():
     src = Source()
-    src.X = random.uniform(0.0, x_upper)
-    src.Y = random.uniform(0.0, y_upper) 
-    src.A = random.uniform(amplitude_lower, amplitude_upper)
-    src.R = random.uniform(R_lower, R_upper)
+    src.X = np.random.uniform(0.0, x_upper)
+    src.Y = np.random.uniform(0.0, y_upper) 
+    src.A = np.random.uniform(amplitude_lower, amplitude_upper)
+    src.R = np.random.uniform(R_lower, R_upper)
     src.logL = log_likelihood(src)
     return src
 
@@ -119,8 +120,11 @@ def getPrior_Y():
     return 0, height;
 
 if __name__ == '__main__':
+        startTime = time.time()
         nest = Nested_Sampler(no_active_samples = n, max_iter = max_iterations)
         out  = nest.fit()
+        elapsedTime = time.time() - startTime
+        print "elapsed time: "+str(elapsedTime) 
         print "log evidence: "+str(out["logZ"])
         print "number of iterations: "+str(out["iterations"])
         print "likelihood calculations: "+str(out["likelihood_calculations"])
@@ -129,4 +133,10 @@ if __name__ == '__main__':
         plot_histogram(data = outX, bins = 400)
         plot_histogram(data = outY, bins = 100)
         show_scatterplot(outX,outY)
+        outsrcX = [i.X for i in out["src"]]
+        outsrcY = [100-i.Y for i in out["src"]]
+        show_scatterplot(outsrcX,outsrcY)
+           
+         
+
 

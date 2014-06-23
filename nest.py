@@ -37,7 +37,6 @@ import numpy as np
 from math import *
 from sources import *
 from metropolis import *
-import random
 
 
 
@@ -98,15 +97,8 @@ class Nested_Sampler(object):
             
             """Finding the object with smallest likelihood"""
             for i in range(self.no_active_samples):
-                if self.active_samples[i].logL > self.active_samples[largest].logL:
-                    largest = i
                 if self.active_samples[i].logL < self.active_samples[smallest].logL:
                     smallest = i
-            
-            """if(self.active_samples[largest].logL + self.log_width < 0.1):
-                print str(self.active_samples[largest].logL + self.log_width)
-                break """
-            
             """Assigning local evidence to the smallest sample"""
             self.active_samples[smallest].logWt = self.log_width + self.active_samples[smallest].logL;
             

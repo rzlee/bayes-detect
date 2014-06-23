@@ -37,7 +37,8 @@ class Metropolis_sampler(object):
 
         self.source = to_evolve
         self.LC     = likelihood_constraint
-        self.step   = 60.0
+        self.start  = 10.0
+        self.step   = 10.0
         self.number = no
         
     """We use a symmetric normal distribution for generating new point"""
@@ -48,9 +49,9 @@ class Metropolis_sampler(object):
         a_l, a_u = getPrior_A()
 
         stepX    = step
-        stepY    = (step/100.0)*(y_u-y_l)
-        stepA    = (step/100.0)*(a_u-a_l)
-        stepR    = (step/100.0)*(r_u-r_l)
+        stepY    = (step/self.start)*(y_u-y_l)
+        stepA    = (step/self.start)*(a_u-a_l)
+        stepR    = (step/self.start)*(r_u-r_l)
 
         new      = sample_source()
         new.X    = np.random.normal(obj.X, (stepX))        
