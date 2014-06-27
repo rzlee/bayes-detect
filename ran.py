@@ -4,18 +4,18 @@ import pickle
 import numpy as np
 from plot import *
 
-file = "sub_15000_300_3"
+file = "sub_60000_1200_10"
 
 f = open(file,'r')
 
 data = pickle.load(f)
 f.close()
 
-start = 2000
-stop = 3500
+start = 30000
+stop = 59999
 
-spec = sorted(data, key=lambda x: x.logL,reverse=True)
-sortspec = [spec[i] for i in range(start, stop)]
+#spec = sorted(data, key=lambda x: x.logL,reverse=True)
+sortspec = [data[i] for i in range(start, stop)]
 specX = [i.X for i in sortspec]
 specY = [100-i.Y for i in sortspec]
 specA = [i.A for i in sortspec]

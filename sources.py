@@ -55,10 +55,10 @@ y_forcalc = np.arange(0, 100)
 xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
 
 """Number of objects used in nested_sampling"""
-n = 300
+n = 1200
 
 """Number of Iterations for nested_sampling method """
-max_iterations = 5000
+max_iterations = 60000
 
 
 """Object Information 
@@ -114,11 +114,11 @@ def getPrior_R():
 
 """ This method returns the prior bounds of X value"""
 def getPrior_X():
-    return 0, width;
+    return 0.0, width;
 
 """ This method returns the prior bounds of Y value"""
 def getPrior_Y():
-    return 0, height;
+    return 0.0, height;
 
 def write(data, out):
     f = open(out,'w+b')

@@ -165,34 +165,3 @@ class Nested_Sampler(object):
     
     def clustered_sampling(self, obj, LC):
         return None
-
-    
-
-
-
-
-
-
-
-
-
-
-
-            
-
-
-                
-
-
-
-                    
-
-
-
-
-
-
-
-
-
-

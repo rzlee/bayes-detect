@@ -37,7 +37,7 @@ def plot_histogram(data, bins):
 # FIX ME : Figure out a way to embed information and
 # show on the plot to scale and also shouls be immune to interactive transformations
 def show_scatterplot(X,Y):
-	plt.scatter(X,Y, marker ="*")
+	plt.scatter(X,Y, marker =".")
 	plt.show()
 
 
