@@ -18,9 +18,10 @@ import random
 from nest import *
 from plot import *
 import time
+import pickle
 
 """Reading the Image data from fits file"""
-fitsFile = "simulated_images/ufig_20_g_gal_sub_500_sub_small.fits"
+fitsFile = "simulated_images/ufig_20_g_sub_500_sub_small.fits"
 
 hdulist   = fits.open(fitsFile)
 data_map   = (hdulist[0].data)
@@ -32,21 +33,21 @@ data_map = data_map.flatten()
 
 """Bounds for the prior distribution of Amplitude """
 amplitude_upper = 1.4*np.max(data_map)
-amplitude_lower = np.mean(data_map) + np.std(data_map)
+amplitude_lower = 0.1
 
 """Bounds for the prior distribution of position """
-x_upper = 400
-y_upper = 100
+x_upper = 400.0
+y_upper = 100.0
 
 """Bounds for the prior distribution of Spatial extent """
-R_upper = 4.0
-R_lower = 1.0
+R_upper = 12.0
+R_lower = 0.1
 
 PI = np.pi
 
 """Incorporating RMS noise into the model"""    
-noise = 2.0 
-K = (no_pixels/2)*(np.log(2*PI) + 2*np.log(noise))
+noise = 2.0#stats.mode(data_map) 
+K = (no_pixels/2)*(np.log(2*PI) + 4*np.log(abs(noise)))
 
 """Useful in likelihood evaluation for calculating the simulated object as the function of indices"""
 x_forcalc = np.arange(0, 400)
@@ -54,10 +55,10 @@ y_forcalc = np.arange(0, 100)
 xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
 
 """Number of objects used in nested_sampling"""
-n = 1200
+n = 300
 
 """Number of Iterations for nested_sampling method """
-max_iterations = 10000
+max_iterations = 5000
 
 
 """Object Information 
@@ -89,10 +90,10 @@ def proposed_model(x, y, X, Y, A, R):
 """Sampling the object from prior distribution"""
 def sample_source():
     src = Source()
-    src.X = np.random.uniform(0.0, x_upper)
-    src.Y = np.random.uniform(0.0, y_upper) 
-    src.A = np.random.uniform(amplitude_lower, amplitude_upper)
-    src.R = np.random.uniform(R_lower, R_upper)
+    src.X = random.uniform(0.0, x_upper)
+    src.Y = random.uniform(0.0, y_upper) 
+    src.A = random.uniform(amplitude_lower, amplitude_upper)
+    src.R = random.uniform(R_lower, R_upper)
     src.logL = log_likelihood(src)
     return src
 
@@ -119,6 +120,19 @@ def getPrior_X():
 def getPrior_Y():
     return 0, height;
 
+def write(data, out):
+    f = open(out,'w+b')
+    pickle.dump(data, f)
+    f.close()
+
+def read(filename):
+    f = open(filename)
+    data = pickle.load(f)
+    f.close()
+    return data
+
+
+
 if __name__ == '__main__':
         startTime = time.time()
         nest = Nested_Sampler(no_active_samples = n, max_iter = max_iterations)
@@ -128,6 +142,9 @@ if __name__ == '__main__':
         print "log evidence: "+str(out["logZ"])
         print "number of iterations: "+str(out["iterations"])
         print "likelihood calculations: "+str(out["likelihood_calculations"])
+        dispersion = 10
+        data = np.array(out["samples"])
+        write(data,"sub_"+str(max_iterations)+"_"+str(n)+"_"+str(dispersion))
         outX = [i.X for i in out["samples"]]
         outY = [100-i.Y for i in out["samples"]]   
         plot_histogram(data = outX, bins = 400)
@@ -135,6 +152,8 @@ if __name__ == '__main__':
         show_scatterplot(outX,outY)
         outsrcX = [i.X for i in out["src"]]
         outsrcY = [100-i.Y for i in out["src"]]
+        plot_histogram(data = outsrcX, bins = 400)
+        plot_histogram(data = outsrcY, bins = 100)
         show_scatterplot(outsrcX,outsrcY)
            
          

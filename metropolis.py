@@ -10,10 +10,8 @@ probabilities being equal.
 3.Accept the point with probability min(1., priorRatio*LikelihoodRatio)
 4.Since our prior is a uniform distribution in all dimensions we just accept the point if it has a
 greater likelihood
-5.We need to pass through the likelihood contours, Inorder restrict or increase the prior volume
-we choose an accept-reject ratio. We do this by running it in a loop of 20 steps.
-6.When the accept-reject ratio is good the stepsize is decreased to reduce the prior volume.
-If it is bad then stepsize is increased to facilitate for looking in other possible regions  
+5.We need to pass through the likelihood contours, Inorder to climb more likelihood levels at each iteration
+We use 20 steps.  
 
 References:
 ===========
@@ -40,54 +38,59 @@ class Metropolis_sampler(object):
         self.start  = 10.0
         self.step   = 10.0
         self.number = no
+                
+    """Sampling from the prior subject to constraints according to Metropolis method 
+    proposed by Sivia et al discussed in Multinest paper by feroz and Hobson"""
+
+    def sample(self):
+        metro = Source()
+        metro.__dict__ = self.source.__dict__.copy()
+        next  = None
+        new   = sample_source()
+        self.number+=1
+        count = 0
+        hit = 0
+        miss = 0
         
-    """We use a symmetric normal distribution for generating new point"""
-    def generate_point(self, obj, step):
         x_l, x_u = getPrior_X()
         y_l, y_u = getPrior_Y()
         r_l, r_u = getPrior_R()
         a_l, a_u = getPrior_A()
 
-        stepX    = step
-        stepY    = (step/self.start)*(y_u-y_l)
-        stepA    = (step/self.start)*(a_u-a_l)
-        stepR    = (step/self.start)*(r_u-r_l)
+        stepnormalize = self.step/x_u
 
-        new      = sample_source()
-        new.X    = np.random.normal(obj.X, (stepX))        
-        new.Y    = np.random.normal(obj.Y, (stepY))
-        new.A    = np.random.normal(obj.A, (stepA))
-        new.R    = np.random.normal(obj.R, (stepR))
-
-        if(new.X > x_u or new.X < x_l): new.X = obj.X;
-        if(new.Y > y_u or new.Y < y_l): new.Y = obj.Y;
-        if(new.A > a_u or new.A < a_l): new.A = obj.A;
-        if(new.R > r_u or new.R < r_l): new.R = obj.R;        
+        stepX    = self.step
+        stepY    = stepnormalize*(y_u-y_l)
+        stepA    = stepnormalize*(a_u - a_l)
+        stepR    = stepnormalize*(r_u-r_l)        
         
-        new.logL = log_likelihood(new)
+        bord = None
 
-        return new  
+        while(count<=20):
+            
+            new.X    = random.gauss(metro.X, (stepX))
+            new.Y    = random.gauss(metro.Y, (stepY))
+            new.A    = random.gauss(metro.A, (stepA))
+            new.R    = random.gauss(metro.R, (stepR))
 
-    """Sampling from the prior subject to constraints according to Metropolis method 
-    proposed by Sivia et al discussed in Multinest paper by feroz and Hobson"""
+            if(new.X > x_u or new.X < x_l): bord = 1;
+            if(new.Y > y_u or new.Y < y_l): bord = 1;
+            if(new.A > a_u or new.A < a_l): bord = 1;
+            if(new.R > r_u or new.R < r_l): bord = 1;
 
-    def sample(self):
-        metro = self.source
-        self.number+=1
-        next  = None
-        hit   = 0
-        miss  = 0
+            if bord==1:
+                new = sample_source()
+            else:
+                new.logL = log_likelihood(new)
+            self.number+=1
 
-        for i in range(20):
-            next = self.generate_point(metro,abs(self.step))
-            self.number+=2
-            if(next.logL > metro.logL):
-                metro.__dict__ = next.__dict__.copy()
+            if(new.logL > metro.logL):
+                metro.__dict__ = new.__dict__.copy()
                 hit+=1
             else:
                 miss+=1
+            
+            count+=1
+            bord = 0
 
-        if( hit > miss ):   self.step *= exp(1.0 / hit);
-        if( hit < miss ):   self.step /= exp(1.0 / miss);        
-                                
         return metro, self.number
