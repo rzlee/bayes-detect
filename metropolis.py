@@ -74,29 +74,30 @@ class Metropolis_sampler(object):
 
         while(True):
             
-            new.X    = random.gauss(metro.X, (stepX))
-            new.Y    = random.gauss(metro.Y, (stepY))
-            new.A    = random.gauss(metro.A, (stepA))
-            new.R    = random.gauss(metro.R, (stepR))
+            if(count <=20):
+                new.X    = random.gauss(metro.X, (stepX))
+                new.Y    = random.gauss(metro.Y, (stepY))
+                new.A    = random.gauss(metro.A, (stepA))
+                new.R    = random.gauss(metro.R, (stepR))
 
-            if(new.X > x_u or new.X < x_l): bord = 1;
-            if(new.Y > y_u or new.Y < y_l): bord = 1;
-            if(new.A > a_u or new.A < a_l): bord = 1;
-            if(new.R > r_u or new.R < r_l): bord = 1;
+                if(new.X > x_u or new.X < x_l): bord = 1;
+                if(new.Y > y_u or new.Y < y_l): bord = 1;
+                if(new.A > a_u or new.A < a_l): bord = 1;
+                if(new.R > r_u or new.R < r_l): bord = 1;
 
-            if bord==1:
-                new = sample_source()
-            else:
-                new.logL = log_likelihood(new)
-            self.number+=1
+                if bord==1:
+                    new = sample_source()
+                else:
+                    new.logL = log_likelihood(new)
+                self.number+=1
 
-            if(count<20):
                 if(new.logL > metro.logL):
                     metro.__dict__ = new.__dict__.copy()
             else:
                 if(new.logL > start.logL):
                     metro.__dict__ = new.__dict__.copy()
                     break
+                new = sample_source()    
             
             count+=1
             bord = 0
