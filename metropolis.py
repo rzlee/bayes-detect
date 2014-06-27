@@ -66,7 +66,7 @@ class Metropolis_sampler(object):
         
         bord = None
 
-        while(count<=20):
+        while(True):
             
             new.X    = random.gauss(metro.X, (stepX))
             new.Y    = random.gauss(metro.Y, (stepY))
@@ -84,13 +84,15 @@ class Metropolis_sampler(object):
                 new.logL = log_likelihood(new)
             self.number+=1
 
-            if(new.logL > metro.logL):
-                metro.__dict__ = new.__dict__.copy()
-                hit+=1
+            if(count<20):
+                if(new.logL > metro.logL):
+                    metro.__dict__ = new.__dict__.copy()
             else:
-                miss+=1
+                if(new.logL > metro.logL):
+                    metro.__dict__ = new.__dict__.copy()
+                    break
             
             count+=1
             bord = 0
-
+        
         return metro, self.number

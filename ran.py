@@ -4,14 +4,14 @@ import pickle
 import numpy as np
 from plot import *
 
-file = "sub_60000_1200_10"
+file = "pickles/sub_60000_1200_10"
 
 f = open(file,'r')
 
 data = pickle.load(f)
 f.close()
 
-start = 30000
+start = 0
 stop = 59999
 
 #spec = sorted(data, key=lambda x: x.logL,reverse=True)
