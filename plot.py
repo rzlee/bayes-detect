@@ -41,3 +41,20 @@ def show_scatterplot(X,Y):
 	plt.show()
 
 
+"""Method to show the sources at the end of the nested sampling method"""
+def show_source():
+	height =100
+	width = 400
+	i = Source()
+	i.X = 200
+	i.Y = 50
+	i.A = 100
+	i.R = 3
+	x = np.arange(0, width)
+	y = np.arange(0, height)
+	xx, yy = np.meshgrid(x, y, sparse=True)
+	z = np.zeros((height,width),float)
+	z = i.A*np.exp(-1*((xx-i.X)**2+(yy-i.Y)**2)/(2*(i.R**2)))
+	plt.imshow(z)
+	plt.show()
+
