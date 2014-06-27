@@ -45,6 +45,8 @@ class Metropolis_sampler(object):
     def sample(self):
         metro = Source()
         metro.__dict__ = self.source.__dict__.copy()
+        start = Source()
+        start.__dict__ = self.source.__dict__.copy()
         next  = None
         new   = sample_source()
         self.number+=1
@@ -65,6 +67,10 @@ class Metropolis_sampler(object):
         stepR    = stepnormalize*(r_u-r_l)        
         
         bord = None
+
+        """Using 20 steps to jump multiple likelihood levels at each iteration. After 20 steps
+        if it still fails to come up with new point greater than the initial point, the first one
+        which satisfies is taken instantly """
 
         while(True):
             
@@ -88,7 +94,7 @@ class Metropolis_sampler(object):
                 if(new.logL > metro.logL):
                     metro.__dict__ = new.__dict__.copy()
             else:
-                if(new.logL > metro.logL):
+                if(new.logL > start.logL):
                     metro.__dict__ = new.__dict__.copy()
                     break
             
