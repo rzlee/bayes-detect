@@ -91,15 +91,30 @@ class Nested_Sampler(object):
         self.Information = 0.0
         LogL = [i.logL for i in self.active_samples]
         iteration = None
+        stop = None
+        prev_stop = 0.0
        
         for iteration in range(1,self.maximum_iterations):
-            if iteration%100==0: print str(iteration);# temporary verbose
             smallest = 0
             """Finding the object with smallest likelihood"""
             smallest = np.argmin(LogL)
             """Assigning local evidence to the smallest sample"""
             self.active_samples[smallest].logWt = self.log_width + self.active_samples[smallest].logL;
             
+            largest = np.argmax(LogL)
+
+            stop = self.active_samples[largest].logL + self.log_width - self.log_evidence
+
+
+            if iteration%100==0 or iteration==1:
+                print str(iteration)
+                #print "stop: "+str(stop)            
+
+            
+            #if(abs(stop - prev_stop) < 0.1): break; 
+
+            prev_stop = stop
+
             """Calculating the updated evidence"""
             temp_evidence = np.logaddexp(self.log_evidence, self.active_samples[smallest].logWt)
             
@@ -122,10 +137,11 @@ class Nested_Sampler(object):
             """New likelihood constraint""" 
             likelihood_constraint = self.active_samples[smallest].logL
 
+            survivor = int(smallest)
 
             if self.sample == "metropolis":
                 """Obtain new sample using Metropolis principle"""
-                updated, number = self.metropolis_sampling(obj = self.active_samples[smallest], LC = likelihood_constraint, likelihood_calc =self.no_likelihood)
+                updated, number = self.metropolis_sampling(obj = self.active_samples[survivor], LC = likelihood_constraint, likelihood_calc =self.no_likelihood)
                 self.active_samples[smallest].__dict__ = updated.__dict__.copy()
                 LogL[smallest] = self.active_samples[smallest].logL
                 self.no_likelihood = number
