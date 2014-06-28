@@ -58,7 +58,7 @@ xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
 n = 1200
 
 """Number of Iterations for nested_sampling method """
-max_iterations = 20000
+max_iterations = 60000
 
 
 """Object Information 
@@ -142,9 +142,9 @@ if __name__ == '__main__':
         print "log evidence: "+str(out["logZ"])
         print "number of iterations: "+str(out["iterations"])
         print "likelihood calculations: "+str(out["likelihood_calculations"])
-        dispersion = 10
+        dispersion = 20
         data = np.array(out["samples"])
-        write(data,"sub_"+str(max_iterations)+"_"+str(n)+"_"+str(dispersion))
+        write(data,"sub_"+str(max_iterations)+"_"+str(n)+"_"+str(dispersion)+"_281147")
         outX = [i.X for i in out["samples"]]
         outY = [100-i.Y for i in out["samples"]]   
         plot_histogram(data = outX, bins = 400)
