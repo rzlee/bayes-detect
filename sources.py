@@ -144,7 +144,7 @@ if __name__ == '__main__':
         print "likelihood calculations: "+str(out["likelihood_calculations"])
         dispersion = 20
         data = np.array(out["samples"])
-        write(data,"sub_"+str(max_iterations)+"_"+str(n)+"_"+str(dispersion)+"_281147")
+        write(data,"sub_"+str(max_iterations)+"_"+str(n)+"_"+str(dispersion))
         outX = [i.X for i in out["samples"]]
         outY = [100-i.Y for i in out["samples"]]   
         plot_histogram(data = outX, bins = 400)
