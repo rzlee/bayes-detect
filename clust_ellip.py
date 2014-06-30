@@ -63,7 +63,7 @@ class Clustered_Sampler(object):
         clust_points = np.empty(number_of_clusters,dtype=object)
         ellipsoids = np.empty(number_of_clusters,dtype=object)
         for i in range(number_of_clusters):
-            clust_points[i] = [pointset[x] for x in range(len(pointset)) if(point_labels[x]==i)]
+            clust_points[i] = np.array(pointset[np.where(point_labels==i)])
         for i in range(number_of_clusters):
             if len(clust_points[i]) > 1:
                 try:
