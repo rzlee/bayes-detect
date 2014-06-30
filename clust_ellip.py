@@ -18,68 +18,66 @@ from math import *
 from sources import *
 import random
 from scipy.cluster.vq import vq, kmeans2
+import copy
+from sklearn.cluster import AffinityPropagation
 
 
 class Clustered_Sampler(object):
 
     """Initialize using the information of current active samples and the object to evolve"""
-    def __init__(self, to_evolve, active_samples, likelihood_constraint):
+    def __init__(self, active_samples, enlargement):
 
-        self.source = to_evolve
-        self.points = active_samples
-        self.LC     = likelihood_constraint
+        self.points = copy.deepcopy(active_samples)
+        self.enlargement = enlargement
         self.clustered_point_set = None
         self.number_of_clusters = None
         self.ellipsoid_set = None
         self.activepoint_set = self.build_set()
+        self.total_vol = None
 
     def build_set(self):
         array = []
         for active_sample in self.points:
-            array.append([active_sample.X, active_sample.Y, active_sample.A, active_sample.R])
-        return array            
+            array.append([float(active_sample.X), float(active_sample.Y)])
+        return np.array(array)            
         
 
     # FIX ME : This method clusters the samples and return the mean points of each cluster. We will attempt
     #to do agglomerative clustering as an improvement in coming days""" 
 
-    def cluster(self, activepoint_set, number_of_clusters):
-        centroids, label = kmeans(obs=activepoint_set, k_or_guess = number_of_clusters)
-        return centroids, label, activepoint_set    
+    def cluster(self, activepoint_set):
+        af = AffinityPropagation().fit(activepoint_set)
+        cluster_centers_indices = af.cluster_centers_indices_
+        labels = af.labels_
+        print str(labels)
+        number_of_clusters= len(cluster_centers_indices)
+        print str(number_of_clusters)
+        return number_of_clusters, labels, activepoint_set    
 
 
     """This method builds ellipsoids enlarged by a factor, around each cluster of active samples
      from which we sample to evolve using the likelihood_constraint"""
 
-     """Note : Incomplete"""  
-
     def optimal_ellipsoids(self):
-        volume_condition = False
-        overlap_condition = False
-        clust_points = None
-        ellipsoids = []
-        while(volume_condition==False or overlap_condition ==False):
-            clust_cent, point_labels, pointset = self.cluster(self.tempClust,2)#Cluster and find centroids
-            clust_points = np.empty(len(clust_cent))
-            ellipsoids = np.empty(len(clust_cent))
-            for i in range(len(clust_cent)):
-                clust_points[i] = [pointset(x) for x in range(len(pointset)) if(label(x)==i) ]
-            for i in range(len(clust_cent)):
-                ellipsoids[i] = self.build_ellipsoid(centroid=clust_cent[i], points=clust_points[i])
-         return None
+        number_of_clusters, point_labels, pointset = self.cluster(self.activepoint_set)#Cluster and find centroids
+        clust_points = np.empty(number_of_clusters,dtype=object)
+        ellipsoids = np.empty(number_of_clusters,dtype=object)
+        for i in range(number_of_clusters):
+            clust_points[i] = [pointset[x] for x in range(len(pointset)) if(point_labels[x]==i)]
+        for i in range(number_of_clusters):
+            if len(clust_points[i]) > 1:
+                try:
+                    ellipsoids[i] = Ellipsoid(points=clust_points[i],
+                              enlargement_factor = 1.0)#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))
+                except np.linalg.linalg.LinAlgError:
+                    ellipsoids[i] = None
+                    print str(i)
+            else:
+                ellipsoids[i] = None
+                
+        return ellipsoids
 
     
-    def build_ellipsoid(self, centroid, points):
-        return Ellipsoid(centroid = centroid, points = points, enlargement_factor=1.5)
-
-    
-    def check_overlapping(self):
-        return None
-
-
-    def sample_from_ellipsoid(self):
-        return None
-        
     """This method is responsible for sampling from the enlarged ellipsoids with certain probability
     The method also checks if any ellipsoids are overlapping and behaves accordingly """
     def sample(self):
@@ -90,61 +88,50 @@ class Clustered_Sampler(object):
 
 class Ellipsoid(object):
 
-    def __init__(self, centroid = None, points, enlargement_factor):
+    def __init__(self, points, enlargement_factor):
 
-        self.centroid = centroid
         self.clpoints = points
-        self.enlargement_factor =enlargement_factor
-        self.covariance_matrix = self.build_cov(centroid, points)
-        self.eigenvalues = self.get_eigenvalues(self.covariance_matrix)
-        self.semi_axes = self.find_semiaxes(eigenvalues=self.eigenvalues)
-        self.volume = self.find_volume()
+        self.centroid = np.mean(points,axis=0)
+        self.enlargement_factor = enlargement_factor
+        self.covariance_matrix = self.build_cov(self.centroid, self.clpoints)
 
     
     def build_cov(self, center, clpoints):
-        return np.cov(m=clpoints, rowvar=0)
+        points = np.array(clpoints)
+        transformed = points - center
+        cov_mat = np.cov(m=transformed, rowvar=0)
+        inv_cov_mat = np.linalg.inv(cov_mat)
+        pars = [np.dot(np.dot(transformed[i,:], inv_cov_mat), transformed[i,:]) for i in range(len(transformed))]
+        pars = np.array(pars)
+        scale_factor = np.max(pars)
+        cov_mat = cov_mat*scale_factor*self.enlargement_factor
+        return cov_mat
 
-
-    def get_eigenvalues(self,covariance_matrix):
-        return np.linalg.eigvals(self.covariance_matrix)
-
-    
-    def find_semiaxes(self, eigenvalues):
-        axes = np.reciprocal(np.sqrt(eigenvalues))
-        self.enlarge(semiaxes=axes)
-        return axes
-
-    def find_volume(self):
-        semi_axes = self.semi_axes
-        volume = 0.5*(np.pi**2)*(np.product(semi_axes)) 
-        return volume    
-
-
-    def enlarge(self,semiaxes):
-        for i in semiaxes:
-            i = i*self.enlargement_factor
+    def sample(self):
+        return None
         
 
-"""Trying single ellipsoid sampler first before building clustered version"""
 
-class SingleEllipsoidal_Sampler(object):
-
-    def __init__(self, to_evolve, activepoint_set, likelihood_constraint):
-
-        self.points = activepoint_set
-        self.source = to_evolve
-        self.LC = likelihood_constraint
-        self.ellipsoid = self.build_ellipsoid(points = activepoint_set, enlargement_factor = )
-
-    def build_ellipsoid(self, points, enlargement_factor):
-        return Ellipsoid(points = points, enlargement_factor = enlargement_factor)
-
-
-    def sample_from_ellipsoid(self):
-        return None
-
-
-            
-
+if __name__ == '__main__':
+    sources = get_sources(300)
+    clustellip = Clustered_Sampler(active_samples = sources, enlargement= 1.0)
+    X = [i.X for i in sources]
+    Y = [i.Y for i in sources]
+    ellipsoids = clustellip.optimal_ellipsoids()
+    plt.figure()
+    ax = plt.gca()
+    for i in range(len(ellipsoids)):
+        if ellipsoids[i]!=None:
+            a, b = np.linalg.eig(ellipsoids[i].covariance_matrix)
+            c = np.dot(b, np.diag(np.sqrt(a)))
+            width = np.sqrt(np.sum(c[:,1]**2)) * 2.
+            height = np.sqrt(np.sum(c[:,0]**2)) * 2.
+            angle = math.atan(c[1,1] / c[0,1]) * 180./math.pi
+            ellipse = Ellipse(ellipsoids[i].centroid, width, height, angle)
+            ellipse.set_facecolor('None')
+            ax.add_patch(ellipse)
+    plt.plot(X, Y, 'ro')
+    plt.show()
+     
 
 

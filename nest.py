@@ -37,6 +37,7 @@ import numpy as np
 from math import *
 from sources import *
 from metropolis import *
+from clust_ellip import *
 
 
 
@@ -148,7 +149,11 @@ class Nested_Sampler(object):
 
             if self.sample == "clustered_ellipsoidal":
                 """Obtain new sample using Clustered ellipsoidal sampling"""
-                self.active_samples[smallest] = self.clustered_sampling(obj = self.active_samples[smallest], LC = likelihood_constraint)
+                f = 1.5
+                alpha = 0.75
+                factor = np.log(f)+ alpha*self.log_width
+                factor = np.exp(factor)
+                self.active_samples[smallest] = self.clustered_sampling(to_evolve = self.active_samples[smallest], active_samples = self.active_samples, enlargement= factor)
             
             """Shrink width"""  
             self.log_width -= 1.0 / self.no_active_samples;
