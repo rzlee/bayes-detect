@@ -33,15 +33,15 @@ data_map = data_map.flatten()
 
 """Bounds for the prior distribution of Amplitude """
 amplitude_upper = 1.4*np.max(data_map)
-amplitude_lower = 0.1
+amplitude_lower = np.mean(data_map)
 
 """Bounds for the prior distribution of position """
 x_upper = 400.0
 y_upper = 100.0
 
 """Bounds for the prior distribution of Spatial extent """
-R_upper = 12.0
-R_lower = 0.1
+R_upper = 3.0
+R_lower = 2.0
 
 PI = np.pi
 
@@ -58,7 +58,7 @@ xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
 n = 1200
 
 """Number of Iterations for nested_sampling method """
-max_iterations = 60000
+max_iterations = 18000
 
 
 """Object Information 
@@ -142,7 +142,7 @@ if __name__ == '__main__':
         print "log evidence: "+str(out["logZ"])
         print "number of iterations: "+str(out["iterations"])
         print "likelihood calculations: "+str(out["likelihood_calculations"])
-        dispersion = 20
+        dispersion = 10
         data = np.array(out["samples"])
         write(data,"sub_"+str(max_iterations)+"_"+str(n)+"_"+str(dispersion))
         outX = [i.X for i in out["samples"]]

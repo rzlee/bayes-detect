@@ -35,8 +35,8 @@ class Metropolis_sampler(object):
 
         self.source = to_evolve
         self.LC     = likelihood_constraint
-        self.start  = 20.0
-        self.step   = 20.0
+        self.start  = 10.0
+        self.step   = 10.0
         self.number = no
                 
     """Sampling from the prior subject to constraints according to Metropolis method 
@@ -45,6 +45,8 @@ class Metropolis_sampler(object):
     def sample(self):
         metro = Source()
         metro.__dict__ = self.source.__dict__.copy()
+        start = Source()
+        start.__dict__ = self.source.__dict__.copy()
         new   = Source()
         self.number+=1
         count = 0
@@ -69,26 +71,34 @@ class Metropolis_sampler(object):
         if it still fails to come up with new point greater than the initial point, the first one
         which satisfies is taken instantly """
 
-        while(count<=20):
+        while(True):
+            if(count <=20):
+                while bord==1:
+                    bord = 0
+                    new.X    = random.gauss(metro.X, (stepX))
+                    new.Y    = random.gauss(metro.Y, (stepY))
+                    new.A    = random.gauss(metro.A, (stepA))
+                    new.R    = random.gauss(metro.R, (stepR))
+
+                    if(new.X > x_u or new.X < x_l): bord = 1;
+                    if(new.Y > y_u or new.Y < y_l): bord = 1;
+                    if(new.A > a_u or new.A < a_l): bord = 1;
+                    if(new.R > r_u or new.R < r_l): bord = 1;
+
+                new.logL = log_likelihood(new)
+                self.number+=1
             
-            while bord==1:
-                bord = 0
-                new.X    = random.gauss(metro.X, (stepX))
-                new.Y    = random.gauss(metro.Y, (stepY))
-                new.A    = random.gauss(metro.A, (stepA))
-                new.R    = random.gauss(metro.R, (stepR))
+                if(new.logL > metro.logL):
+                    metro.__dict__ = new.__dict__.copy()
+            else:
+                if(metro.logL > start.logL):
+                    break
+                new = sample_source()
+                self.number+=1
 
-                if(new.X > x_u or new.X < x_l): bord = 1;
-                if(new.Y > y_u or new.Y < y_l): bord = 1;
-                if(new.A > a_u or new.A < a_l): bord = 1;
-                if(new.R > r_u or new.R < r_l): bord = 1;
-
-            new.logL = log_likelihood(new)
-            self.number+=1
-
-            if(new.logL > metro.logL):
-                metro.__dict__ = new.__dict__.copy()
-
+                if(new.logL > start.logL):
+                    metro.__dict__ = new.__dict__.copy()
+            
             count+=1
             bord=1
                     

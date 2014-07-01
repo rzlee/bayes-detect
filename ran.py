@@ -33,16 +33,16 @@ def without_duplicates(data):
     
     return 2*mean#+std    
 
-baselikelihood = without_duplicates(data)
-start = 30000 
-stop = 45000
-sortspec = [data[i] for i in range(start,stop)]# if data[i].logL > baselikelihood]
-specX = [i.X for i in sortspec]
-specY = [100-i.Y for i in sortspec]
-specA = [i.A for i in sortspec]
-a = set(specA)
+#baselikelihood = without_duplicates(data)
+start = 0 
+stop = 59999
+sortspec = [data[i].logL for i in range(start,stop)]# if data[i].logL > baselikelihood]
+#specX = [i.X for i in sortspec]
+#specY = [100-i.Y for i in sortspec]
+#specA = [i.A for i in sortspec]
+a = set(sortspec)
 print len(a)
-plot_histogram(specX, bins=400)
-plot_histogram(specY, bins =100)
+#plot_histogram(specX, bins=400)
+#plot_histogram(specY, bins =100)
 #plot_histogram(specA, bins =1000)        
-show_scatterplot(specX, specY)
+#show_scatterplot(specX, specY)
