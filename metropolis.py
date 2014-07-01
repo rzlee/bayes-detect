@@ -72,32 +72,45 @@ class Metropolis_sampler(object):
         which satisfies is taken instantly """
 
         while(True):
-            if(count <=20):
-                while bord==1:
-                    bord = 0
-                    new.X    = random.gauss(metro.X, (stepX))
-                    new.Y    = random.gauss(metro.Y, (stepY))
-                    new.A    = random.gauss(metro.A, (stepA))
-                    new.R    = random.gauss(metro.R, (stepR))
-
-                    if(new.X > x_u or new.X < x_l): bord = 1;
-                    if(new.Y > y_u or new.Y < y_l): bord = 1;
-                    if(new.A > a_u or new.A < a_l): bord = 1;
-                    if(new.R > r_u or new.R < r_l): bord = 1;
-
-                new.logL = log_likelihood(new)
-                self.number+=1
             
+            while bord==1:
+                bord = 0
+                new.X    = random.gauss(metro.X, (stepX))
+                new.Y    = random.gauss(metro.Y, (stepY))
+                new.A    = random.gauss(metro.A, (stepA))
+                new.R    = random.gauss(metro.R, (stepR))
+
+                if(new.X > x_u or new.X < x_l): bord = 1;
+                if(new.Y > y_u or new.Y < y_l): bord = 1;
+                if(new.A > a_u or new.A < a_l): bord = 1;
+                if(new.R > r_u or new.R < r_l): bord = 1;
+
+            new.logL = log_likelihood(new)
+            self.number+=1
+            
+            if count <=20 :
+
+                if(new.logL > start.logL and count == 20):
+                    metro.__dict__ = new.__dict__.copy()
+                    break
+
                 if(new.logL > metro.logL):
                     metro.__dict__ = new.__dict__.copy()
             else:
-                if(metro.logL > start.logL):
-                    break
-                new = sample_source()
-                self.number+=1
-
                 if(new.logL > start.logL):
-                    metro.__dict__ = new.__dict__.copy()
+                    metro.__dict__ = new.__dict__.copy()                    
+                    break
+                
+                self.step*= 1.2
+
+                stepnormalize = self.step/x_u
+
+                stepX    = self.step
+                stepY    = stepnormalize*(y_u-y_l)
+                stepA    = stepnormalize*(a_u - a_l)
+                stepR    = stepnormalize*(r_u-r_l)
+
+
             
             count+=1
             bord=1
