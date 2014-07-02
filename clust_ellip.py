@@ -17,7 +17,6 @@ import numpy as np
 from math import *
 from sources import *
 import random
-from scipy.cluster.vq import vq, kmeans2
 import copy
 from sklearn.cluster import AffinityPropagation
 
@@ -25,20 +24,23 @@ from sklearn.cluster import AffinityPropagation
 class Clustered_Sampler(object):
 
     """Initialize using the information of current active samples and the object to evolve"""
-    def __init__(self, active_samples, enlargement):
+    def __init__(self, active_samples, likelihood_constraint, enlargement, no):
 
         self.points = copy.deepcopy(active_samples)
+        self.LC = likelihood_constraint
         self.enlargement = enlargement
         self.clustered_point_set = None
         self.number_of_clusters = None
-        self.ellipsoid_set = None
         self.activepoint_set = self.build_set()
+        self.ellipsoid_set = self.optimal_ellipsoids()
         self.total_vol = None
+        self.found = False
+        self.number = no
 
     def build_set(self):
         array = []
         for active_sample in self.points:
-            array.append([float(active_sample.X), float(active_sample.Y)])
+            array.append([float(active_sample.X), float(active_sample.Y),float(active_sample.A), float(active_sample.R)])
         return np.array(array)            
         
 
@@ -59,12 +61,14 @@ class Clustered_Sampler(object):
      from which we sample to evolve using the likelihood_constraint"""
 
     def optimal_ellipsoids(self):
-        number_of_clusters, point_labels, pointset = self.cluster(self.activepoint_set)#Cluster and find centroids
-        clust_points = np.empty(number_of_clusters,dtype=object)
-        ellipsoids = np.empty(number_of_clusters,dtype=object)
-        for i in range(number_of_clusters):
+        self.number_of_clusters, point_labels, pointset = self.cluster(self.activepoint_set)#Cluster and find centroids
+        clust_points = np.empty(self.number_of_clusters,dtype=object)
+        ellipsoids = np.empty(self.number_of_clusters,dtype=object)
+        print str(self.number_of_clusters)
+        for i in range(self.number_of_clusters):
             clust_points[i] = np.array(pointset[np.where(point_labels==i)])
-        for i in range(number_of_clusters):
+        invalid = []    
+        for i in range(self.number_of_clusters):
             if len(clust_points[i]) > 1:
                 try:
                     ellipsoids[i] = Ellipsoid(points=clust_points[i],
@@ -72,16 +76,51 @@ class Clustered_Sampler(object):
                 except np.linalg.linalg.LinAlgError:
                     ellipsoids[i] = None
                     print str(i)
+                    invalid.append(i)
             else:
                 ellipsoids[i] = None
-                
+                print str(i)
+                invalid.append(i)
+        ellipsoids = np.delete(ellipsoids, invalid)         
         return ellipsoids
 
     
     """This method is responsible for sampling from the enlarged ellipsoids with certain probability
     The method also checks if any ellipsoids are overlapping and behaves accordingly """
     def sample(self):
-        return None
+        vols = np.array([i.volume for i in self.ellipsoid_set])
+        vols = vols/np.sum(vols)
+        arbit = np.random.random()
+        trial = Source()
+        clust = Source()
+        z = None
+        for i in range(len(vols)):
+            if(vols[i] > arbit):
+                z = i
+                break
+        points = self.ellipsoid_set[i].sample(n_points=20)
+        max_likelihood = self.LC
+        count = 0
+        while count<20:
+            trial.X = points[count][0]
+            trial.Y = points[count][1]
+            trial.A = points[count][2]
+            trial.R = points[count][3]
+            trial.logL = log_likelihood(trial)
+            self.number+=1
+
+            if(trial.logL > max_likelihood):
+                clust.__dict__ = trial.__dict__.copy()
+                max_likelihood = trial.logL
+                self.found == True
+
+            count+=1
+        if(self.found == True): return clust, self.number;
+        else : return None, self.number;       
+
+
+
+        
 
 
 """Class for ellipsoids"""
@@ -94,6 +133,8 @@ class Ellipsoid(object):
         self.centroid = np.mean(points,axis=0)
         self.enlargement_factor = enlargement_factor
         self.covariance_matrix = self.build_cov(self.centroid, self.clpoints)
+        self.volume = self.find_volume()
+        
 
     
     def build_cov(self, center, clpoints):
@@ -107,19 +148,33 @@ class Ellipsoid(object):
         cov_mat = cov_mat*scale_factor*self.enlargement_factor
         return cov_mat
 
-    def sample(self):
-        return None
+    def sample(self, n_points):
+        dim = 4
+        points = np.empty((n_points, dim), dtype = float)
+        values, vects = np.linalg.eig(self.covariance_matrix)
+        scaled = np.dot(vects, np.diag(np.sqrt(values)))
+        for i in range(n_points):
+            randpt = np.random.randn(dim)
+            point  = randpt* np.random.rand()**(1./dim) / np.sqrt(np.sum(randpt**2))
+            points[i, :] = np.dot(scaled, point) + self.centroid
+        return points
+
+    def find_volume(self):
+        return (np.pi**2)*(np.sqrt(np.linalg.det(self.covariance_matrix)))/2.
+
+        
         
 
 
 if __name__ == '__main__':
     sources = get_sources(300)
     clustellip = Clustered_Sampler(active_samples = sources, enlargement= 1.0)
-    X = [i.X for i in sources]
-    Y = [i.Y for i in sources]
+    X0 = [i.X for i in sources]
+    Y0 = [i.Y for i in sources]
     ellipsoids = clustellip.optimal_ellipsoids()
     plt.figure()
     ax = plt.gca()
+    points = []
     for i in range(len(ellipsoids)):
         if ellipsoids[i]!=None:
             a, b = np.linalg.eig(ellipsoids[i].covariance_matrix)
@@ -127,10 +182,14 @@ if __name__ == '__main__':
             width = np.sqrt(np.sum(c[:,1]**2)) * 2.
             height = np.sqrt(np.sum(c[:,0]**2)) * 2.
             angle = math.atan(c[1,1] / c[0,1]) * 180./math.pi
+            points = ellipsoids[i].sample(n_points = 50)
             ellipse = Ellipse(ellipsoids[i].centroid, width, height, angle)
             ellipse.set_facecolor('None')
             ax.add_patch(ellipse)
-    plt.plot(X, Y, 'ro')
+    X = [i[0] for i in points]
+    Y = [i[1] for i in points]
+    plt.plot(X, Y, 'bo')
+    plt.plot(X0,Y0, 'ro')
     plt.show()
      
 

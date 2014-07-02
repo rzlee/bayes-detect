@@ -46,7 +46,7 @@ class Nested_Sampler(object):
 
     """Initialization for the Nested_Sampler"""
 
-    def __init__(self, no_active_samples, max_iter, sample = "metropolis", plot=False, conv_thresh=0.1):
+    def __init__(self, no_active_samples, max_iter, sample = "clustered_ellipsoidal", plot=False, conv_thresh=0.1):
 
         """Number of active_samples in the nested sampling loop to start"""
         self.no_active_samples     = no_active_samples
@@ -106,16 +106,8 @@ class Nested_Sampler(object):
 
             stop = self.active_samples[largest].logL + self.log_width - self.log_evidence
 
-
-            if iteration%100==0 or iteration==1:
-                print str(iteration)
-                #print "stop: "+str(stop)            
-
+            print str(iteration)
             
-            #if(abs(stop - prev_stop) < 0.1): break; 
-
-            prev_stop = stop
-
             """Calculating the updated evidence"""
             temp_evidence = np.logaddexp(self.log_evidence, self.active_samples[smallest].logWt)
             
@@ -149,12 +141,11 @@ class Nested_Sampler(object):
 
             if self.sample == "clustered_ellipsoidal":
                 """Obtain new sample using Clustered ellipsoidal sampling"""
-                f = 1.5
-                alpha = 0.75
-                factor = np.log(f)+ alpha*self.log_width
-                factor = np.exp(factor)
-                self.active_samples[smallest] = self.clustered_sampling(to_evolve = self.active_samples[smallest], active_samples = self.active_samples, enlargement= factor)
-            
+                updated, number = self.clustered_sampling(active_points = self.active_samples, LC = likelihood_constraint, likelihood_calc =self.no_likelihood)
+                self.active_samples[smallest].__dict__ = updated.__dict__.copy()
+                LogL[smallest] = self.active_samples[smallest].logL
+                self.no_likelihood = number  
+
             """Shrink width"""  
             self.log_width -= 1.0 / self.no_active_samples;
 
@@ -184,5 +175,13 @@ class Nested_Sampler(object):
 
     """ Method for drawing a new sample using clustered ellipsoidal sampling"""
     
-    def clustered_sampling(self, obj, LC):
-        return None
+    def clustered_sampling(self, active_points, LC, likelihood_calc ):
+        Clust = Clustered_Sampler(active_samples=active_points, likelihood_constraint=LC, enlargement=1.0, no=likelihood_calc)
+        sample = None
+        number = None
+        while True:
+            sample, number = Clust.sample()
+            if(sample!=None):
+                break
+            Clust = Clustered_Sampler(active_samples=active_points, likelihood_constraint=LC, enlargement=1.0, no=number)   
+        return sample, number
