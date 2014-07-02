@@ -55,10 +55,10 @@ y_forcalc = np.arange(0, 100)
 xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
 
 """Number of objects used in nested_sampling"""
-n = 1200
+n = 300
 
 """Number of Iterations for nested_sampling method """
-max_iterations = 18000
+max_iterations = 1000
 
 
 """Object Information 
