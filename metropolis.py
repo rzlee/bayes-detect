@@ -101,8 +101,13 @@ class Metropolis_sampler(object):
                     metro.__dict__ = new.__dict__.copy()                    
                     break
                 
-                self.step*= 1.2
+                new = sample_source()
 
+                if(new.logL > start.logL):
+                    metro.__dict__ = new.__dict__.copy()                    
+                    break               
+
+                self.step*= 1.1
                 stepnormalize = self.step/x_u
 
                 stepX    = self.step
