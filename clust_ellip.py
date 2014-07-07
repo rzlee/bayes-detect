@@ -19,12 +19,15 @@ from sources import *
 import random
 import copy
 from sklearn.cluster import AffinityPropagation
+import warnings
+from sklearn.cluster import DBSCAN
+from scipy.cluster.vq import kmeans2
 
 
 class Clustered_Sampler(object):
 
     """Initialize using the information of current active samples and the object to evolve"""
-    def __init__(self, active_samples, likelihood_constraint, enlargement, no):
+    def __init__(self, active_samples, likelihood_constraint,enlargement, no):#
 
         self.points = copy.deepcopy(active_samples)
         self.LC = likelihood_constraint
@@ -34,7 +37,7 @@ class Clustered_Sampler(object):
         self.activepoint_set = self.build_set()
         self.ellipsoid_set = self.optimal_ellipsoids()
         self.total_vol = None
-        self.found = False
+        #self.found = False
         self.number = no
 
     def build_set(self):
@@ -48,12 +51,21 @@ class Clustered_Sampler(object):
     #to do agglomerative clustering as an improvement in coming days""" 
 
     def cluster(self, activepoint_set):
-        af = AffinityPropagation().fit(activepoint_set)
+        """af = AffinityPropagation().fit(activepoint_set)
         cluster_centers_indices = af.cluster_centers_indices_
         labels = af.labels_
         print str(labels)
         number_of_clusters= len(cluster_centers_indices)
-        print str(number_of_clusters)
+        print "number_of_clusters: "+str(number_of_clusters)"""
+        """db = DBSCAN(eps=200, min_samples=2).fit(activepoint_set)
+        core_samples = db.core_sample_indices_
+        labels = db.labels_
+        print str(labels)
+        # Number of clusters in labels, ignoring noise if present.
+        number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)"""
+        centroid, labels = kmeans2(activepoint_set, 20)
+        print str(len(centroid))
+        number_of_clusters = len(centroid)  
         return number_of_clusters, labels, activepoint_set    
 
 
@@ -64,7 +76,6 @@ class Clustered_Sampler(object):
         self.number_of_clusters, point_labels, pointset = self.cluster(self.activepoint_set)#Cluster and find centroids
         clust_points = np.empty(self.number_of_clusters,dtype=object)
         ellipsoids = np.empty(self.number_of_clusters,dtype=object)
-        print str(self.number_of_clusters)
         for i in range(self.number_of_clusters):
             clust_points[i] = np.array(pointset[np.where(point_labels==i)])
         invalid = []    
@@ -90,16 +101,16 @@ class Clustered_Sampler(object):
     def sample(self):
         vols = np.array([i.volume for i in self.ellipsoid_set])
         vols = vols/np.sum(vols)
-        arbit = np.random.random()
+        arbit = np.random.uniform(0,1)
         trial = Source()
         clust = Source()
-        z = None
-        for i in range(len(vols)):
-            if(vols[i] > arbit):
-                z = i
-                break
-        points = self.ellipsoid_set[i].sample(n_points=20)
+        #z = None
+        found = False
+        z = int(len(self.ellipsoid_set)*np.random.uniform(0,1)) % len(self.ellipsoid_set)
+        print "Sampling from ellipsoid : "+ str(z)        
+        points = self.ellipsoid_set[z].sample(n_points=20)
         max_likelihood = self.LC
+        print "likelihood_constraint: "+str(max_likelihood)
         count = 0
         while count<20:
             trial.X = points[count][0]
@@ -107,16 +118,20 @@ class Clustered_Sampler(object):
             trial.A = points[count][2]
             trial.R = points[count][3]
             trial.logL = log_likelihood(trial)
+            #print "Trial likelihood for point"+" "+str(count)+": "+str(trial.logL)
             self.number+=1
 
             if(trial.logL > max_likelihood):
                 clust.__dict__ = trial.__dict__.copy()
                 max_likelihood = trial.logL
-                self.found == True
+                break
 
             count+=1
-        if(self.found == True): return clust, self.number;
-        else : return None, self.number;       
+        #if(clust.logL > self.LC):
+            #print "Found the point with likelihood greater than : "+ str(self.LC) 
+        
+        return clust,self.number     
+             
 
 
 
@@ -152,11 +167,35 @@ class Ellipsoid(object):
         dim = 4
         points = np.empty((n_points, dim), dtype = float)
         values, vects = np.linalg.eig(self.covariance_matrix)
-        scaled = np.dot(vects, np.diag(np.sqrt(values)))
+        x_l, x_u = getPrior_X()
+        y_l, y_u = getPrior_Y()
+        r_l, r_u = getPrior_R()
+        a_l, a_u = getPrior_A()        
+        #print str(values)
+        scaled = np.dot(vects, np.diag(np.sqrt(np.absolute(values))))
+        #print str(scaled)
+        bord = 1
+        new = None    
         for i in range(n_points):
-            randpt = np.random.randn(dim)
-            point  = randpt* np.random.rand()**(1./dim) / np.sqrt(np.sum(randpt**2))
-            points[i, :] = np.dot(scaled, point) + self.centroid
+            #count = 0
+            while bord==1:
+                bord = 0
+                randpt = np.random.randn(dim)
+                point  = randpt* np.random.rand()**(1./dim) / np.sqrt(np.sum(randpt**2))
+                new =  np.dot(scaled, point) + self.centroid
+
+                #print str(new)
+
+                if(new[0] > x_u or new[0] < x_l): bord = 1;
+                if(new[1] > y_u or new[1] < y_l): bord = 1;
+                if(new[2] > a_u or new[2] < a_l): bord = 1;
+                if(new[3] > r_u or new[3] < r_l): bord = 1;
+
+                #count+=1
+                #if(count >=200): new = self.centroid
+
+            bord = 1     
+            points[i, :] = copy.deepcopy(new)
         return points
 
     def find_volume(self):
@@ -168,7 +207,7 @@ class Ellipsoid(object):
 
 if __name__ == '__main__':
     sources = get_sources(300)
-    clustellip = Clustered_Sampler(active_samples = sources, enlargement= 1.0)
+    clustellip = Clustered_Sampler(active_samples = sources,likelihood_constraint=0.0, enlargement= 1.0,no=1)
     X0 = [i.X for i in sources]
     Y0 = [i.Y for i in sources]
     ellipsoids = clustellip.optimal_ellipsoids()
