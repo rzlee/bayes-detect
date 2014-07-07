@@ -181,7 +181,8 @@ class Nested_Sampler(object):
         number = None
         while True:
             sample, number = Clust.sample()
-            if(sample!=None):
+            if(sample.logL > LC):
+                print "In nest: found from clustered sampling"
                 break
             Clust = Clustered_Sampler(active_samples=active_points, likelihood_constraint=LC, enlargement=1.0, no=number)   
         return sample, number
