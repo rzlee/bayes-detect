@@ -9,6 +9,10 @@ Robert J. Brunner
 
     python sources.py
 
+or
+
+    ipython notebook Bayesian_Source_Detection.ipynb    
+
 ==================
 
 Work in Progress
