@@ -5,7 +5,7 @@ import numpy as np
 from plot import *
 from sources import *
 
-file = "pickles/sub_60000_1200_10"
+file = "sub_40000_4000"
 
 f = open(file,'r')
 
@@ -14,8 +14,7 @@ f.close()
 
 
 
-#spec = sorted(data, key=lambda x: x.logL,reverse=True)
-#sortspec = [data[i] for i in range(start, stop)]
+
 def without_duplicates(data):
     logl = set()
     original = []
@@ -29,20 +28,23 @@ def without_duplicates(data):
             logl.add(logLike)
     print str(len(original))        
     mean = np.mean(original)
-    #std = np.std(original)
+    std = np.std(original)
     
-    return 2*mean#+std    
+    return 10*mean    
 
-#baselikelihood = without_duplicates(data)
-start = 0 
-stop = 59999
-sortspec = [data[i].logL for i in range(start,stop)]# if data[i].logL > baselikelihood]
-#specX = [i.X for i in sortspec]
-#specY = [100-i.Y for i in sortspec]
+baselikelihood = without_duplicates(data)
+print str(baselikelihood)
+start = 25000
+stop = 30000
+spec = sorted(data, key=lambda x: x.logL,reverse=True)
+sortspec = [data[i] for i in range(start, stop)]
+#sortspec = [data[i] for i in range(start,stop) if data[i].logL > baselikelihood]
+specX = [i.X for i in sortspec]
+specY = [100-i.Y for i in sortspec]
 #specA = [i.A for i in sortspec]
-a = set(sortspec)
-print len(a)
-#plot_histogram(specX, bins=400)
-#plot_histogram(specY, bins =100)
+#a = set(sortspec)
+print len(sortspec)
+plot_histogram(specX, bins=400)
+plot_histogram(specY, bins =100)
 #plot_histogram(specA, bins =1000)        
-#show_scatterplot(specX, specY)
+show_scatterplot(specX, specY)

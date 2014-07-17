@@ -31,7 +31,7 @@ class Clustered_Sampler(object):
 
         self.points = copy.deepcopy(active_samples)
         self.LC = likelihood_constraint
-        self.enlargement = enlargement
+        self.enlargement = 1.5
         self.clustered_point_set = None
         self.number_of_clusters = None
         self.activepoint_set = self.build_set()
@@ -43,7 +43,7 @@ class Clustered_Sampler(object):
     def build_set(self):
         array = []
         for active_sample in self.points:
-            array.append([float(active_sample.X), float(active_sample.Y),float(active_sample.A), float(active_sample.R)])
+            array.append([float(active_sample.X), float(active_sample.Y)])
         return np.array(array)            
         
 
@@ -57,14 +57,14 @@ class Clustered_Sampler(object):
         print str(labels)
         number_of_clusters= len(cluster_centers_indices)
         print "number_of_clusters: "+str(number_of_clusters)"""
-        """db = DBSCAN(eps=200, min_samples=2).fit(activepoint_set)
+        """db = DBSCAN(eps=10, min_samples=4).fit(activepoint_set)
         core_samples = db.core_sample_indices_
         labels = db.labels_
-        print str(labels)
+        #print str(labels)
         # Number of clusters in labels, ignoring noise if present.
         number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)"""
-        centroid, labels = kmeans2(activepoint_set, 20)
-        print str(len(centroid))
+        centroid, labels = kmeans2(activepoint_set, 5)
+        #print str(len(centroid))
         number_of_clusters = len(centroid)  
         return number_of_clusters, labels, activepoint_set    
 
@@ -83,17 +83,46 @@ class Clustered_Sampler(object):
             if len(clust_points[i]) > 1:
                 try:
                     ellipsoids[i] = Ellipsoid(points=clust_points[i],
-                              enlargement_factor = 1.0)#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))
+                              enlargement_factor = 1.5)#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))
                 except np.linalg.linalg.LinAlgError:
                     ellipsoids[i] = None
-                    print str(i)
+                    #print str(i)
                     invalid.append(i)
             else:
                 ellipsoids[i] = None
-                print str(i)
+                #print str(i)
                 invalid.append(i)
-        ellipsoids = np.delete(ellipsoids, invalid)         
+        ellipsoids = np.delete(ellipsoids, invalid)
+        #print len(ellipsoids)         
         return ellipsoids
+
+
+    def recursive_bounding_ellipsoids(self, data, ellipsoid=None):
+        ellipsoids = []
+        if ellipsoid is None:
+            ellipsoid = Ellipsoid(points = data, enlargement_factor=1.0)
+        centroids, labels = kmeans2(data, 2, iter=10)
+        clustered_data = [None, None]
+        clustered_data[0] = [data[i] for i in range(len(data)) if labels[i]==0]
+        clustered_data[1] = [data[i] for i in range(len(data)) if labels[i]==1]
+        vol = [0.0,0.0]
+        clustered_ellipsoids = np.empty(2,object)  
+        for i in [0, 1]:
+            if(len(clustered_data[i]) <= 1):
+                clustered_ellipsoids[i] = Ellipsoid(clustered_data[i],1.0)
+                vol[i]= clustered_ellipsoids[i].volume 
+        do = True
+
+        if(vol[0] + vol[1] < ellipsoid.volume ):
+            for i in [0, 1]:
+                if(vol[i]>0.0):
+                    ellipsoids.extend(self.recursive_bounding_ellipsoids(np.array(clustered_data[i]), clustered_ellipsoids[i]))
+        else:
+            ellipsoids.append(ellipsoid)
+        print len(ellipsoids)    
+        return ellipsoids    
+
+     
 
     
     """This method is responsible for sampling from the enlarged ellipsoids with certain probability
@@ -104,19 +133,22 @@ class Clustered_Sampler(object):
         arbit = np.random.uniform(0,1)
         trial = Source()
         clust = Source()
-        #z = None
-        found = False
-        z = int(len(self.ellipsoid_set)*np.random.uniform(0,1)) % len(self.ellipsoid_set)
-        print "Sampling from ellipsoid : "+ str(z)        
-        points = self.ellipsoid_set[z].sample(n_points=20)
+        for i in range(len(vols)):
+            if(arbit<=vols[i]):
+                z = i
+                break
+        #print "Sampling from ellipsoid : "+ str(z)        
+        points = self.ellipsoid_set[z].sample(n_points=50)
         max_likelihood = self.LC
-        print "likelihood_constraint: "+str(max_likelihood)
+        #print "likelihood_constraint: "+str(max_likelihood)
         count = 0
-        while count<20:
+        r_l, r_u = getPrior_R()
+        a_l, a_u = getPrior_A()
+        while count<50:
             trial.X = points[count][0]
             trial.Y = points[count][1]
-            trial.A = points[count][2]
-            trial.R = points[count][3]
+            trial.A = np.random.uniform(a_l,a_u)
+            trial.R = np.random.uniform(r_l,r_u)            
             trial.logL = log_likelihood(trial)
             #print "Trial likelihood for point"+" "+str(count)+": "+str(trial.logL)
             self.number+=1
@@ -125,7 +157,7 @@ class Clustered_Sampler(object):
                 clust.__dict__ = trial.__dict__.copy()
                 max_likelihood = trial.logL
                 break
-
+                                
             count+=1
         #if(clust.logL > self.LC):
             #print "Found the point with likelihood greater than : "+ str(self.LC) 
@@ -148,6 +180,7 @@ class Ellipsoid(object):
         self.centroid = np.mean(points,axis=0)
         self.enlargement_factor = enlargement_factor
         self.covariance_matrix = self.build_cov(self.centroid, self.clpoints)
+        self.inv_cov_mat = np.linalg.inv(self.covariance_matrix)
         self.volume = self.find_volume()
         
 
@@ -164,7 +197,7 @@ class Ellipsoid(object):
         return cov_mat
 
     def sample(self, n_points):
-        dim = 4
+        dim = 2
         points = np.empty((n_points, dim), dtype = float)
         values, vects = np.linalg.eig(self.covariance_matrix)
         x_l, x_u = getPrior_X()
@@ -188,9 +221,6 @@ class Ellipsoid(object):
 
                 if(new[0] > x_u or new[0] < x_l): bord = 1;
                 if(new[1] > y_u or new[1] < y_l): bord = 1;
-                if(new[2] > a_u or new[2] < a_l): bord = 1;
-                if(new[3] > r_u or new[3] < r_l): bord = 1;
-
                 #count+=1
                 #if(count >=200): new = self.centroid
 
@@ -206,11 +236,16 @@ class Ellipsoid(object):
 
 
 if __name__ == '__main__':
-    sources = get_sources(300)
+    
+    #file = "sub_1000_400_source"
+    #f = open(file,'r')
+    #sources = pickle.load(f)
+    #f.close()
+    sources = get_sources(200)
     clustellip = Clustered_Sampler(active_samples = sources,likelihood_constraint=0.0, enlargement= 1.0,no=1)
     X0 = [i.X for i in sources]
     Y0 = [i.Y for i in sources]
-    ellipsoids = clustellip.optimal_ellipsoids()
+    ellipsoids = clustellip.ellipsoid_set
     plt.figure()
     ax = plt.gca()
     points = []

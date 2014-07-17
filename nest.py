@@ -35,8 +35,7 @@ http://www.inference.phy.cam.ac.uk/bayesys/
 
 import numpy as np
 from math import *
-from sources import *
-from metropolis import *
+import sources
 from clust_ellip import *
 
 
@@ -46,8 +45,8 @@ class Nested_Sampler(object):
 
     """Initialization for the Nested_Sampler"""
 
-    def __init__(self, no_active_samples, max_iter, sample = "clustered_ellipsoidal", plot=False, conv_thresh=0.1):
-
+    def __init__(self, active_samples, no_active_samples, max_iter, sample = "metropolis", plot=False, conv_thresh=0.1):
+ 
         """Number of active_samples in the nested sampling loop to start"""
         self.no_active_samples     = no_active_samples
 
@@ -64,7 +63,7 @@ class Nested_Sampler(object):
         self.convergence_threshold = 0.1
 
         """ Sampling active points from the prior distribution specified """
-        self.active_samples        = get_sources(no_active_samples)
+        self.active_samples        = active_samples
         
         """ Variable to hold evidence at each iteration"""
         self.log_evidence              = None
@@ -88,7 +87,7 @@ class Nested_Sampler(object):
 
         """ Initializing evidence and prior mass """
         self.log_evidence = -1e300
-        self.log_width = log(1.0 - exp(-1.0 / n))
+        self.log_width = log(1.0 - exp(-1.0 / self.no_active_samples))
         self.Information = 0.0
         LogL = [i.logL for i in self.active_samples]
         iteration = None
@@ -121,7 +120,7 @@ class Nested_Sampler(object):
 
             #print str(self.active_samples[smallest].X)+" "+str(self.active_samples[smallest].Y)+" "+str(self.active_samples[smallest].logL)
             
-            sample = Source()
+            sample = sources.Source()
             sample.__dict__ = self.active_samples[smallest].__dict__.copy()
 
             """storing posterior points"""
@@ -131,6 +130,11 @@ class Nested_Sampler(object):
             likelihood_constraint = self.active_samples[smallest].logL
 
             survivor = int(smallest)
+
+            while True:
+                survivor = int(self.no_active_samples * np.random.uniform(0,1)) % self.no_active_samples  # force 0 <= copy < n
+                if survivor != smallest:
+                    break
 
             if self.sample == "metropolis":
                 """Obtain new sample using Metropolis principle"""
@@ -182,7 +186,87 @@ class Nested_Sampler(object):
         while True:
             sample, number = Clust.sample()
             if(sample.logL > LC):
-                print "In nest: found from clustered sampling"
+                #print "In nest: found from clustered sampling"
                 break
             Clust = Clustered_Sampler(active_samples=active_points, likelihood_constraint=LC, enlargement=1.0, no=number)   
         return sample, number
+
+
+
+class Metropolis_sampler(object):
+
+    """Initializing metropolis sampler"""
+
+    def __init__(self, to_evolve, likelihood_constraint, no):
+
+        self.source = to_evolve
+        self.LC     = likelihood_constraint
+        self.step   = 8.0
+        self.number = no
+                
+    """Sampling from the prior subject to constraints according to Metropolis method 
+    proposed by Sivia et al discussed in Multinest paper by feroz and Hobson"""
+
+    def sample(self):
+        metro = Source()
+        metro.__dict__ = self.source.__dict__.copy()
+        start = Source()
+        start.__dict__ = self.source.__dict__.copy()
+        new   = Source()
+        self.number+=1
+        count = 0
+        hit = 0
+        miss = 0
+        
+        x_l, x_u = getPrior_X()
+        y_l, y_u = getPrior_Y()
+        r_l, r_u = getPrior_R()
+        a_l, a_u = getPrior_A()
+
+        stepnormalize = self.step/x_u
+
+        stepX    = self.step
+        stepY    = stepnormalize*(y_u-y_l)
+        stepA    = stepnormalize*(a_u - a_l)
+        stepR    = stepnormalize*(r_u-r_l)        
+        
+        bord = 1
+
+        while(count<20):
+            
+            while bord==1:
+                bord = 0
+                new.X    = metro.X + stepX * (2.*np.random.uniform(0, 1) - 1.);
+                new.Y    = metro.Y + stepY * (2.*np.random.uniform(0, 1) - 1.);
+                new.A    = metro.A + stepA * (2.*np.random.uniform(0, 1) - 1.);
+                new.R    = metro.R + stepR * (2.*np.random.uniform(0, 1) - 1.);
+
+                if(new.X > x_u or new.X < x_l): bord = 1;
+                if(new.Y > y_u or new.Y < y_l): bord = 1;
+                if(new.A > a_u or new.A < a_l): bord = 1;
+                if(new.R > r_u or new.R < r_l): bord = 1;                
+
+            new.logL = log_likelihood(new)
+            self.number+=1
+            
+            if(new.logL > self.LC):
+                metro.__dict__ = new.__dict__.copy()
+                hit+=1
+            else:
+                miss+=1
+            
+            if( hit > miss ):   self.step *= exp(1.0 / hit);
+            if( hit < miss ):   self.step /= exp(1.0 / miss);
+
+            stepnormalize = self.step/x_u         
+
+            stepX    = self.step
+            stepY    = stepnormalize*(y_u-y_l)
+            stepA    = stepnormalize*(a_u - a_l)
+            stepR    = stepnormalize*(r_u-r_l)        
+        
+            
+            count+=1
+            bord=1
+                    
+        return metro, self.number        

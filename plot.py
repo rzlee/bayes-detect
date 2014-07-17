@@ -1,10 +1,12 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.transforms import *
-from sources import *
+#from sources import *
 from matplotlib.patches import Ellipse
 import math
-from pylab import figure,show 
+from pylab import figure,show
+import pickle
+from scipy import stats 
 
 
 """Method to show the sources at the end of the nested sampling method"""
@@ -31,15 +33,19 @@ def show_samples(height, width, samples):
     plt.show()
 
 
-def plot_histogram(data, bins):
+def plot_histogram(data, bins, title):
     plt.hist(data,bins)
+    plt.title(title)
     plt.show()
     return None
 
 # FIX ME : Figure out a way to embed information and
 # show on the plot to scale and also shouls be immune to interactive transformations
-def show_scatterplot(X,Y):
+def show_scatterplot(X,Y,title, height, width):
     plt.scatter(X,Y, marker =".")
+    plt.title(title)
+    plt.xlim(0, width)
+    plt.ylim(0, height)
     plt.show()
 
 
@@ -97,7 +103,53 @@ def plot_ellipse():
     ax.add_patch(ellipse)
     plt.plot(X[:,0], X[:,1], 'ro')
     plt.show()
+
+def write(data, out):
+    f = open(out,'w+b')
+    pickle.dump(data, f)
+    f.close()
+
+
+def make_source(src_array,height,width):
+    x = np.arange(0, width)
+    y = np.arange(0, height)
+    xx, yy = np.meshgrid(x, y, sparse=True)
+    z = np.zeros((height,width),float)
+    for i in src_array:
+        z+= i[2]*np.exp(-1*((xx-i[0])**2+(yy-i[1])**2)/(2*(i[3]**2)))
+    plt.imshow(z)
+    plt.title("Source image")
+    plt.show()
+    return z
+
+
+def add_gaussian_noise(mean, sd, data):
+    height = len(data)
+    width = len(data[0])
+    my_noise=stats.distributions.norm.rvs(mean,sd,size=(height, width))
+    noised = data + my_noise
+    plt.imshow(noised)
+    plt.title("Source image with additive gaussian noise of rms "+str(sd)+" units")
+    plt.show()
+    return noised
+
     
 
 if __name__ == '__main__':
-        plot_ellipse()     
+        srces =  [[43.71, 22.91, 10.54, 3.34],
+                  [101.62, 40.60, 1.37, 3.40],
+                  [92.63, 110.56, 1.81, 3.66],
+                  [183.60, 85.90, 1.23, 5.06],
+                  [34.12, 162.54, 1.95, 6.02],
+                  [153.87, 169.18, 1.06, 6.61],
+                  [155.54, 32.14, 1.46, 4.05],
+                  [130.56, 183.48, 1.63, 4.11]]
+        make_source(srces, 200, 200)              
+
+
+
+
+
+
+
+       
