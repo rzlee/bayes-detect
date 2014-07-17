@@ -15,6 +15,7 @@ noise = 2.0
 data_map = plot.add_gaussian_noise(mean=0,sd=noise,data=data_map)
 sources.write(data_map, "simulated_images\multinest_noised")
 
+#[X,Y,A,R]
 prior_array = [[0.0,200.0],[0.0,200.0],[1.0,12.5],[2.0,9.0]]
 
 sources.run_source_detect(samples = 4000, iterations = 25000, sample_method = "metropolis", prior = prior_array, noise_rms = noise)
