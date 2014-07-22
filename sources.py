@@ -18,6 +18,12 @@ import random
 from plot import *
 import time
 import pickle
+import clust_ellip
+import copy
+from sklearn.cluster import AffinityPropagation
+import warnings
+from sklearn.cluster import DBSCAN
+from scipy.cluster.vq import kmeans2
 
 """Reading the Image data from fits file"""
 """fitsFile = "simulated_images/multinest_toy"
@@ -185,7 +191,7 @@ class Nested_Sampler(object):
 
             stop = self.active_samples[largest].logL + self.log_width - self.log_evidence
 
-            if iteration%1000 == 0 or iteration==1:
+            if iteration%100 == 0 or iteration==1:
                 print str(iteration)
             
             """Calculating the updated evidence"""
@@ -280,7 +286,7 @@ class Metropolis_sampler(object):
 
         self.source = to_evolve
         self.LC     = likelihood_constraint
-        self.step   = 8.0
+        self.step   = dispersion
         self.number = no
                 
     """Sampling from the prior subject to constraints according to Metropolis method 
@@ -320,6 +326,8 @@ class Metropolis_sampler(object):
                 new.A    = metro.A + stepA * (2.*np.random.uniform(0, 1) - 1.);
                 new.R    = metro.R + stepR * (2.*np.random.uniform(0, 1) - 1.);
 
+                
+
                 if(new.X > x_u or new.X < x_l): bord = 1;
                 if(new.Y > y_u or new.Y < y_l): bord = 1;
                 if(new.A > a_u or new.A < a_l): bord = 1;
@@ -353,9 +361,218 @@ class Metropolis_sampler(object):
 
 
 
+class Clustered_Sampler(object):
+
+    """Initialize using the information of current active samples and the object to evolve"""
+    def __init__(self, active_samples, likelihood_constraint,enlargement, no):#
+
+        self.points = copy.deepcopy(active_samples)
+        self.LC = likelihood_constraint
+        self.enlargement = 1.5
+        self.clustered_point_set = None
+        self.number_of_clusters = None
+        self.activepoint_set = self.build_set()
+        self.ellipsoid_set = self.optimal_ellipsoids()
+        self.total_vol = None
+        #self.found = False
+        self.number = no
+
+    def build_set(self):
+        array = []
+        for active_sample in self.points:
+            array.append([float(active_sample.X), float(active_sample.Y)])
+        return np.array(array)            
+        
+
+    # FIX ME : This method clusters the samples and return the mean points of each cluster. We will attempt
+    #to do agglomerative clustering as an improvement in coming days""" 
+
+    def cluster(self, activepoint_set):
+        """af = AffinityPropagation().fit(activepoint_set)
+        cluster_centers_indices = af.cluster_centers_indices_
+        labels = af.labels_
+        print str(labels)
+        number_of_clusters= len(cluster_centers_indices)
+        print "number_of_clusters: "+str(number_of_clusters)"""
+        """db = DBSCAN(eps=10, min_samples=4).fit(activepoint_set)
+        core_samples = db.core_sample_indices_
+        labels = db.labels_
+        #print str(labels)
+        # Number of clusters in labels, ignoring noise if present.
+        number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)"""
+        centroid, labels = kmeans2(activepoint_set, 5)
+        #print str(len(centroid))
+        number_of_clusters = len(centroid)  
+        return number_of_clusters, labels, activepoint_set    
+
+
+    """This method builds ellipsoids enlarged by a factor, around each cluster of active samples
+     from which we sample to evolve using the likelihood_constraint"""
+
+    def optimal_ellipsoids(self):
+        self.number_of_clusters, point_labels, pointset = self.cluster(self.activepoint_set)#Cluster and find centroids
+        clust_points = np.empty(self.number_of_clusters,dtype=object)
+        ellipsoids = np.empty(self.number_of_clusters,dtype=object)
+        for i in range(self.number_of_clusters):
+            clust_points[i] = np.array(pointset[np.where(point_labels==i)])
+        invalid = []    
+        for i in range(self.number_of_clusters):
+            if len(clust_points[i]) > 1:
+                try:
+                    ellipsoids[i] = Ellipsoid(points=clust_points[i],
+                              enlargement_factor = 1.5)#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))
+                except np.linalg.linalg.LinAlgError:
+                    ellipsoids[i] = None
+                    print str(i)
+                    invalid.append(i)
+            else:
+                ellipsoids[i] = None
+                print str(i)
+                invalid.append(i)
+        ellipsoids = np.delete(ellipsoids, invalid)
+        print len(ellipsoids)         
+        return ellipsoids
+
+
+    def recursive_bounding_ellipsoids(self, data, ellipsoid=None):
+        ellipsoids = []
+        if ellipsoid is None:
+            ellipsoid = Ellipsoid(points = data, enlargement_factor=1.0)
+        centroids, labels = kmeans2(data, 2, iter=10)
+        clustered_data = [None, None]
+        clustered_data[0] = [data[i] for i in range(len(data)) if labels[i]==0]
+        clustered_data[1] = [data[i] for i in range(len(data)) if labels[i]==1]
+        vol = [0.0,0.0]
+        clustered_ellipsoids = np.empty(2,object)  
+        for i in [0, 1]:
+            if(len(clustered_data[i]) <= 1):
+                clustered_ellipsoids[i] = Ellipsoid(clustered_data[i],1.0)
+                vol[i]= clustered_ellipsoids[i].volume 
+        do = True
+
+        if(vol[0] + vol[1] < ellipsoid.volume ):
+            for i in [0, 1]:
+                if(vol[i]>0.0):
+                    ellipsoids.extend(self.recursive_bounding_ellipsoids(np.array(clustered_data[i]), clustered_ellipsoids[i]))
+        else:
+            ellipsoids.append(ellipsoid)
+        print len(ellipsoids)    
+        return ellipsoids    
+
+     
+
+    
+    """This method is responsible for sampling from the enlarged ellipsoids with certain probability
+    The method also checks if any ellipsoids are overlapping and behaves accordingly """
+    def sample(self):
+        vols = np.array([i.volume for i in self.ellipsoid_set])
+        vols = vols/np.max(vols)
+        arbit = np.random.uniform(0,1)
+        trial = Source()
+        clust = Source()
+        z =None
+        for i in range(len(vols)):
+            if(arbit<=vols[i]):
+                z = i
+                break
+        #print "Sampling from ellipsoid : "+ str(z)        
+        points = self.ellipsoid_set[z].sample(n_points=50)
+        max_likelihood = self.LC
+        #print "likelihood_constraint: "+str(max_likelihood)
+        count = 0
+        r_l, r_u = getPrior_R()
+        a_l, a_u = getPrior_A()
+        while count<50:
+            trial.X = points[count][0]
+            trial.Y = points[count][1]
+            trial.A = np.random.uniform(a_l,a_u)
+            trial.R = np.random.uniform(r_l,r_u)            
+            trial.logL = log_likelihood(trial)
+            #print "Trial likelihood for point"+" "+str(count)+": "+str(trial.logL)
+            self.number+=1
+
+            if(trial.logL > max_likelihood):
+                clust.__dict__ = trial.__dict__.copy()
+                max_likelihood = trial.logL
+                break
+                                
+            count+=1
+        #if(clust.logL > self.LC):
+            #print "Found the point with likelihood greater than : "+ str(self.LC) 
+        
+        return clust,self.number     
+             
+
+
+
+        
+
+
+"""Class for ellipsoids"""
+
+class Ellipsoid(object):
+
+    def __init__(self, points, enlargement_factor):
+
+        self.clpoints = points
+        self.centroid = np.mean(points,axis=0)
+        self.enlargement_factor = enlargement_factor
+        self.covariance_matrix = self.build_cov(self.centroid, self.clpoints)
+        self.inv_cov_mat = np.linalg.inv(self.covariance_matrix)
+        self.volume = self.find_volume()
+        
+
+    
+    def build_cov(self, center, clpoints):
+        points = np.array(clpoints)
+        transformed = points - center
+        cov_mat = np.cov(m=transformed, rowvar=0)
+        inv_cov_mat = np.linalg.inv(cov_mat)
+        pars = [np.dot(np.dot(transformed[i,:], inv_cov_mat), transformed[i,:]) for i in range(len(transformed))]
+        pars = np.array(pars)
+        scale_factor = np.max(pars)
+        cov_mat = cov_mat*scale_factor*self.enlargement_factor
+        return cov_mat
+
+    def sample(self, n_points):
+        dim = 2
+        points = np.empty((n_points, dim), dtype = float)
+        values, vects = np.linalg.eig(self.covariance_matrix)
+        x_l, x_u = getPrior_X()
+        y_l, y_u = getPrior_Y()
+        r_l, r_u = getPrior_R()
+        a_l, a_u = getPrior_A()        
+        #print str(values)
+        scaled = np.dot(vects, np.diag(np.sqrt(np.absolute(values))))
+        #print str(scaled)
+        bord = 1
+        new = None    
+        for i in range(n_points):
+            #count = 0
+            while bord==1:
+                bord = 0
+                randpt = np.random.randn(dim)
+                point  = randpt* np.random.rand()**(1./dim) / np.sqrt(np.sum(randpt**2))
+                new =  np.dot(scaled, point) + self.centroid
+
+                #print str(new)
+
+                if(new[0] > x_u or new[0] < x_l): bord = 1;
+                if(new[1] > y_u or new[1] < y_l): bord = 1;
+                #count+=1
+                #if(count >=200): new = self.centroid
+
+            bord = 1     
+            points[i, :] = copy.deepcopy(new)
+        return points
+
+    def find_volume(self):
+        return (np.pi**2)*(np.sqrt(np.linalg.det(self.covariance_matrix)))/2.
+
+
 
 """Main method to start nested sampling"""
-def run_source_detect(samples, iterations, sample_method, prior,noise_rms):
+def run_source_detect(samples, iterations, sample_method, prior,noise_rms, disp):
     startTime = time.time()
     
     global amplitude_upper
@@ -366,6 +583,9 @@ def run_source_detect(samples, iterations, sample_method, prior,noise_rms):
     global R_lower
     global noise
     global K
+    global dispersion
+
+    dispersion = disp
 
 
     amplitude_upper = prior[2][1]
@@ -397,22 +617,22 @@ def run_source_detect(samples, iterations, sample_method, prior,noise_rms):
     data = np.array(out["samples"])
     srcdata = np.array(out["src"])
     outX = [i.X for i in out["samples"]]
-    outY = [200-i.Y for i in out["samples"]]   
+    outY = [height-i.Y for i in out["samples"]]   
 
-    plot_histogram(data = outX, bins = 200, title = "X_histogram of posterior samples")
-    plot_histogram(data = outY, bins = 200, title = "Y_histogram of posterior samples")
+    plot_histogram(data = outX, bins = width, title = "X_histogram of posterior samples")
+    plot_histogram(data = outY, bins = height, title = "Y_histogram of posterior samples")
     show_scatterplot(outX,outY, title= "Scatter plot of posterior samples", height = height, width = width)
 
     outsrcX = [i.X for i in out["src"]]
-    outsrcY = [200-i.Y for i in out["src"]]
-    plot_histogram(data = outsrcX, bins = 200, title="Xsrc")
-    plot_histogram(data = outsrcY, bins =200, title="Ysrc")
+    outsrcY = [height-i.Y for i in out["src"]]
+    plot_histogram(data = outsrcX, bins = width, title="Xsrc")
+    plot_histogram(data = outsrcY, bins = height, title="Ysrc")
     show_scatterplot(outsrcX,outsrcY, title= "Scatter plot of sources", height = height, width = width)
 
 if __name__ == '__main__':
     prior_array = [[0.0,200.0],[0.0,200.0],[1.0,12.5],[2.0,9.0]]
     noise = 2.0
-    run_source_detect(samples = 400, iterations = 8000, sample_method = "metropolis", prior = prior_array, noise_rms = noise)
+    run_source_detect(samples = 400, iterations = 8000, sample_method = "clustered_ellipsoidal", prior = prior_array, noise_rms = noise, disp = 4.0)
 
            
          
