@@ -133,7 +133,24 @@ def add_gaussian_noise(mean, sd, data):
     plt.show()
     return noised
 
-    
+def make_random_source(limits, width, height, number_of_sources):
+    x_l, x_u = limits[0] 
+    y_l, y_u = limits[1]
+    a_l, a_u = limits[2]
+    r_l, r_u = limits[3]
+
+    x = np.arange(0, width)
+    y = np.arange(0, height)
+    xx, yy = np.meshgrid(x, y, sparse=True)
+    z = np.zeros((height,width),float)
+    for i in range(number_of_sources):
+        z+= np.random.uniform(a_l,a_u)*np.exp(-1*((xx-np.random.uniform(x_l,x_u))**2+(yy-np.random.uniform(y_l,y_u))**2)/(2*(np.random.uniform(r_l,r_u)**2)))
+    plt.imshow(z)
+    plt.title("Source image")
+    plt.show()
+    return z
+
+
 
 if __name__ == '__main__':
         srces =  [[43.71, 22.91, 10.54, 3.34],
