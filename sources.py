@@ -9,7 +9,7 @@ http://www.inference.phy.cam.ac.uk/bayesys/
 Hobson, Machlachlan, Bayesian object detection in astronomical images(2003)
 """
 
-
+import sys
 import numpy as np
 from matplotlib import pyplot as plt
 from astropy.io import fits
@@ -26,12 +26,32 @@ from sklearn.cluster import DBSCAN
 from scipy.cluster.vq import kmeans2
 
 """Reading the Image data from fits file"""
-"""fitsFile = "simulated_images/multinest_toy"
+#fitsFile = "simulated_images/multinest_toy"
 
-hdulist   = fits.open(fitsFile)
-data_map   = (hdulist[0].data)"""
+#hdulist   = fits.open(fitsFile)
+#data_map   = (hdulist[0].data)"""
 
-File = "simulated_images/multinest_toy_noised"
+Config = {}
+
+try:
+    ConfigFile = open("config.cfg", "r")
+except IndexError:
+    print "Can't find the config file"
+
+Lines = ConfigFile.readlines()
+
+for line in Lines:
+    if line[0]=='#' or line[0]=='\n':
+        pass
+    else:
+        try:
+            Config[line.split('=')[0]]= line.split('=')[1].rstrip()
+        except IndexError:
+            pass
+
+         
+            
+File = (Config['IMAGE_PATH'])
 
 s = open(File,'r')
 data_map = pickle.load(s)
@@ -237,6 +257,14 @@ class Nested_Sampler(object):
                 LogL[smallest] = self.active_samples[smallest].logL
                 self.no_likelihood = number  
 
+            if self.sample == "uniform":
+                """Obtain new sample using Metropolis principle"""
+                updated, number = self.uniform_sampling(obj = self.active_samples[survivor], LC = likelihood_constraint, likelihood_calc =self.no_likelihood)
+                self.active_samples[smallest].__dict__ = updated.__dict__.copy()
+                LogL[smallest] = self.active_samples[smallest].logL
+                self.no_likelihood = number
+
+
             """Shrink width"""  
             self.log_width -= 1.0 / self.no_active_samples;
 
@@ -272,6 +300,50 @@ class Nested_Sampler(object):
                 break
             Clust = Clustered_Sampler(active_samples=active_points, likelihood_constraint=LC, enlargement=1.0, no=number)   
         return sample, number
+
+    def uniform_sampling(self, obj, LC, likelihood_calc):
+        unif = uniform_sampler(to_evolve = obj, likelihood_constraint = LC, no =likelihood_calc)
+        evolved, number = unif.sample()
+        return evolved, number      
+
+
+
+
+
+"""Uniform sampler"""
+class uniform_sampler(object):
+
+    """Initializing uniform sampler"""
+
+    def __init__(self, to_evolve, likelihood_constraint, no):
+
+        self.source = to_evolve
+        self.LC     = likelihood_constraint
+        self.number = no
+                
+    def sample(self):
+        new   = Source()
+        self.number+=1
+                
+        x_l, x_u = getPrior_X()
+        y_l, y_u = getPrior_Y()
+        r_l, r_u = getPrior_R()
+        a_l, a_u = getPrior_A()
+
+        while(True):
+            
+            new.X = np.random.uniform(x_l,x_u)
+            new.Y = np.random.uniform(y_l,y_u)
+            new.A = np.random.uniform(a_l,a_u)
+            new.R = np.random.uniform(r_l,r_u)
+            new.logL = log_likelihood(new)
+            self.number+=1
+            
+            if(new.logL > self.LC):
+                metro.__dict__ = new.__dict__.copy()
+                break
+                        
+        return metro, self.number
 
 
 
@@ -502,10 +574,7 @@ class Clustered_Sampler(object):
         
         return clust,self.number     
              
-
-
-
-        
+       
 
 
 """Class for ellipsoids"""
@@ -572,7 +641,7 @@ class Ellipsoid(object):
 
 
 """Main method to start nested sampling"""
-def run_source_detect(samples, iterations, sample_method, prior,noise_rms, disp):
+def run_source_detect(samples = None, iterations = None, sample_method = None, prior= None,noise_rms = None, disp = None,mode = "Manual" ):
     startTime = time.time()
     
     global amplitude_upper
@@ -585,27 +654,36 @@ def run_source_detect(samples, iterations, sample_method, prior,noise_rms, disp)
     global K
     global dispersion
 
-    dispersion = disp
+    if mode == "ipython":
+        dispersion = disp
+        amplitude_upper = prior[2][1]
+        amplitude_lower = prior[2][0]
+        x_upper = prior[0][1]
+        y_upper = prior[1][1]
+        R_upper = prior[3][1]
+        R_lower = prior[3][0]
+        noise   = noise_rms  
+        K = (no_pixels/2)*(np.log(2*np.pi) + 4*np.log(abs(noise)))
+        n = samples
+        max_iter = iterations
+        sample_type = sample_method
 
+    if mode == "Manual":
+        dispersion = float(Config['DISPERSION'])
+        amplitude_upper = float(Config['A_PRIOR_UPPER'])
+        amplitude_lower = float(Config['A_PRIOR_LOWER'])
+        # FIX : Don't forget to change
+        x_upper = float(Config['X_PRIOR_UPPER'])
+        y_upper = float(Config['Y_PRIOR_UPPER'])
+        R_upper = float(Config['R_PRIOR_UPPER'])
+        R_lower = float(Config['R_PRIOR_LOWER'])
+        noise   = float(Config['NOISE'])
+        K = (no_pixels/2)*(np.log(2*np.pi) + 4*np.log(abs(noise)))
+        max_iter = int(Config['MAX_ITER'])
+        n = int(Config['ACTIVE_POINTS'])
+        sample_type = str(Config['SAMPLER'])
 
-    amplitude_upper = prior[2][1]
-    amplitude_lower = prior[2][0]
-
-    x_upper = prior[0][1]
-    y_upper = prior[1][1]
-
-    R_upper = prior[3][1]
-    R_lower = prior[3][0]
-    
-    noise   = noise_rms  
-
-    K = (no_pixels/2)*(np.log(2*np.pi) + 4*np.log(abs(noise)))
-
-    n = samples
-    max_iter = iterations
-    sample_type = sample_method
-    
-    nested = Nested_Sampler(no_active_samples = samples, max_iter = max_iter, sample = sample_type)
+    nested = Nested_Sampler(no_active_samples = n, max_iter = max_iter, sample = sample_type)
     out  = nested.fit()
 
     elapsedTime = time.time() - startTime
@@ -630,9 +708,7 @@ def run_source_detect(samples, iterations, sample_method, prior,noise_rms, disp)
     show_scatterplot(outsrcX,outsrcY, title= "Scatter plot of sources", height = height, width = width)
 
 if __name__ == '__main__':
-    prior_array = [[0.0,200.0],[0.0,200.0],[1.0,12.5],[2.0,9.0]]
-    noise = 2.0
-    run_source_detect(samples = 400, iterations = 8000, sample_method = "clustered_ellipsoidal", prior = prior_array, noise_rms = noise, disp = 4.0)
+    run_source_detect(mode = "Manual" )
 
            
          
