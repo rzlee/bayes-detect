@@ -1,4 +1,4 @@
-import plot
+from Src import plot
 
 
 SrcArray = [[43.71, 22.91, 10.54, 3.34],
@@ -15,7 +15,7 @@ data_map = plot.add_gaussian_noise(mean=0,sd=noise,data=data_map)
 plot.write(data_map, "simulated_images/multinest_toy_noised")
 
 #Import sources should be here because we are loading the simulated image globally inside it
-import sources
+from Src import sources
 #[X,Y,A,R]
 prior_array = [[0.0,200.0],[0.0,200.0],[1.0,12.5],[2.0,9.0]]
 
