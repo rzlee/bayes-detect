@@ -412,6 +412,12 @@ class Nested_Sampler(object):
 
             self.log_evidence = temp_evidence
 
+            stopping = self.active_samples[largest].logL + self.log_width - self.log_evidence 
+            print str(stopping) 
+
+            if stopping < self.convergence_threshold:
+                break
+
             #print str(self.active_samples[smallest].X)+" "+str(self.active_samples[smallest].Y)+" "+str(self.active_samples[smallest].logL)
             
             sample = Source()
@@ -1230,7 +1236,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         n = int(Config['ACTIVE_POINTS'])
         sample_type = str(Config['SAMPLER'])
 
-    nested = Nested_Sampler(no_active_samples = n, max_iter = 20, sample = sample_type)
+    nested = Nested_Sampler(no_active_samples = n, max_iter = max_iter, sample = sample_type)
     out  = nested.fit()
 
     elapsedTime = time.time() - startTime
