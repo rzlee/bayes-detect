@@ -6,7 +6,7 @@ import math
 from pylab import figure,show
 import pickle
 from scipy import stats
-import sources 
+
 
 
 def show_source(height, width, sources):

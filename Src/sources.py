@@ -2,6 +2,7 @@ import sys
 import numpy as np
 from matplotlib import pyplot as plt
 from astropy.io import fits
+from astropy.io import ascii
 from math import *
 import random
 from plot import *
@@ -1229,7 +1230,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         n = int(Config['ACTIVE_POINTS'])
         sample_type = str(Config['SAMPLER'])
 
-    nested = Nested_Sampler(no_active_samples = n, max_iter = max_iter, sample = sample_type)
+    nested = Nested_Sampler(no_active_samples = n, max_iter = 20, sample = sample_type)
     out  = nested.fit()
 
     elapsedTime = time.time() - startTime
@@ -1239,8 +1240,17 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
     print "likelihood calculations: "+str(out["likelihood_calculations"])
 
     data = np.array(out["samples"])
+    
+    X = np.array([i.X for i in data])
+    Y = np.array([i.Y for i in data])
+    A = np.array([i.A for i in data])
+    R = np.array([i.R for i in data])
+    logL = np.array([i.logL for i in data])
+
+    ascii.write([X, Y, A, R, logL], 'output/samples.dat', names=['X', 'Y', 'A', 'R', 'logL']) 
+
     srcdata = np.array(out["src"])
-    write(data, "posterior")
+    
     outX = [i.X for i in out["samples"]]
     outY = [height-i.Y for i in out["samples"]]   
 
