@@ -1,0 +1,1351 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>sources &mdash; src  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="src  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">src  documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for sources</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">astropy.io</span> <span class="kn">import</span> <span class="n">fits</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">plot</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">scipy.cluster.vq</span> <span class="kn">import</span> <span class="n">kmeans2</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="c">#Reading the Image data from fits file</span>
+<span class="c">#fitsFile = &quot;simulated_images/multinest_toy&quot;</span>
+
+<span class="c">#hdulist   = fits.open(fitsFile)</span>
+<span class="c">#data_map   = (hdulist[0].data)&quot;&quot;&quot;</span>
+
+<span class="n">Config</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">ConfigFile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span><span class="o">+</span><span class="s">&quot;\config.cfg&quot;</span><span class="p">,</span> <span class="s">&quot;r&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+    <span class="k">print</span> <span class="s">&quot;Can&#39;t find the config file&quot;</span>
+
+<span class="n">Lines</span> <span class="o">=</span> <span class="n">ConfigFile</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">Lines</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;#&#39;</span> <span class="ow">or</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Config</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;=&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span><span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;=&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+         
+<span class="n">File</span> <span class="o">=</span> <span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;IMAGE_PATH&#39;</span><span class="p">])</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">File</span><span class="p">,</span><span class="s">&#39;r&#39;</span><span class="p">)</span>
+<span class="n">data_map</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_map</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_map</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">no_pixels</span> <span class="o">=</span> <span class="n">width</span><span class="o">*</span><span class="n">height</span>
+
+<span class="c">#Converting the data_map into a vector for likelihood calculations</span>
+<span class="n">data_map</span> <span class="o">=</span> <span class="n">data_map</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+
+<span class="c">#Useful in likelihood evaluation for calculating the simulated object as the function of indices</span>
+<span class="n">x_forcalc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+<span class="n">y_forcalc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+<span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x_forcalc</span><span class="p">,</span> <span class="n">y_forcalc</span><span class="p">,</span> <span class="n">sparse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Source"><a class="viewcode-back" href="../sources.html#sources.Source">[docs]</a><span class="k">class</span> <span class="nc">Source</span><span class="p">:</span>
+    
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     This is a class which instantiates a source object with its attributes.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : float</span>
+<span class="sd">        x coordinate of the center of the object</span>
+<span class="sd">    Y : float</span>
+<span class="sd">        y coordinate of the center of the object</span>
+<span class="sd">    A : float</span>
+<span class="sd">        Amplitude of the object</span>
+<span class="sd">    R : float</span>
+<span class="sd">        Spatial extent of the object</span>
+<span class="sd">    logL : float </span>
+<span class="sd">        Log likelihood of the object</span>
+<span class="sd">    logWt : float</span>
+<span class="sd">        Log weight of the object&quot;&quot;&quot;</span>
+          
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logL</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logWt</span> <span class="o">=</span> <span class="bp">None</span>
+
+</div>
+<div class="viewcode-block" id="log_likelihood"><a class="viewcode-back" href="../sources.html#sources.log_likelihood">[docs]</a><span class="k">def</span> <span class="nf">log_likelihood</span><span class="p">(</span><span class="n">Source</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the log likelihood of the source object.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Source : object</span>
+<span class="sd">        A source object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    log likelihood : float</span>
+<span class="sd">        log likelihood of the input object.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">        TypeError : When we pass an object with any of X, Y, A, R attributes as None type</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>           
+
+    <span class="n">simulated_map</span> <span class="o">=</span> <span class="n">Source</span><span class="o">.</span><span class="n">A</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="p">((</span><span class="n">xx</span><span class="o">-</span><span class="n">Source</span><span class="o">.</span><span class="n">X</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">yy</span><span class="o">-</span><span class="n">Source</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">Source</span><span class="o">.</span><span class="n">R</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span>
+    <span class="n">diff_map</span> <span class="o">=</span> <span class="n">data_map</span> <span class="o">-</span> <span class="n">simulated_map</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">diff_map</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="n">noise</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">*</span><span class="n">diff_map</span><span class="p">))</span> <span class="o">-</span> <span class="n">K</span>    
+    
+</div>
+<div class="viewcode-block" id="proposed_model"><a class="viewcode-back" href="../sources.html#sources.proposed_model">[docs]</a><span class="k">def</span> <span class="nf">proposed_model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">R</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the contribution to a pixel at (x,y) from source [X,Y,A,R]</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : float</span>
+<span class="sd">        The x coordinate of the pixel of interest.</span>
+<span class="sd">    y : float</span>
+<span class="sd">        The y coordinate of the pixel of interest.</span>
+<span class="sd">    X : float</span>
+<span class="sd">        The x coordinate of the center of the source under consideration</span>
+<span class="sd">    Y : float</span>
+<span class="sd">        The y coordinate of the center of the source under consideration</span>
+<span class="sd">    A : float</span>
+<span class="sd">        The value of amplitude of the source under consideration</span>
+<span class="sd">    R : float</span>
+<span class="sd">        The value of spatial extent of the source under consideration         </span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Intensity value at (x,y)           </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">A</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(((</span><span class="n">x</span><span class="o">-</span><span class="n">X</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">Y</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">R</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span>
+    
+</div>
+<div class="viewcode-block" id="sample_source"><a class="viewcode-back" href="../sources.html#sources.sample_source">[docs]</a><span class="k">def</span> <span class="nf">sample_source</span><span class="p">():</span>
+    
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sampling the object from prior distribution.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    src : object</span>
+<span class="sd">        The source object with X,Y,A,R sampled from their prior distribution and log likelihood calculated.     </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">src</span> <span class="o">=</span> <span class="n">Source</span><span class="p">()</span>
+    <span class="n">src</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">x_upper</span><span class="p">)</span>
+    <span class="n">src</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">y_upper</span><span class="p">)</span> 
+    <span class="n">src</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">amplitude_lower</span><span class="p">,</span> <span class="n">amplitude_upper</span><span class="p">)</span>
+    <span class="n">src</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">R_lower</span><span class="p">,</span> <span class="n">R_upper</span><span class="p">)</span>
+    <span class="n">src</span><span class="o">.</span><span class="n">logL</span> <span class="o">=</span> <span class="n">log_likelihood</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">src</span>
+
+</div>
+<div class="viewcode-block" id="get_sources"><a class="viewcode-back" href="../sources.html#sources.get_sources">[docs]</a><span class="k">def</span> <span class="nf">get_sources</span><span class="p">(</span><span class="n">no_active_points</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns an array of source objects sampled from their prior distribution.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    no_active_points : int</span>
+<span class="sd">        The number of source objects to be returned</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    src_array : array</span>
+<span class="sd">        An array of objects with size equal to no_active_points.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">src_array</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">no_active_points</span><span class="p">):</span>
+        <span class="n">src_array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_source</span><span class="p">())</span>
+    
+    <span class="k">return</span> <span class="n">src_array</span>
+
+</div>
+<div class="viewcode-block" id="getPrior_A"><a class="viewcode-back" href="../sources.html#sources.getPrior_A">[docs]</a><span class="k">def</span> <span class="nf">getPrior_A</span><span class="p">():</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bounds : tuple</span>
+<span class="sd">        a tuple of the amplitude bounds.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">amplitude_lower</span><span class="p">,</span> <span class="n">amplitude_upper</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">bounds</span>
+
+</div>
+<div class="viewcode-block" id="getPrior_R"><a class="viewcode-back" href="../sources.html#sources.getPrior_R">[docs]</a><span class="k">def</span> <span class="nf">getPrior_R</span><span class="p">():</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bounds : tuple</span>
+<span class="sd">        a tuple of the R bounds.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">R_lower</span><span class="p">,</span> <span class="n">R_upper</span><span class="p">;</span> 
+    <span class="k">return</span> <span class="n">bounds</span>
+
+</div>
+<div class="viewcode-block" id="getPrior_X"><a class="viewcode-back" href="../sources.html#sources.getPrior_X">[docs]</a><span class="k">def</span> <span class="nf">getPrior_X</span><span class="p">():</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bounds : tuple</span>
+<span class="sd">        a tuple of the X bounds.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">bounds</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">width</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">bounds</span>
+
+</div>
+<div class="viewcode-block" id="getPrior_Y"><a class="viewcode-back" href="../sources.html#sources.getPrior_Y">[docs]</a><span class="k">def</span> <span class="nf">getPrior_Y</span><span class="p">():</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bounds : tuple</span>
+<span class="sd">        a tuple of the Y bounds.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">bounds</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">height</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">bounds</span>
+
+</div>
+<div class="viewcode-block" id="write"><a class="viewcode-back" href="../sources.html#sources.write">[docs]</a><span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Writes an array to a pickle</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : array</span>
+<span class="sd">        Array to be stored      </span>
+<span class="sd">    out : str</span>
+<span class="sd">        The location to be stored at</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="s">&#39;w+b&#39;</span><span class="p">)</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="read"><a class="viewcode-back" href="../sources.html#sources.read">[docs]</a><span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads an array from a pickle and returns it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename : str</span>
+<span class="sd">        location of the pickle</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    data : array</span>
+<span class="sd">        Pickle data</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+</div>
+<div class="viewcode-block" id="Nested_Sampler"><a class="viewcode-back" href="../sources.html#sources.Nested_Sampler">[docs]</a><span class="k">class</span> <span class="nc">Nested_Sampler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An Implementation of Nested Sampling proposed by John Skilling and Sivia.</span>
+
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    no_active_samples : int</span>
+<span class="sd">        number of active samples</span>
+<span class="sd">    maximum_iterations : int</span>
+<span class="sd">        maximum number of iterations</span>
+<span class="sd">    sample : str</span>
+<span class="sd">        sampling type</span>
+<span class="sd">    convergence_threshold : float</span>
+<span class="sd">        stopping criterion based on evidence</span>
+<span class="sd">    active_samples : array</span>
+<span class="sd">        array containing the active samples</span>
+<span class="sd">    log_evidence : float</span>
+<span class="sd">        Log evidence</span>
+<span class="sd">    posterior_inferences : array</span>
+<span class="sd">        Posterior samples </span>
+<span class="sd">    log_width : float</span>
+<span class="sd">        Log width of the prior</span>
+<span class="sd">    Information : float</span>
+<span class="sd">        Information for error estimation in evidence</span>
+<span class="sd">    no_likelihood : int</span>
+<span class="sd">        To keep track of number of likelihood evaluations made    </span>
+
+
+<span class="sd">    References </span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [1] http://www.inference.phy.cam.ac.uk/bayesys/</span>
+<span class="sd">    .. [2] Shaw, Bridges, Hobson 2007, MNRAS, 378, 1365 </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">no_active_samples</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">,</span> <span class="n">sample</span> <span class="o">=</span> <span class="s">&quot;metropolis&quot;</span><span class="p">,</span> <span class="n">conv_thresh</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the nested sampler.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        no_active_samples : int</span>
+<span class="sd">            Number of active points which aid in sampling</span>
+<span class="sd">        max_iter : int</span>
+<span class="sd">            Maximum number of iterations to run</span>
+<span class="sd">        sample : str</span>
+<span class="sd">            Sampling mode</span>
+<span class="sd">            </span>
+<span class="sd">            * &quot;uniform&quot; = Samples the points randomly from a uniform distribution.  </span>
+<span class="sd">            * &quot;metropolis&quot; = Samples the points according to Metropolis principle.</span>
+<span class="sd">            * &quot;clustered_ellipsoidal&quot; = Samples the points according to Clustered ellipsoidal method.</span>
+<span class="sd">            </span>
+<span class="sd">        conv_thresh : float</span>
+<span class="sd">            Stopping criterion based on the current evidence in an iteration.  </span>
+<span class="sd">            </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+ 
+        <span class="bp">self</span><span class="o">.</span><span class="n">no_active_samples</span>     <span class="o">=</span> <span class="n">no_active_samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maximum_iterations</span>    <span class="o">=</span> <span class="n">max_iter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample</span>                <span class="o">=</span> <span class="n">sample</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convergence_threshold</span> <span class="o">=</span> <span class="mf">0.1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span>        <span class="o">=</span> <span class="n">get_sources</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_active_samples</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_evidence</span>          <span class="o">=</span> <span class="bp">None</span> <span class="c"># Log evidence</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">posterior_inferences</span>  <span class="o">=</span> <span class="p">[]</span>   <span class="c"># Posterior samples </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_width</span>             <span class="o">=</span> <span class="bp">None</span> <span class="c"># Log width of the prior</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Information</span>           <span class="o">=</span> <span class="bp">None</span> <span class="c"># Information for error estimation in evidence</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">no_likelihood</span>         <span class="o">=</span> <span class="n">no_active_samples</span> <span class="c"># To keep track of number of likelihood evaluations made</span>
+
+    
+<div class="viewcode-block" id="Nested_Sampler.fit"><a class="viewcode-back" href="../sources.html#sources.Nested_Sampler.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Runs the nested sampling procedure.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        A dict mapping the following to their values.</span>
+
+<span class="sd">            *  src - Active points</span>
+<span class="sd">            *  samples - Posterior samples </span>
+<span class="sd">            *  logZ - The log evidence</span>
+<span class="sd">            *  Information - The Information for error estimation</span>
+<span class="sd">            *  likelihood_calculations - Number of likelihood evaluations</span>
+<span class="sd">            *  iterations - Number of iterations until stopping</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c">#Initializing evidence and prior mass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_evidence</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e300</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_width</span> <span class="o">=</span> <span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_active_samples</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Information</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">LogL</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">logL</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">]</span>
+        <span class="n">iteration</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">prev_stop</span> <span class="o">=</span> <span class="mf">0.0</span>
+       
+        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">maximum_iterations</span><span class="p">):</span>
+            <span class="n">smallest</span> <span class="o">=</span> <span class="mi">0</span>
+            
+            <span class="c">#Finding the object with smallest likelihood</span>
+            <span class="n">smallest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">LogL</span><span class="p">)</span>
+            
+            <span class="c">#Assigning local evidence to the smallest sample</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">logWt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_width</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">logL</span><span class="p">;</span>
+            
+            <span class="n">largest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">LogL</span><span class="p">)</span>
+
+            <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">largest</span><span class="p">]</span><span class="o">.</span><span class="n">logL</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_width</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_evidence</span>
+
+            <span class="k">if</span> <span class="n">iteration</span><span class="o">%</span><span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">iteration</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">iteration</span><span class="p">)</span>
+            
+            <span class="c">#Calculating the updated evidence</span>
+            <span class="n">temp_evidence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logaddexp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_evidence</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">logWt</span><span class="p">)</span>
+            
+            <span class="c">#Calculating the information which will be helpful in calculating the uncertainity</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Information</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">logWt</span> <span class="o">-</span> <span class="n">temp_evidence</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">logL</span> <span class="o">+</span> \
+            <span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_evidence</span> <span class="o">-</span> <span class="n">temp_evidence</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Information</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_evidence</span><span class="p">)</span> <span class="o">-</span> <span class="n">temp_evidence</span><span class="p">;</span>
+            
+            <span class="c"># FIX ME : Add a stopping criterion condition </span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_evidence</span> <span class="o">=</span> <span class="n">temp_evidence</span>
+
+            <span class="c">#print str(self.active_samples[smallest].X)+&quot; &quot;+str(self.active_samples[smallest].Y)+&quot; &quot;+str(self.active_samples[smallest].logL)</span>
+            
+            <span class="n">sample</span> <span class="o">=</span> <span class="n">Source</span><span class="p">()</span>
+            <span class="n">sample</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="c">#storing posterior points</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">posterior_inferences</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+            
+            <span class="c">#New likelihood constraint </span>
+            <span class="n">likelihood_constraint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">logL</span>
+
+            <span class="n">survivor</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">smallest</span><span class="p">)</span>
+
+            <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="n">survivor</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_active_samples</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_active_samples</span>  <span class="c"># force 0 &lt;= copy &lt; n</span>
+                <span class="k">if</span> <span class="n">survivor</span> <span class="o">!=</span> <span class="n">smallest</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span> <span class="o">==</span> <span class="s">&quot;metropolis&quot;</span><span class="p">:</span>
+                <span class="c">#Obtain new sample using Metropolis principle</span>
+                <span class="n">updated</span><span class="p">,</span> <span class="n">number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metropolis_sampling</span><span class="p">(</span><span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">survivor</span><span class="p">],</span> <span class="n">LC</span> <span class="o">=</span> <span class="n">likelihood_constraint</span><span class="p">,</span> <span class="n">likelihood_calc</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">no_likelihood</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="n">updated</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">LogL</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">logL</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">no_likelihood</span> <span class="o">=</span> <span class="n">number</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span> <span class="o">==</span> <span class="s">&quot;clustered_ellipsoidal&quot;</span><span class="p">:</span>
+                <span class="c">#Obtain new sample using Clustered ellipsoidal sampling</span>
+                <span class="n">updated</span><span class="p">,</span> <span class="n">number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clustered_sampling</span><span class="p">(</span><span class="n">active_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">,</span> <span class="n">LC</span> <span class="o">=</span> <span class="n">likelihood_constraint</span><span class="p">,</span> <span class="n">likelihood_calc</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">no_likelihood</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="n">updated</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">LogL</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">logL</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">no_likelihood</span> <span class="o">=</span> <span class="n">number</span>  
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span> <span class="o">==</span> <span class="s">&quot;uniform&quot;</span><span class="p">:</span>
+                <span class="c">#Obtain new sample using uniform sampling principle</span>
+                <span class="n">updated</span><span class="p">,</span> <span class="n">number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uniform_sampling</span><span class="p">(</span><span class="n">LC</span> <span class="o">=</span> <span class="n">likelihood_constraint</span><span class="p">,</span> <span class="n">likelihood_calc</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">no_likelihood</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="n">updated</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">LogL</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">[</span><span class="n">smallest</span><span class="p">]</span><span class="o">.</span><span class="n">logL</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">no_likelihood</span> <span class="o">=</span> <span class="n">number</span>
+
+
+            <span class="c">#Shrink width  </span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_width</span> <span class="o">-=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_active_samples</span><span class="p">;</span>
+
+        <span class="c"># FIX ME: Incorporate the active samples into evidence calculation and information after the loop</span>
+        <span class="k">return</span> <span class="p">{</span> <span class="s">&quot;src&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">active_samples</span><span class="p">,</span>
+            <span class="s">&quot;samples&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_inferences</span><span class="p">,</span> 
+            <span class="s">&quot;logZ&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">log_evidence</span><span class="p">,</span>
+            <span class="s">&quot;Information&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">Information</span><span class="p">,</span>
+            <span class="s">&quot;likelihood_calculations&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">no_likelihood</span><span class="p">,</span>
+            <span class="s">&quot;iterations&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">maximum_iterations</span> 
+            <span class="p">}</span>
+
+</div>
+<div class="viewcode-block" id="Nested_Sampler.metropolis_sampling"><a class="viewcode-back" href="../sources.html#sources.Nested_Sampler.metropolis_sampling">[docs]</a>    <span class="k">def</span> <span class="nf">metropolis_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">LC</span><span class="p">,</span> <span class="n">likelihood_calc</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the sample satisfying the likelihood condition by metropolis sampling </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        obj : object</span>
+<span class="sd">            The sample to evolve</span>
+<span class="sd">        LC  : float</span>
+<span class="sd">            likelihood constraint</span>
+<span class="sd">        likelihood_calc : int</span>
+<span class="sd">            Number of likelihood calculations until this point</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        evolved - object</span>
+<span class="sd">            The evolved sample satisfying the likelihood constraint</span>
+<span class="sd">        number - int</span>
+<span class="sd">            The updated likelihood calculations number</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c">#Instantiating the metropolis sampler object</span>
+        <span class="n">Metro</span> <span class="o">=</span> <span class="n">Metropolis_sampler</span><span class="p">(</span><span class="n">to_evolve</span> <span class="o">=</span> <span class="n">obj</span><span class="p">,</span> <span class="n">likelihood_constraint</span> <span class="o">=</span> <span class="n">LC</span><span class="p">,</span> <span class="n">no</span> <span class="o">=</span><span class="n">likelihood_calc</span> <span class="p">)</span>
+        <span class="n">evolved</span><span class="p">,</span> <span class="n">number</span> <span class="o">=</span> <span class="n">Metro</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">evolved</span><span class="p">,</span> <span class="n">number</span>
+
+</div>
+<div class="viewcode-block" id="Nested_Sampler.clustered_sampling"><a class="viewcode-back" href="../sources.html#sources.Nested_Sampler.clustered_sampling">[docs]</a>    <span class="k">def</span> <span class="nf">clustered_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">active_points</span><span class="p">,</span> <span class="n">LC</span><span class="p">,</span> <span class="n">likelihood_calc</span> <span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the sample satisfying the likelihood condition by clustered ellipsoidal sampling </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        active_points : array</span>
+<span class="sd">            The full set of active points at current state</span>
+<span class="sd">        LC : float</span>
+<span class="sd">            likelihood constraint</span>
+<span class="sd">        likelihood_calc : int</span>
+<span class="sd">            Number of likelihood calculations until this point</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        sample : object</span>
+<span class="sd">            The evolved sample satisfying the likelihood constraint</span>
+<span class="sd">        number : int</span>
+<span class="sd">            The updated likelihood calculations number</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+
+        <span class="n">Clust</span> <span class="o">=</span> <span class="n">Clustered_Sampler</span><span class="p">(</span><span class="n">active_samples</span><span class="o">=</span><span class="n">active_points</span><span class="p">,</span> <span class="n">likelihood_constraint</span><span class="o">=</span><span class="n">LC</span><span class="p">,</span> <span class="n">enlargement</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">no</span><span class="o">=</span><span class="n">likelihood_calc</span><span class="p">)</span>
+        <span class="n">sample</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">number</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">sample</span><span class="p">,</span> <span class="n">number</span> <span class="o">=</span> <span class="n">Clust</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">logL</span> <span class="o">&gt;</span> <span class="n">LC</span><span class="p">):</span>
+                <span class="c">#print &quot;In nest: found from clustered sampling&quot;</span>
+                <span class="k">break</span>
+            <span class="n">Clust</span> <span class="o">=</span> <span class="n">Clustered_Sampler</span><span class="p">(</span><span class="n">active_samples</span><span class="o">=</span><span class="n">active_points</span><span class="p">,</span> <span class="n">likelihood_constraint</span><span class="o">=</span><span class="n">LC</span><span class="p">,</span> <span class="n">enlargement</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">no</span><span class="o">=</span><span class="n">number</span><span class="p">)</span>   
+        <span class="k">return</span> <span class="n">sample</span><span class="p">,</span> <span class="n">number</span>
+
+    </div>
+<div class="viewcode-block" id="Nested_Sampler.uniform_sampling"><a class="viewcode-back" href="../sources.html#sources.Nested_Sampler.uniform_sampling">[docs]</a>    <span class="k">def</span> <span class="nf">uniform_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">LC</span><span class="p">,</span> <span class="n">likelihood_calc</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the sample satisfying the likelihood condition by uniform random sampling </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        LC  : float</span>
+<span class="sd">            likelihood constraint</span>
+<span class="sd">        likelihood_calc : int</span>
+<span class="sd">            Number of likelihood calculations until this point</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        evolved : object</span>
+<span class="sd">            The evolved sample satisfying the likelihood constraint</span>
+<span class="sd">        number : int</span>
+<span class="sd">            The updated likelihood calculations number</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">unif</span> <span class="o">=</span> <span class="n">uniform_sampler</span><span class="p">(</span><span class="n">likelihood_constraint</span> <span class="o">=</span> <span class="n">LC</span><span class="p">,</span> <span class="n">no</span> <span class="o">=</span><span class="n">likelihood_calc</span><span class="p">)</span>
+        <span class="n">evolved</span><span class="p">,</span> <span class="n">number</span> <span class="o">=</span> <span class="n">unif</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">evolved</span><span class="p">,</span> <span class="n">number</span>      
+
+
+
+
+</div></div>
+<div class="viewcode-block" id="uniform_sampler"><a class="viewcode-back" href="../sources.html#sources.uniform_sampler">[docs]</a><span class="k">class</span> <span class="nc">uniform_sampler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An Implementation of uniform sampling to randomly pick a sample satisfying the likelihood</span>
+<span class="sd">    constraint in the current nested sampling phase.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    LC : float</span>
+<span class="sd">        likelihood constraint for the point</span>
+<span class="sd">    number : int</span>
+<span class="sd">        likelihood calculations until now        </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">likelihood_constraint</span><span class="p">,</span> <span class="n">no</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the uniform sampler</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        likelihood_constraint: float</span>
+<span class="sd">            name says it all</span>
+<span class="sd">        no : int</span>
+<span class="sd">            Number of likelihood evaluations until this point</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">LC</span>     <span class="o">=</span> <span class="n">likelihood_constraint</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number</span> <span class="o">=</span> <span class="n">no</span>
+                
+    
+<div class="viewcode-block" id="uniform_sampler.sample"><a class="viewcode-back" href="../sources.html#sources.uniform_sampler.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method to pick the sample satisfying the likelihood constraint using uniform sampling</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        new : object</span>
+<span class="sd">            The evolved sample  </span>
+<span class="sd">        number : int</span>
+<span class="sd">            Number of likelihood calculations after sampling  </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">new</span>   <span class="o">=</span> <span class="n">Source</span><span class="p">()</span>
+                        
+        <span class="n">x_l</span><span class="p">,</span> <span class="n">x_u</span> <span class="o">=</span> <span class="n">getPrior_X</span><span class="p">()</span>
+        <span class="n">y_l</span><span class="p">,</span> <span class="n">y_u</span> <span class="o">=</span> <span class="n">getPrior_Y</span><span class="p">()</span>
+        <span class="n">r_l</span><span class="p">,</span> <span class="n">r_u</span> <span class="o">=</span> <span class="n">getPrior_R</span><span class="p">()</span>
+        <span class="n">a_l</span><span class="p">,</span> <span class="n">a_u</span> <span class="o">=</span> <span class="n">getPrior_A</span><span class="p">()</span>
+
+        <span class="k">while</span><span class="p">(</span><span class="bp">True</span><span class="p">):</span>
+            
+            <span class="n">new</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">x_l</span><span class="p">,</span><span class="n">x_u</span><span class="p">)</span>
+            <span class="n">new</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">y_l</span><span class="p">,</span><span class="n">y_u</span><span class="p">)</span>
+            <span class="n">new</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">a_l</span><span class="p">,</span><span class="n">a_u</span><span class="p">)</span>
+            <span class="n">new</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">r_l</span><span class="p">,</span><span class="n">r_u</span><span class="p">)</span>
+            <span class="n">new</span><span class="o">.</span><span class="n">logL</span> <span class="o">=</span> <span class="n">log_likelihood</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">number</span><span class="o">+=</span><span class="mi">1</span>
+            
+            <span class="k">if</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">logL</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">LC</span><span class="p">):</span>
+                <span class="k">break</span>
+                        
+        <span class="k">return</span> <span class="n">new</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">number</span>
+
+</div></div>
+<div class="viewcode-block" id="Metropolis_sampler"><a class="viewcode-back" href="../sources.html#sources.Metropolis_sampler">[docs]</a><span class="k">class</span> <span class="nc">Metropolis_sampler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An Implementation of Metropolis sampling to pick a sample satisfying the likelihood</span>
+<span class="sd">    constraint in the current nested sampling phase.  </span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source : object</span>
+<span class="sd">       object to evolve</span>
+<span class="sd">    LC : float</span>
+<span class="sd">        likelihood constraint for the point</span>
+<span class="sd">    step : float</span>
+<span class="sd">        dispersion of the gaussian proposal distribution</span>
+<span class="sd">    number : int</span>
+<span class="sd">        likelihood calculations until now</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_evolve</span><span class="p">,</span> <span class="n">likelihood_constraint</span><span class="p">,</span> <span class="n">no</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the Metropolis sampler</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        to_evolve : object</span>
+<span class="sd">            The sample to evolve</span>
+<span class="sd">        likelihood_constraint: float</span>
+<span class="sd">            name says it all</span>
+<span class="sd">        no : int</span>
+<span class="sd">            Number of likelihood evaluations until this point</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">to_evolve</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LC</span>     <span class="o">=</span> <span class="n">likelihood_constraint</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step</span>   <span class="o">=</span> <span class="n">dispersion</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number</span> <span class="o">=</span> <span class="n">no</span>
+                
+    
+<div class="viewcode-block" id="Metropolis_sampler.sample"><a class="viewcode-back" href="../sources.html#sources.Metropolis_sampler.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method to pick the sample satisfying the likelihood constraint using metropolis sampling</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        metro : object</span>
+<span class="sd">            The evolved sample  </span>
+<span class="sd">        number : int</span>
+<span class="sd">            Number of likelihood calculations until now  </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">metro</span> <span class="o">=</span> <span class="n">Source</span><span class="p">()</span>
+        <span class="n">metro</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">Source</span><span class="p">()</span>
+        <span class="n">start</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">new</span>   <span class="o">=</span> <span class="n">Source</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">hit</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">miss</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="n">x_l</span><span class="p">,</span> <span class="n">x_u</span> <span class="o">=</span> <span class="n">getPrior_X</span><span class="p">()</span>
+        <span class="n">y_l</span><span class="p">,</span> <span class="n">y_u</span> <span class="o">=</span> <span class="n">getPrior_Y</span><span class="p">()</span>
+        <span class="n">r_l</span><span class="p">,</span> <span class="n">r_u</span> <span class="o">=</span> <span class="n">getPrior_R</span><span class="p">()</span>
+        <span class="n">a_l</span><span class="p">,</span> <span class="n">a_u</span> <span class="o">=</span> <span class="n">getPrior_A</span><span class="p">()</span>
+
+        <span class="n">stepnormalize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="o">/</span><span class="n">x_u</span>
+
+        <span class="n">stepX</span>    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
+        <span class="n">stepY</span>    <span class="o">=</span> <span class="n">stepnormalize</span><span class="o">*</span><span class="p">(</span><span class="n">y_u</span><span class="o">-</span><span class="n">y_l</span><span class="p">)</span>
+        <span class="n">stepA</span>    <span class="o">=</span> <span class="n">stepnormalize</span><span class="o">*</span><span class="p">(</span><span class="n">a_u</span> <span class="o">-</span> <span class="n">a_l</span><span class="p">)</span>
+        <span class="n">stepR</span>    <span class="o">=</span> <span class="n">stepnormalize</span><span class="o">*</span><span class="p">(</span><span class="n">r_u</span><span class="o">-</span><span class="n">r_l</span><span class="p">)</span>        
+        
+        <span class="n">bord</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">while</span><span class="p">(</span><span class="n">count</span><span class="o">&lt;</span><span class="mi">20</span><span class="p">):</span>
+            
+            <span class="k">while</span> <span class="n">bord</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">bord</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">new</span><span class="o">.</span><span class="n">X</span>    <span class="o">=</span> <span class="n">metro</span><span class="o">.</span><span class="n">X</span> <span class="o">+</span> <span class="n">stepX</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">);</span>
+                <span class="n">new</span><span class="o">.</span><span class="n">Y</span>    <span class="o">=</span> <span class="n">metro</span><span class="o">.</span><span class="n">Y</span> <span class="o">+</span> <span class="n">stepY</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">);</span>
+                <span class="n">new</span><span class="o">.</span><span class="n">A</span>    <span class="o">=</span> <span class="n">metro</span><span class="o">.</span><span class="n">A</span> <span class="o">+</span> <span class="n">stepA</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">);</span>
+                <span class="n">new</span><span class="o">.</span><span class="n">R</span>    <span class="o">=</span> <span class="n">metro</span><span class="o">.</span><span class="n">R</span> <span class="o">+</span> <span class="n">stepR</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">);</span>
+
+                
+
+                <span class="k">if</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">X</span> <span class="o">&gt;</span> <span class="n">x_u</span> <span class="ow">or</span> <span class="n">new</span><span class="o">.</span><span class="n">X</span> <span class="o">&lt;</span> <span class="n">x_l</span><span class="p">):</span> <span class="n">bord</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">Y</span> <span class="o">&gt;</span> <span class="n">y_u</span> <span class="ow">or</span> <span class="n">new</span><span class="o">.</span><span class="n">Y</span> <span class="o">&lt;</span> <span class="n">y_l</span><span class="p">):</span> <span class="n">bord</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">A</span> <span class="o">&gt;</span> <span class="n">a_u</span> <span class="ow">or</span> <span class="n">new</span><span class="o">.</span><span class="n">A</span> <span class="o">&lt;</span> <span class="n">a_l</span><span class="p">):</span> <span class="n">bord</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">R</span> <span class="o">&gt;</span> <span class="n">r_u</span> <span class="ow">or</span> <span class="n">new</span><span class="o">.</span><span class="n">R</span> <span class="o">&lt;</span> <span class="n">r_l</span><span class="p">):</span> <span class="n">bord</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>                
+
+            <span class="n">new</span><span class="o">.</span><span class="n">logL</span> <span class="o">=</span> <span class="n">log_likelihood</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">number</span><span class="o">+=</span><span class="mi">1</span>
+            
+            <span class="k">if</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">logL</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">LC</span><span class="p">):</span>
+                <span class="n">metro</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="n">new</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">hit</span><span class="o">+=</span><span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">miss</span><span class="o">+=</span><span class="mi">1</span>
+            
+            <span class="k">if</span><span class="p">(</span> <span class="n">hit</span> <span class="o">&gt;</span> <span class="n">miss</span> <span class="p">):</span>   <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">*=</span> <span class="n">exp</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">hit</span><span class="p">);</span>
+            <span class="k">if</span><span class="p">(</span> <span class="n">hit</span> <span class="o">&lt;</span> <span class="n">miss</span> <span class="p">):</span>   <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">/=</span> <span class="n">exp</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">miss</span><span class="p">);</span>
+
+            <span class="n">stepnormalize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="o">/</span><span class="n">x_u</span>         
+
+            <span class="n">stepX</span>    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
+            <span class="n">stepY</span>    <span class="o">=</span> <span class="n">stepnormalize</span><span class="o">*</span><span class="p">(</span><span class="n">y_u</span><span class="o">-</span><span class="n">y_l</span><span class="p">)</span>
+            <span class="n">stepA</span>    <span class="o">=</span> <span class="n">stepnormalize</span><span class="o">*</span><span class="p">(</span><span class="n">a_u</span> <span class="o">-</span> <span class="n">a_l</span><span class="p">)</span>
+            <span class="n">stepR</span>    <span class="o">=</span> <span class="n">stepnormalize</span><span class="o">*</span><span class="p">(</span><span class="n">r_u</span><span class="o">-</span><span class="n">r_l</span><span class="p">)</span>        
+        
+            
+            <span class="n">count</span><span class="o">+=</span><span class="mi">1</span>
+            <span class="n">bord</span><span class="o">=</span><span class="mi">1</span>
+                    
+        <span class="k">return</span> <span class="n">metro</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">number</span>
+
+
+
+</div></div>
+<div class="viewcode-block" id="Clustered_Sampler"><a class="viewcode-back" href="../sources.html#sources.Clustered_Sampler">[docs]</a><span class="k">class</span> <span class="nc">Clustered_Sampler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implementation of clustered ellipsoidal method for using in multimodal nested sampling as</span>
+<span class="sd">    an improvement to detect modes in the posterior. This was proposed in multinest paper by Feroz</span>
+<span class="sd">    and Hobson(2008). This method is closer in spirit to the recursive technique advocated in Shaw</span>
+<span class="sd">    et al.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    points : array</span>
+<span class="sd">        copy of active samples in the current nested sampling phase</span>
+<span class="sd">    LC : float</span>
+<span class="sd">        likelihood_constraint</span>
+<span class="sd">    enlargement : float</span>
+<span class="sd">        Enlargement factor used in constructing ellipsoids</span>
+<span class="sd">    clustered_point_set : array</span>
+<span class="sd">        The points belonging to different clusters</span>
+<span class="sd">    number_of_clusters : int</span>
+<span class="sd">        Number of clusters</span>
+<span class="sd">    activepoint_set : float</span>
+<span class="sd">        array of activepoint_set for clustering</span>
+<span class="sd">    ellipsoid_set : array</span>
+<span class="sd">        array of optimal ellipsoids constructed around the active point set.</span>
+<span class="sd">    total_vol : float</span>
+<span class="sd">        Total volume enclosed by the optimal ellipsoids</span>
+<span class="sd">    number : float</span>
+<span class="sd">        Number of likelihood evaluations until now </span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [1] Multinest paper by Feroz and Hobson 2008.</span>
+<span class="sd">    .. [2] Shaw R., Bridges M., Hobson M.P., 2007, MNRAS, in press (astro-ph/0701867)</span>
+<span class="sd">    .. [3] A Nested Sampling Algorithm for Cosmological Model Selection(2006) Pia Mukherjee , David Parkinson , and Andrew R. Liddle</span>
+<span class="sd">    .. [4] http://www.sjsu.edu/faculty/watkins/ellipsoid.htm </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">active_samples</span><span class="p">,</span> <span class="n">likelihood_constraint</span><span class="p">,</span><span class="n">enlargement</span><span class="p">,</span> <span class="n">no</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the clustered ellipsoidal sampler.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        active_samples : array</span>
+<span class="sd">            The array containing the active samples for this clustered sampling phase</span>
+<span class="sd">        likelihood_constraint : float</span>
+<span class="sd">            Name says it all</span>
+<span class="sd">        enlargement_factor : float</span>
+<span class="sd">            The enlargement factor for ellipsoids</span>
+<span class="sd">        no : int</span>
+<span class="sd">            Number of likelihood calculations until the current sampling phase  </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">points</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">active_samples</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LC</span> <span class="o">=</span> <span class="n">likelihood_constraint</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enlargement</span> <span class="o">=</span> <span class="mf">1.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clustered_point_set</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_clusters</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activepoint_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ellipsoid_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_ellipsoids</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_vol</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number</span> <span class="o">=</span> <span class="n">no</span>
+
+    
+<div class="viewcode-block" id="Clustered_Sampler.build_set"><a class="viewcode-back" href="../sources.html#sources.Clustered_Sampler.build_set">[docs]</a>    <span class="k">def</span> <span class="nf">build_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Builds set of the active samples in array format for clustering.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        array : array</span>
+<span class="sd">            Array containing the active samples. Each element [X,Y] represents an object </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">array</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">active_sample</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">:</span>
+            <span class="n">array</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">active_sample</span><span class="o">.</span><span class="n">X</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">active_sample</span><span class="o">.</span><span class="n">Y</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>            
+        
+</div>
+<div class="viewcode-block" id="Clustered_Sampler.cluster"><a class="viewcode-back" href="../sources.html#sources.Clustered_Sampler.cluster">[docs]</a>    <span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activepoint_set</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Clusters an array of samples using kmeans2</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        activepoint_set : array</span>
+<span class="sd">            Set of active points to be clustered</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        number_of_clusters : int</span>
+<span class="sd">            name says it all</span>
+<span class="sd">        labels : array</span>
+<span class="sd">            Cluster labels assigned by kmeans for each sample</span>
+<span class="sd">        activepoint_set : array</span>
+<span class="sd">            The point set       </span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">centroid</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">kmeans2</span><span class="p">(</span><span class="n">activepoint_set</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">number_of_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">centroid</span><span class="p">)</span>  
+        <span class="k">return</span> <span class="n">number_of_clusters</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">activepoint_set</span>    
+
+</div>
+<div class="viewcode-block" id="Clustered_Sampler.optimal_ellipsoids"><a class="viewcode-back" href="../sources.html#sources.Clustered_Sampler.optimal_ellipsoids">[docs]</a>    <span class="k">def</span> <span class="nf">optimal_ellipsoids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Method for calculating ellipsoids around the individual clusters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ellipsoids : array</span>
+<span class="sd">            An array of ellipsoids to sample from.  </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_clusters</span><span class="p">,</span> <span class="n">point_labels</span><span class="p">,</span> <span class="n">pointset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">activepoint_set</span><span class="p">)</span><span class="c">#Cluster and find centroids</span>
+        <span class="n">clust_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_clusters</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+        <span class="n">ellipsoids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_clusters</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_clusters</span><span class="p">):</span>
+            <span class="n">clust_points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pointset</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">point_labels</span><span class="o">==</span><span class="n">i</span><span class="p">)])</span>
+        <span class="n">invalid</span> <span class="o">=</span> <span class="p">[]</span>    
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_clusters</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">clust_points</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">ellipsoids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ellipsoid</span><span class="p">(</span><span class="n">points</span><span class="o">=</span><span class="n">clust_points</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                              <span class="n">enlargement_factor</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">)</span><span class="c">#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))</span>
+                <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+                    <span class="n">ellipsoids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+                    <span class="k">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                    <span class="n">invalid</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ellipsoids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">invalid</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">ellipsoids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">ellipsoids</span><span class="p">,</span> <span class="n">invalid</span><span class="p">)</span>
+        <span class="k">print</span> <span class="nb">len</span><span class="p">(</span><span class="n">ellipsoids</span><span class="p">)</span>         
+        <span class="k">return</span> <span class="n">ellipsoids</span>
+
+</div>
+<div class="viewcode-block" id="Clustered_Sampler.recursive_bounding_ellipsoids"><a class="viewcode-back" href="../sources.html#sources.Clustered_Sampler.recursive_bounding_ellipsoids">[docs]</a>    <span class="k">def</span> <span class="nf">recursive_bounding_ellipsoids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ellipsoid</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation of finding minimum bounding ellipsoids recursively.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : array</span>
+<span class="sd">            The active samples around which ellipsoids are to be built.</span>
+<span class="sd">        ellipsoid : object</span>
+<span class="sd">            Starting ellipsiod. None by default</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ellipsoids : array</span>
+<span class="sd">           Array of ellipsoids satisfying all the conditions               </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ellipsoids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">ellipsoid</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">ellipsoid</span> <span class="o">=</span> <span class="n">Ellipsoid</span><span class="p">(</span><span class="n">points</span> <span class="o">=</span> <span class="n">data</span><span class="p">,</span> <span class="n">enlargement_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">centroids</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">kmeans2</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="nb">iter</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">clustered_data</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
+        <span class="n">clustered_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span> <span class="k">if</span> <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">clustered_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span> <span class="k">if</span> <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">vol</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span>
+        <span class="n">clustered_ellipsoids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="nb">object</span><span class="p">)</span>  
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clustered_data</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">clustered_ellipsoids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ellipsoid</span><span class="p">(</span><span class="n">clustered_data</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="n">vol</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span> <span class="n">clustered_ellipsoids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">volume</span> 
+        <span class="n">do</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="n">vol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">vol</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">ellipsoid</span><span class="o">.</span><span class="n">volume</span> <span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">vol</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&gt;</span><span class="mf">0.0</span><span class="p">):</span>
+                    <span class="n">ellipsoids</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recursive_bounding_ellipsoids</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">clustered_data</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">clustered_ellipsoids</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ellipsoids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ellipsoid</span><span class="p">)</span>
+        <span class="k">print</span> <span class="nb">len</span><span class="p">(</span><span class="n">ellipsoids</span><span class="p">)</span>    
+        <span class="k">return</span> <span class="n">ellipsoids</span>    
+
+     </div>
+<div class="viewcode-block" id="Clustered_Sampler.sample"><a class="viewcode-back" href="../sources.html#sources.Clustered_Sampler.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sampling from the built ellipsoids.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        clust : object</span>
+<span class="sd">            The sampled point satisfying the likelihood constraint</span>
+<span class="sd">        number : int</span>
+<span class="sd">            The number of likelihood calculations until this</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">vols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">i</span><span class="o">.</span><span class="n">volume</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ellipsoid_set</span><span class="p">])</span>
+        <span class="n">vols</span> <span class="o">=</span> <span class="n">vols</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">vols</span><span class="p">)</span>
+        <span class="n">arbit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">trial</span> <span class="o">=</span> <span class="n">Source</span><span class="p">()</span>
+        <span class="n">clust</span> <span class="o">=</span> <span class="n">Source</span><span class="p">()</span>
+        <span class="n">z</span> <span class="o">=</span><span class="bp">None</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vols</span><span class="p">)):</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">arbit</span><span class="o">&lt;=</span><span class="n">vols</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                <span class="n">z</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="k">break</span>
+        <span class="c">#print &quot;Sampling from ellipsoid : &quot;+ str(z)        </span>
+        <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ellipsoid_set</span><span class="p">[</span><span class="n">z</span><span class="p">]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n_points</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+        <span class="n">max_likelihood</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">LC</span>
+        <span class="c">#print &quot;likelihood_constraint: &quot;+str(max_likelihood)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">r_l</span><span class="p">,</span> <span class="n">r_u</span> <span class="o">=</span> <span class="n">getPrior_R</span><span class="p">()</span>
+        <span class="n">a_l</span><span class="p">,</span> <span class="n">a_u</span> <span class="o">=</span> <span class="n">getPrior_A</span><span class="p">()</span>
+        <span class="k">while</span> <span class="n">count</span><span class="o">&lt;</span><span class="mi">50</span><span class="p">:</span>
+            <span class="n">trial</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="n">count</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">trial</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="n">count</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">trial</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">a_l</span><span class="p">,</span><span class="n">a_u</span><span class="p">)</span>
+            <span class="n">trial</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">r_l</span><span class="p">,</span><span class="n">r_u</span><span class="p">)</span>            
+            <span class="n">trial</span><span class="o">.</span><span class="n">logL</span> <span class="o">=</span> <span class="n">log_likelihood</span><span class="p">(</span><span class="n">trial</span><span class="p">)</span>
+            <span class="c">#print &quot;Trial likelihood for point&quot;+&quot; &quot;+str(count)+&quot;: &quot;+str(trial.logL)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">number</span><span class="o">+=</span><span class="mi">1</span>
+
+            <span class="k">if</span><span class="p">(</span><span class="n">trial</span><span class="o">.</span><span class="n">logL</span> <span class="o">&gt;</span> <span class="n">max_likelihood</span><span class="p">):</span>
+                <span class="n">clust</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="n">trial</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">max_likelihood</span> <span class="o">=</span> <span class="n">trial</span><span class="o">.</span><span class="n">logL</span>
+                <span class="k">break</span>
+                                
+            <span class="n">count</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="c">#if(clust.logL &gt; self.LC):</span>
+            <span class="c">#print &quot;Found the point with likelihood greater than : &quot;+ str(self.LC) </span>
+        
+        <span class="k">return</span> <span class="n">clust</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">number</span>     
+             
+       </div></div>
+<div class="viewcode-block" id="Ellipsoid"><a class="viewcode-back" href="../sources.html#sources.Ellipsoid">[docs]</a><span class="k">class</span> <span class="nc">Ellipsoid</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An Implementation of minimum bounding ellipsoids for use in Ellipsoidal methods.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    clpoints : array</span>
+<span class="sd">       array of points</span>
+<span class="sd">    centroid : array</span>
+<span class="sd">       centroid of the ellipsoid</span>
+<span class="sd">    enlargement_factor : float</span>
+<span class="sd">       factor of enlargement</span>
+<span class="sd">    covariance_matrix : array</span>
+<span class="sd">       covariance matrix of the points of the ellipsoid</span>
+<span class="sd">    inv_cov_mat : array</span>
+<span class="sd">       inverse covariance matrix of the points of the ellipsoid</span>
+<span class="sd">    volume : float</span>
+<span class="sd">       Volume of the ellipsoid</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [1] Multinest paper by Feroz and Hobson 2008.</span>
+<span class="sd">    .. [2] Shaw R., Bridges M., Hobson M.P., 2007, MNRAS, in press (astro-ph/0701867)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">enlargement_factor</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the ellipsoid object</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        points : array</span>
+<span class="sd">            The point set for the minimum bounding ellipsoid</span>
+<span class="sd">        enlargement_factor : float</span>
+<span class="sd">            Enlargement factor for better sampling</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clpoints</span> <span class="o">=</span> <span class="n">points</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">points</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enlargement_factor</span> <span class="o">=</span> <span class="n">enlargement_factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_cov</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centroid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clpoints</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inv_cov_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">volume</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_volume</span><span class="p">()</span>
+        
+
+<div class="viewcode-block" id="Ellipsoid.build_cov"><a class="viewcode-back" href="../sources.html#sources.Ellipsoid.build_cov">[docs]</a>    <span class="k">def</span> <span class="nf">build_cov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">clpoints</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Builds the scaled covariance matrix such that the ellipsoid encloses all the points.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        center : array</span>
+<span class="sd">            The centroid of the point cluster </span>
+<span class="sd">        clpoints : array</span>
+<span class="sd">            The point set of interest</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cov_mat : array</span>
+<span class="sd">            Scaled covariance matrix  </span>
+
+<span class="sd">        &quot;&quot;&quot;</span> 
+
+        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">clpoints</span><span class="p">)</span>
+        <span class="n">transformed</span> <span class="o">=</span> <span class="n">points</span> <span class="o">-</span> <span class="n">center</span>
+        <span class="n">cov_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">transformed</span><span class="p">,</span> <span class="n">rowvar</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">inv_cov_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">cov_mat</span><span class="p">)</span>
+        <span class="n">pars</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">transformed</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span> <span class="n">inv_cov_mat</span><span class="p">),</span> <span class="n">transformed</span><span class="p">[</span><span class="n">i</span><span class="p">,:])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">transformed</span><span class="p">))]</span>
+        <span class="n">pars</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pars</span><span class="p">)</span>
+        <span class="n">scale_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">pars</span><span class="p">)</span>
+        <span class="n">cov_mat</span> <span class="o">=</span> <span class="n">cov_mat</span><span class="o">*</span><span class="n">scale_factor</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">enlargement_factor</span>
+        <span class="k">return</span> <span class="n">cov_mat</span>
+
+</div>
+<div class="viewcode-block" id="Ellipsoid.sample"><a class="viewcode-back" href="../sources.html#sources.Ellipsoid.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_points</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method to sample points inside the ellipsoid</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_points : int</span>
+<span class="sd">            Number of points to sample</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        points : array</span>
+<span class="sd">            The array of sampled points     </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+
+        <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_points</span><span class="p">,</span> <span class="n">dim</span><span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">values</span><span class="p">,</span> <span class="n">vects</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eig</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">)</span>
+        <span class="n">x_l</span><span class="p">,</span> <span class="n">x_u</span> <span class="o">=</span> <span class="n">getPrior_X</span><span class="p">()</span>
+        <span class="n">y_l</span><span class="p">,</span> <span class="n">y_u</span> <span class="o">=</span> <span class="n">getPrior_Y</span><span class="p">()</span>
+        <span class="n">r_l</span><span class="p">,</span> <span class="n">r_u</span> <span class="o">=</span> <span class="n">getPrior_R</span><span class="p">()</span>
+        <span class="n">a_l</span><span class="p">,</span> <span class="n">a_u</span> <span class="o">=</span> <span class="n">getPrior_A</span><span class="p">()</span>        
+        <span class="c">#print str(values)</span>
+        <span class="n">scaled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vects</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">values</span><span class="p">))))</span>
+        <span class="c">#print str(scaled)</span>
+        <span class="n">bord</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="bp">None</span>    
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_points</span><span class="p">):</span>
+            <span class="c">#count = 0</span>
+            <span class="k">while</span> <span class="n">bord</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">bord</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">randpt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+                <span class="n">point</span>  <span class="o">=</span> <span class="n">randpt</span><span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">dim</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">randpt</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+                <span class="n">new</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">scaled</span><span class="p">,</span> <span class="n">point</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span>
+
+                <span class="c">#print str(new)</span>
+
+                <span class="k">if</span><span class="p">(</span><span class="n">new</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">x_u</span> <span class="ow">or</span> <span class="n">new</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">x_l</span><span class="p">):</span> <span class="n">bord</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">new</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">y_u</span> <span class="ow">or</span> <span class="n">new</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">y_l</span><span class="p">):</span> <span class="n">bord</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="c">#count+=1</span>
+                <span class="c">#if(count &gt;=200): new = self.centroid</span>
+
+            <span class="n">bord</span> <span class="o">=</span> <span class="mi">1</span>     
+            <span class="n">points</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">points</span>
+
+    </div>
+<div class="viewcode-block" id="Ellipsoid.find_volume"><a class="viewcode-back" href="../sources.html#sources.Ellipsoid.find_volume">[docs]</a>    <span class="k">def</span> <span class="nf">find_volume</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The method to find the volume of ellipsoid</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        volume : float</span>
+<span class="sd">            volume of the ellipsoid under consideration</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">volume</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">)))</span><span class="o">/</span><span class="mf">2.</span>
+        <span class="k">return</span> <span class="n">volume</span> 
+
+</div></div>
+<div class="viewcode-block" id="run_source_detect"><a class="viewcode-back" href="../sources.html#sources.run_source_detect">[docs]</a><span class="k">def</span> <span class="nf">run_source_detect</span><span class="p">(</span><span class="n">samples</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">iterations</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">sample_method</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span> <span class="bp">None</span><span class="p">,</span><span class="n">noise_rms</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">disp</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span><span class="n">mode</span> <span class="o">=</span> <span class="s">&quot;Manual&quot;</span> <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The main method for Bayesian source detection. Runs and generates plots and histograms for posterior samples and</span>
+<span class="sd">    active samples. Outputs the source positions, posterior inferences and other details for reference and analysis.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    samples : int</span>
+<span class="sd">        Number of active samples for nested sampling</span>
+<span class="sd">    iterations : int</span>
+<span class="sd">        Maximum number of iterations for nested sampling</span>
+<span class="sd">    sample_method : str</span>
+<span class="sd">        The method for sampling. example : &quot;metropolis&quot;, &quot;uniform&quot;, &quot;clustered_ellipsoidal&quot;</span>
+<span class="sd">    prior : array</span>
+<span class="sd">        Prior distribution for all parameters of the sources</span>
+<span class="sd">    noise_rms : float</span>
+<span class="sd">        The RMS noise for modelling the likelihood function</span>
+<span class="sd">    disp : float</span>
+<span class="sd">        dispersion used in metropolis method</span>
+<span class="sd">    mode : str</span>
+<span class="sd">        Running mode</span>
+
+<span class="sd">        * &quot;Manual&quot; : Can be ran manually form the Command line . In this case all the above params are obtained</span>
+<span class="sd">                   from the config file.</span>
+<span class="sd">        * &quot;ipython&quot; : Can be ran independently from ipython console. In this case we have to provide all the parameters                        </span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Generates the following plots successively.</span>
+
+<span class="sd">        * X-histogram of the posterior samples </span>
+<span class="sd">        * Y-histogram of the posterior samples</span>
+<span class="sd">        * Scatter plot of the posterior samples in 2D i.e (X,Y)</span>
+<span class="sd">        * X-histogram of the active samples </span>
+<span class="sd">        * Y-histogram of the active samples</span>
+<span class="sd">        * Scatter plot of the active samples in 2D i.e (X,Y)</span>
+
+<span class="sd">    Outputs the posterior samples and the following information to ASCII file</span>
+<span class="sd">        </span>
+<span class="sd">        * Time elapsed</span>
+<span class="sd">        * Log evidence</span>
+<span class="sd">        * Number of iterations</span>
+<span class="sd">        * Number of likelihood evaluations                 </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">startTime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    
+    <span class="k">global</span> <span class="n">amplitude_upper</span>
+    <span class="k">global</span> <span class="n">amplitude_lower</span>
+    <span class="k">global</span> <span class="n">x_upper</span>
+    <span class="k">global</span> <span class="n">y_upper</span>
+    <span class="k">global</span> <span class="n">R_upper</span>
+    <span class="k">global</span> <span class="n">R_lower</span>
+    <span class="k">global</span> <span class="n">noise</span>
+    <span class="k">global</span> <span class="n">K</span>
+    <span class="k">global</span> <span class="n">dispersion</span>
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&quot;ipython&quot;</span><span class="p">:</span>
+        <span class="n">dispersion</span> <span class="o">=</span> <span class="n">disp</span>
+        <span class="n">amplitude_upper</span> <span class="o">=</span> <span class="n">prior</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">amplitude_lower</span> <span class="o">=</span> <span class="n">prior</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">x_upper</span> <span class="o">=</span> <span class="n">prior</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">y_upper</span> <span class="o">=</span> <span class="n">prior</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">R_upper</span> <span class="o">=</span> <span class="n">prior</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">R_lower</span> <span class="o">=</span> <span class="n">prior</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">noise</span>   <span class="o">=</span> <span class="n">noise_rms</span>  
+        <span class="n">K</span> <span class="o">=</span> <span class="p">(</span><span class="n">no_pixels</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">+</span> <span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">noise</span><span class="p">)))</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">samples</span>
+        <span class="n">max_iter</span> <span class="o">=</span> <span class="n">iterations</span>
+        <span class="n">sample_type</span> <span class="o">=</span> <span class="n">sample_method</span>
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&quot;Manual&quot;</span><span class="p">:</span>
+        <span class="n">dispersion</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;DISPERSION&#39;</span><span class="p">])</span>
+        <span class="n">amplitude_upper</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;A_PRIOR_UPPER&#39;</span><span class="p">])</span>
+        <span class="n">amplitude_lower</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;A_PRIOR_LOWER&#39;</span><span class="p">])</span>
+        <span class="c"># FIX : Don&#39;t forget to change</span>
+        <span class="n">x_upper</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;X_PRIOR_UPPER&#39;</span><span class="p">])</span>
+        <span class="n">y_upper</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;Y_PRIOR_UPPER&#39;</span><span class="p">])</span>
+        <span class="n">R_upper</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;R_PRIOR_UPPER&#39;</span><span class="p">])</span>
+        <span class="n">R_lower</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;R_PRIOR_LOWER&#39;</span><span class="p">])</span>
+        <span class="n">noise</span>   <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;NOISE&#39;</span><span class="p">])</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="p">(</span><span class="n">no_pixels</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">+</span> <span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">noise</span><span class="p">)))</span>
+        <span class="n">max_iter</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;MAX_ITER&#39;</span><span class="p">])</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;ACTIVE_POINTS&#39;</span><span class="p">])</span>
+        <span class="n">sample_type</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Config</span><span class="p">[</span><span class="s">&#39;SAMPLER&#39;</span><span class="p">])</span>
+
+    <span class="n">nested</span> <span class="o">=</span> <span class="n">Nested_Sampler</span><span class="p">(</span><span class="n">no_active_samples</span> <span class="o">=</span> <span class="n">n</span><span class="p">,</span> <span class="n">max_iter</span> <span class="o">=</span> <span class="n">max_iter</span><span class="p">,</span> <span class="n">sample</span> <span class="o">=</span> <span class="n">sample_type</span><span class="p">)</span>
+    <span class="n">out</span>  <span class="o">=</span> <span class="n">nested</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+    <span class="n">elapsedTime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">startTime</span>
+    <span class="k">print</span> <span class="s">&quot;elapsed time: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">elapsedTime</span><span class="p">)</span> 
+    <span class="k">print</span> <span class="s">&quot;log evidence: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s">&quot;logZ&quot;</span><span class="p">])</span>
+    <span class="k">print</span> <span class="s">&quot;number of iterations: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s">&quot;iterations&quot;</span><span class="p">])</span>
+    <span class="k">print</span> <span class="s">&quot;likelihood calculations: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s">&quot;likelihood_calculations&quot;</span><span class="p">])</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s">&quot;samples&quot;</span><span class="p">])</span>
+    <span class="n">srcdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s">&quot;src&quot;</span><span class="p">])</span>
+    <span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s">&quot;posterior&quot;</span><span class="p">)</span>
+    <span class="n">outX</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">X</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">out</span><span class="p">[</span><span class="s">&quot;samples&quot;</span><span class="p">]]</span>
+    <span class="n">outY</span> <span class="o">=</span> <span class="p">[</span><span class="n">height</span><span class="o">-</span><span class="n">i</span><span class="o">.</span><span class="n">Y</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">out</span><span class="p">[</span><span class="s">&quot;samples&quot;</span><span class="p">]]</span>   
+
+    <span class="n">plot_histogram</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">outX</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">width</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s">&quot;X_histogram of posterior samples&quot;</span><span class="p">)</span>
+    <span class="n">plot_histogram</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">outY</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">height</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s">&quot;Y_histogram of posterior samples&quot;</span><span class="p">)</span>
+    <span class="n">show_scatterplot</span><span class="p">(</span><span class="n">outX</span><span class="p">,</span><span class="n">outY</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span> <span class="s">&quot;Scatter plot of posterior samples&quot;</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">)</span>
+
+    <span class="n">outsrcX</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">X</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">out</span><span class="p">[</span><span class="s">&quot;src&quot;</span><span class="p">]]</span>
+    <span class="n">outsrcY</span> <span class="o">=</span> <span class="p">[</span><span class="n">height</span><span class="o">-</span><span class="n">i</span><span class="o">.</span><span class="n">Y</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">out</span><span class="p">[</span><span class="s">&quot;src&quot;</span><span class="p">]]</span>
+    <span class="n">plot_histogram</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">outsrcX</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">width</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&quot;Xsrc&quot;</span><span class="p">)</span>
+    <span class="n">plot_histogram</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">outsrcY</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">height</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&quot;Ysrc&quot;</span><span class="p">)</span>
+    <span class="n">show_scatterplot</span><span class="p">(</span><span class="n">outsrcX</span><span class="p">,</span><span class="n">outsrcY</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span> <span class="s">&quot;Scatter plot of sources&quot;</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">)</span>
+
+</div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">run_source_detect</span><span class="p">(</span><span class="n">mode</span> <span class="o">=</span> <span class="s">&quot;Manual&quot;</span> <span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">src  documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

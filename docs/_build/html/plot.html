@@ -1,0 +1,382 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>plot module &mdash; src  documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="src  documentation" href="index.html" />
+    <link rel="next" title="sources module" href="sources.html" />
+    <link rel="prev" title="Welcome to src’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sources.html" title="sources module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to src’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">src  documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-plot">
+<span id="plot-module"></span><h1>plot module<a class="headerlink" href="#module-plot" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="plot.add_gaussian_noise">
+<tt class="descclassname">plot.</tt><tt class="descname">add_gaussian_noise</tt><big>(</big><em>mean</em>, <em>sd</em>, <em>data</em><big>)</big><a class="reference internal" href="_modules/plot.html#add_gaussian_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.add_gaussian_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds indpendent gaussian noise of given rms units</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>mean</strong> : float</p>
+<blockquote>
+<div><p>Mean of the gaussian . We mostly use zero</p>
+</div></blockquote>
+<p><strong>sd</strong> : float</p>
+<blockquote>
+<div><p>Standard deviation (i.e RMS) of the noise</p>
+</div></blockquote>
+<p><strong>data</strong> : array</p>
+<blockquote>
+<div><p>data to which the noise is added</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>noised</strong> : array</p>
+<blockquote class="last">
+<div><p>noised data</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="plot.affine_transform">
+<tt class="descclassname">plot.</tt><tt class="descname">affine_transform</tt><big>(</big><em>vertices</em>, <em>transform</em><big>)</big><a class="headerlink" href="#plot.affine_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="plot.count_bboxes_overlapping_bbox">
+<tt class="descclassname">plot.</tt><tt class="descname">count_bboxes_overlapping_bbox</tt><big>(</big><em>bbox</em>, <em>bboxes</em><big>)</big><a class="headerlink" href="#plot.count_bboxes_overlapping_bbox" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="plot.make_random_source">
+<tt class="descclassname">plot.</tt><tt class="descname">make_random_source</tt><big>(</big><em>limits</em>, <em>width</em>, <em>height</em>, <em>number_of_sources</em><big>)</big><a class="reference internal" href="_modules/plot.html#make_random_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.make_random_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes an Image with randomly distributed sources</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>limits</strong> : 2Darray</p>
+<blockquote>
+<div><p>prior limits</p>
+</div></blockquote>
+<p><strong>width</strong> : int</p>
+<blockquote>
+<div><p>width of the image</p>
+</div></blockquote>
+<p><strong>length</strong> : int</p>
+<blockquote>
+<div><p>length of the image</p>
+</div></blockquote>
+<p><strong>number_of_sources</strong> : int</p>
+<blockquote>
+<div><p>Number of sources</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>z</strong> : array</p>
+<blockquote class="last">
+<div><p>Source Image</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="plot.make_source">
+<tt class="descclassname">plot.</tt><tt class="descname">make_source</tt><big>(</big><em>src_array</em>, <em>height</em>, <em>width</em><big>)</big><a class="reference internal" href="_modules/plot.html#make_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.make_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the source image with numpy format</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>src_array</strong> : array</p>
+<blockquote>
+<div><p>Array of source objects</p>
+</div></blockquote>
+<p><strong>height</strong> : int</p>
+<blockquote>
+<div><p>height of the image</p>
+</div></blockquote>
+<p><strong>width</strong> : int</p>
+<blockquote>
+<div><p>width of the image</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>z</strong> : array</p>
+<blockquote class="last">
+<div><p>Source image in numpy format</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="plot.plot_ellipse">
+<tt class="descclassname">plot.</tt><tt class="descname">plot_ellipse</tt><big>(</big><em>num_points=100</em><big>)</big><a class="reference internal" href="_modules/plot.html#plot_ellipse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.plot_ellipse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots minimum bounding ellipse around a set of points</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>num_points</strong> : int</p>
+<blockquote class="last">
+<div><p>number of points around which ellipse is to be built</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="plot.plot_histogram">
+<tt class="descclassname">plot.</tt><tt class="descname">plot_histogram</tt><big>(</big><em>data</em>, <em>bins</em>, <em>title</em><big>)</big><a class="reference internal" href="_modules/plot.html#plot_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.plot_histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shows the histogram of a 1D data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : array</p>
+<blockquote>
+<div><p>data to be shown in histogram format</p>
+</div></blockquote>
+<p><strong>bins</strong> : int</p>
+<blockquote>
+<div><p>number of bins to hold</p>
+</div></blockquote>
+<p><strong>title</strong> : str</p>
+<blockquote class="last">
+<div><p>title of the plot</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="plot.show_samples">
+<tt class="descclassname">plot.</tt><tt class="descname">show_samples</tt><big>(</big><em>height</em>, <em>width</em>, <em>samples</em><big>)</big><a class="reference internal" href="_modules/plot.html#show_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.show_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show samples according to their likelihood.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>height</strong> : int</p>
+<blockquote>
+<div><p>Height of the image</p>
+</div></blockquote>
+<p><strong>width</strong> : int</p>
+<blockquote>
+<div><p>width of the image</p>
+</div></blockquote>
+<p><strong>samples</strong> : array</p>
+<blockquote class="last">
+<div><p>Array of samples to plot according to their likelihood</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="plot.show_scatterplot">
+<tt class="descclassname">plot.</tt><tt class="descname">show_scatterplot</tt><big>(</big><em>X</em>, <em>Y</em>, <em>title</em>, <em>height</em>, <em>width</em><big>)</big><a class="reference internal" href="_modules/plot.html#show_scatterplot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.show_scatterplot" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : array</p>
+<blockquote>
+<div><p>x coordinates of the data</p>
+</div></blockquote>
+<p><strong>Y</strong> : array</p>
+<blockquote>
+<div><p>y coordinates of the above data. Same shape as above</p>
+</div></blockquote>
+<p><strong>title</strong> : str</p>
+<blockquote>
+<div><p>title of the scatter plot</p>
+</div></blockquote>
+<p><strong>height</strong> : int</p>
+<blockquote>
+<div><p>height limit of the scatter plot</p>
+</div></blockquote>
+<p><strong>width</strong> : int</p>
+<blockquote class="last">
+<div><p>width limit of the scatter plot</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="plot.show_source">
+<tt class="descclassname">plot.</tt><tt class="descname">show_source</tt><big>(</big><em>height</em>, <em>width</em>, <em>sources</em><big>)</big><a class="reference internal" href="_modules/plot.html#show_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.show_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shows a 2D xy plot of the sources characterized by parameters [X, Y, A, R]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>height</strong> : int</p>
+<blockquote>
+<div><p>Height of the image</p>
+</div></blockquote>
+<p><strong>width</strong> : int</p>
+<blockquote>
+<div><p>width of the image</p>
+</div></blockquote>
+<p><strong>sources</strong> : array</p>
+<blockquote class="last">
+<div><p>Array of source objects to show</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="plot.update_path_extents">
+<tt class="descclassname">plot.</tt><tt class="descname">update_path_extents</tt><big>(</big><em>path</em>, <em>trans</em>, <em>bbox</em>, <em>minpos</em><big>)</big><a class="headerlink" href="#plot.update_path_extents" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="plot.write">
+<tt class="descclassname">plot.</tt><tt class="descname">write</tt><big>(</big><em>data</em>, <em>out</em><big>)</big><a class="reference internal" href="_modules/plot.html#write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes an array to a pickle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : array</p>
+<blockquote>
+<div><p>Array to be stored</p>
+</div></blockquote>
+<p><strong>out</strong> : str</p>
+<blockquote class="last">
+<div><p>The location to be stored at</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to src&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sources.html"
+                        title="next chapter">sources module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/plot.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sources.html" title="sources module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to src’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">src  documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
