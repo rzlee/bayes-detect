@@ -11,6 +11,7 @@ import pickle
 import copy
 import warnings
 from scipy.cluster.vq import kmeans2
+from sklearn.cluster import DBSCAN
 import os
 
 #Reading the Image data from fits file
@@ -413,7 +414,7 @@ class Nested_Sampler(object):
             self.log_evidence = temp_evidence
 
             stopping = self.active_samples[largest].logL + self.log_width - self.log_evidence 
-            print str(stopping) 
+            #print str(stopping) 
 
             if stopping < self.convergence_threshold:
                 break
@@ -864,8 +865,12 @@ class Clustered_Sampler(object):
         
         """
         
-        centroid, labels = kmeans2(activepoint_set, 5)
-        number_of_clusters = len(centroid)  
+        db = DBSCAN(eps=10, min_samples=10).fit(activepoint_set)
+        labels = db.labels_
+        number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+        #print str(labels)
+        #centroid, labels = kmeans2(activepoint_set, 5)
+        #number_of_clusters = len(centroid)  
         return number_of_clusters, labels, activepoint_set    
 
 
@@ -896,11 +901,11 @@ class Clustered_Sampler(object):
                               enlargement_factor = 1.5)#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))
                 except np.linalg.linalg.LinAlgError:
                     ellipsoids[i] = None
-                    print str(i)
+                    #print str(i)
                     invalid.append(i)
             else:
                 ellipsoids[i] = None
-                print str(i)
+                #print str(i)
                 invalid.append(i)
         ellipsoids = np.delete(ellipsoids, invalid)
         print len(ellipsoids)         
@@ -910,7 +915,7 @@ class Clustered_Sampler(object):
     def recursive_bounding_ellipsoids(self, data, ellipsoid=None):
 
         """
-        Implementation of finding minimum bounding ellipsoids recursively.
+        Implementation of finding minimum bounding ellipsoids recursively. (work in progress) 
 
         Parameters
         ----------
@@ -965,16 +970,16 @@ class Clustered_Sampler(object):
 
         """
 
-        vols = np.array([i.volume for i in self.ellipsoid_set])
-        vols = vols/np.max(vols)
+        #vols = np.array([i.volume for i in self.ellipsoid_set])
+        #vols = vols/np.max(vols)
         arbit = np.random.uniform(0,1)
         trial = Source()
         clust = Source()
-        z =None
-        for i in range(len(vols)):
-            if(arbit<=vols[i]):
-                z = i
-                break
+        z = int(len(self.ellipsoid_set)*arbit)
+        #for i in range(len(vols)):
+        #    if(arbit<=vols[i]):
+        #        z = i
+        #        break
         #print "Sampling from ellipsoid : "+ str(z)        
         points = self.ellipsoid_set[z].sample(n_points=50)
         max_likelihood = self.LC
@@ -1049,7 +1054,7 @@ class Ellipsoid(object):
         self.enlargement_factor = enlargement_factor
         self.covariance_matrix = self.build_cov(self.centroid, self.clpoints)
         self.inv_cov_mat = np.linalg.inv(self.covariance_matrix)
-        self.volume = self.find_volume()
+        #self.volume = self.find_volume()
         
 
     def build_cov(self, center, clpoints):
@@ -1206,6 +1211,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
     global noise
     global K
     global dispersion
+    global output_loc 
 
     if mode == "ipython":
         dispersion = disp
@@ -1220,6 +1226,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         n = samples
         max_iter = iterations
         sample_type = sample_method
+        output_loc = 'C:\Users\chaithuzz2\Desktop\Bayes_detect\output\samples.dat'
 
     if mode == "Manual":
         dispersion = float(Config['DISPERSION'])
@@ -1235,7 +1242,9 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         max_iter = int(Config['MAX_ITER'])
         n = int(Config['ACTIVE_POINTS'])
         sample_type = str(Config['SAMPLER'])
-
+        output_loc = str(Config['OUTPUT_DATA_PATH'])
+    
+    print output_loc 
     nested = Nested_Sampler(no_active_samples = n, max_iter = max_iter, sample = sample_type)
     out  = nested.fit()
 
@@ -1253,7 +1262,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
     R = np.array([i.R for i in data])
     logL = np.array([i.logL for i in data])
 
-    ascii.write([X, Y, A, R, logL], 'output/samples.dat', names=['X', 'Y', 'A', 'R', 'logL']) 
+    ascii.write([X, Y, A, R, logL], output_loc, names=['X', 'Y', 'A', 'R', 'logL']) 
 
     srcdata = np.array(out["src"])
     
