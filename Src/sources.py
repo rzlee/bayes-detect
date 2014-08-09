@@ -14,12 +14,6 @@ from scipy.cluster.vq import kmeans2
 from sklearn.cluster import DBSCAN
 import os
 
-#Reading the Image data from fits file
-#fitsFile = "simulated_images/multinest_toy"
-
-#hdulist   = fits.open(fitsFile)
-#data_map   = (hdulist[0].data)"""
-
 Config = {}
 
 try:
@@ -41,9 +35,18 @@ for line in Lines:
          
 File = (Config['IMAGE_PATH'])
 
-s = open(File,'r')
-data_map = pickle.load(s)
-s.close()
+mode = Config['MODE']
+
+data_map = None
+
+if mode == "fits":
+    hdulist   = fits.open(File)
+    data_map   = (hdulist[0].data)
+
+if mode == "numpy":
+    s = open(File,'r')
+    data_map = pickle.load(s)
+    s.close()
 
 height, width = len(data_map), len(data_map[0])
 no_pixels = width*height
