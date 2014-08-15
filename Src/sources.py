@@ -16,37 +16,53 @@ import os
 
 Config = {}
 
+config_found = 1
+
+data_map = None
+
 try:
     ConfigFile = open(os.path.dirname(os.path.realpath(__file__))+"\config.cfg", "r")
 except IndexError:
     print "Can't find the config file"
+    config_found = 0
 
-Lines = ConfigFile.readlines()
+if config_found==1:
+    Lines = ConfigFile.readlines()
 
-for line in Lines:
-    if line[0]=='#' or line[0]=='\n':
-        pass
-    else:
-        try:
-            Config[line.split('=')[0]]= line.split('=')[1].rstrip()
-        except IndexError:
+    for line in Lines:
+        if line[0]=='#' or line[0]=='\n':
             pass
+        else:
+            try:
+                Config[line.split('=')[0]]= line.split('=')[1].rstrip()
+            except IndexError:
+                pass
 
          
-File = (Config['IMAGE_PATH'])
+    File = (Config['IMAGE_PATH'])
 
-mode = Config['MODE']
+    if File[-5:] == '.fits':
+        hdulist   = fits.open(File)
+        data_map   = (hdulist[0].data)
 
-data_map = None
+    if File[-5:] != '.fits':
+        s = open(File,'r')
+        data_map = pickle.load(s)
+        s.close()
 
-if mode == "fits":
-    hdulist   = fits.open(File)
-    data_map   = (hdulist[0].data)
+if config_found==0:
+    
+    File = "C:/Users/chaithuzz2/Desktop/Bayes_detect/assets/simulated_images/ufig_20_g_gal_sub_500_sub_small.fits"
 
-if mode == "numpy":
-    s = open(File,'r')
-    data_map = pickle.load(s)
-    s.close()
+    if File[-5:] == '.fits':
+        hdulist   = fits.open(File)
+        data_map   = (hdulist[0].data)
+
+    if File[-5:] != '.fits':
+        s = open(File,'r')
+        data_map = pickle.load(s)
+        s.close()
+
 
 height, width = len(data_map), len(data_map[0])
 no_pixels = width*height
@@ -153,8 +169,9 @@ def sample_source():
     Returns
     -------
     src : object
-        The source object with X,Y,A,R sampled from their prior distribution and log likelihood calculated.     
+        The source object with X,Y,A,R sampled from their prior distribution and log likelihood calculated.
 
+    
     """
 
     src = Source()
@@ -287,6 +304,10 @@ def read(filename):
     data = pickle.load(f)
     f.close()
     return data
+
+#---------------------------------------------------------------------------------------------------------------
+#                                     MAIN NESTED SAMPLER CLASS
+#---------------------------------------------------------------------------------------------------------------
 
 
 class Nested_Sampler(object):
@@ -566,6 +587,9 @@ class Nested_Sampler(object):
         return evolved, number      
 
 
+#---------------------------------------------------------------------------------------------------------------
+#                                     UNIFORM SAMPLER
+#---------------------------------------------------------------------------------------------------------------
 
 
 
@@ -636,6 +660,10 @@ class uniform_sampler(object):
                 break
                         
         return new, self.number
+
+#---------------------------------------------------------------------------------------------------------------
+#                                     METROPOLIS SAMPLER
+#---------------------------------------------------------------------------------------------------------------
 
 
 class Metropolis_sampler(object):
@@ -759,6 +787,10 @@ class Metropolis_sampler(object):
         return metro, self.number
 
 
+#---------------------------------------------------------------------------------------------------------------
+#                                     CLUSTERED ELLIPSOIDAL SAMPLER
+#---------------------------------------------------------------------------------------------------------------
+
 
 
 class Clustered_Sampler(object):
@@ -868,7 +900,7 @@ class Clustered_Sampler(object):
         
         """
         
-        db = DBSCAN(eps=10, min_samples=10).fit(activepoint_set)
+        db = DBSCAN(eps=6, min_samples=10).fit(activepoint_set)
         labels = db.labels_
         number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
         #print str(labels)
@@ -901,7 +933,7 @@ class Clustered_Sampler(object):
             if len(clust_points[i]) > 1:
                 try:
                     ellipsoids[i] = Ellipsoid(points=clust_points[i],
-                              enlargement_factor = 1.5)#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))
+                              enlargement_factor = 2.0)#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))
                 except np.linalg.linalg.LinAlgError:
                     ellipsoids[i] = None
                     #print str(i)
@@ -973,17 +1005,22 @@ class Clustered_Sampler(object):
 
         """
 
-        #vols = np.array([i.volume for i in self.ellipsoid_set])
-        #vols = vols/np.max(vols)
+        #vols = np.array([len(i.clpoints) for i in self.ellipsoid_set])
+        #print str(vols)
+        #print str(np.sum(vols))
+        #vols = vols/np.sum(vols)
+        #print str(np.sum(vols))
         arbit = np.random.uniform(0,1)
         trial = Source()
         clust = Source()
-        z = int(len(self.ellipsoid_set)*arbit)
+        z = int((len(self.ellipsoid_set))*arbit)
+        #z = None
         #for i in range(len(vols)):
         #    if(arbit<=vols[i]):
         #        z = i
         #        break
-        #print "Sampling from ellipsoid : "+ str(z)        
+        #print "Sampling from ellipsoid : "+ str(z)
+        #print str(z)        
         points = self.ellipsoid_set[z].sample(n_points=50)
         max_likelihood = self.LC
         #print "likelihood_constraint: "+str(max_likelihood)
@@ -1010,6 +1047,11 @@ class Clustered_Sampler(object):
         
         return clust,self.number     
              
+
+#---------------------------------------------------------------------------------------------------------------
+#                                     ELLIPSOID CLASS
+#---------------------------------------------------------------------------------------------------------------
+
        
 class Ellipsoid(object):
 
