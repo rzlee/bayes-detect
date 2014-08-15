@@ -10,7 +10,7 @@ from scipy import stats
 
 
 #Reading the Image data from fits file
-fitsFile = 'C:/Users/chaithuzz2/Desktop/Bayes_detect/assets/simulated_images/ufig_20_g_sub_500_sub_small.fits'
+fitsFile = 'C:/Users/chaithuzz2/Desktop/Bayes_detect/assets/simulated_images/ufig_20_g_gal_sub_500_sub_small.fits'
 
 hdulist   = fits.open(fitsFile)
 data_map   = (hdulist[0].data)
