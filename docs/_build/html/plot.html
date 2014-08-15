@@ -84,6 +84,26 @@
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">plot</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">srces</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">43.71</span><span class="p">,</span> <span class="mf">22.91</span><span class="p">,</span> <span class="mf">10.54</span><span class="p">,</span> <span class="mf">3.34</span><span class="p">],</span>
+<span class="go">            [101.62, 40.60, 1.37, 3.40],</span>
+<span class="go">            [92.63, 110.56, 1.81, 3.66],</span>
+<span class="go">            [183.60, 85.90, 1.23, 5.06],</span>
+<span class="go">            [34.12, 162.54, 1.95, 6.02],</span>
+<span class="go">            [153.87, 169.18, 1.06, 6.61],</span>
+<span class="go">            [155.54, 32.14, 1.46, 4.05],</span>
+<span class="go">            [130.56, 183.48, 1.63, 4.11]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">height</span> <span class="o">=</span> <span class="mi">200</span><span class="n">a</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">width</span> <span class="o">=</span> <span class="mi">200</span>            
+<span class="gp">&gt;&gt;&gt; </span><span class="n">im_data</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">make_source</span><span class="p">(</span><span class="n">srces</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>            
+<span class="gp">&gt;&gt;&gt; </span><span class="n">z</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">add_gaussian_noise</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">im_data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//plot-1.py">Source code</a>, <a class="reference external" href=".//plot-1.png">png</a>, <a class="reference external" href=".//plot-1.hires.png">hires.png</a>, <a class="reference external" href=".//plot-1.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="_images/plot-1.png" src="_images/plot-1.png" />
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -130,6 +150,19 @@
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">plot</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lim</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">200.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">200.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">14.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">height</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">width</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">number_src</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">z</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">make_random_source</span><span class="p">(</span><span class="n">lim</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">number_src</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//plot-2.py">Source code</a>, <a class="reference external" href=".//plot-2.png">png</a>, <a class="reference external" href=".//plot-2.hires.png">hires.png</a>, <a class="reference external" href=".//plot-2.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="_images/plot-2.png" src="_images/plot-2.png" />
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -162,24 +195,54 @@
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">plot</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">height</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">width</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">srces</span> <span class="o">=</span>  <span class="p">[[</span><span class="mf">43.71</span><span class="p">,</span> <span class="mf">22.91</span><span class="p">,</span> <span class="mf">10.54</span><span class="p">,</span> <span class="mf">3.34</span><span class="p">],</span>
+<span class="go">              [101.62, 40.60, 1.37, 3.40],</span>
+<span class="go">              [92.63, 110.56, 1.81, 3.66],</span>
+<span class="go">              [183.60, 85.90, 1.23, 5.06],</span>
+<span class="go">              [34.12, 162.54, 1.95, 6.02],</span>
+<span class="go">              [153.87, 169.18, 1.06, 6.61],</span>
+<span class="go">              [155.54, 32.14, 1.46, 4.05],</span>
+<span class="go">              [130.56, 183.48, 1.63, 4.11]] </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">im_data</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">make_source</span><span class="p">(</span><span class="n">srces</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//plot-3.py">Source code</a>, <a class="reference external" href=".//plot-3.png">png</a>, <a class="reference external" href=".//plot-3.hires.png">hires.png</a>, <a class="reference external" href=".//plot-3.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="_images/plot-3.png" src="_images/plot-3.png" />
+</div>
 </dd></dl>
 
 <dl class="function">
 <dt id="plot.plot_ellipse">
-<tt class="descclassname">plot.</tt><tt class="descname">plot_ellipse</tt><big>(</big><em>num_points=100</em><big>)</big><a class="reference internal" href="_modules/plot.html#plot_ellipse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.plot_ellipse" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">plot.</tt><tt class="descname">plot_ellipse</tt><big>(</big><em>points</em><big>)</big><a class="reference internal" href="_modules/plot.html#plot_ellipse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.plot_ellipse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots minimum bounding ellipse around a set of points</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>num_points</strong> : int</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>points</strong> : 2Darray</p>
 <blockquote class="last">
-<div><p>number of points around which ellipse is to be built</p>
+<div><p>Two dimensional array for plotting the ellipse</p>
 </div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">plot</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plot</span><span class="o">.</span><span class="n">plot_ellipse</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//plot-4.py">Source code</a>, <a class="reference external" href=".//plot-4.png">png</a>, <a class="reference external" href=".//plot-4.hires.png">hires.png</a>, <a class="reference external" href=".//plot-4.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="_images/plot-4.png" src="_images/plot-4.png" />
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -206,32 +269,17 @@
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="function">
-<dt id="plot.show_samples">
-<tt class="descclassname">plot.</tt><tt class="descname">show_samples</tt><big>(</big><em>height</em>, <em>width</em>, <em>samples</em><big>)</big><a class="reference internal" href="_modules/plot.html#show_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plot.show_samples" title="Permalink to this definition">¶</a></dt>
-<dd><p>Show samples according to their likelihood.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>height</strong> : int</p>
-<blockquote>
-<div><p>Height of the image</p>
-</div></blockquote>
-<p><strong>width</strong> : int</p>
-<blockquote>
-<div><p>width of the image</p>
-</div></blockquote>
-<p><strong>samples</strong> : array</p>
-<blockquote class="last">
-<div><p>Array of samples to plot according to their likelihood</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">plot</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">400</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plot</span><span class="o">.</span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="s">&quot;Histogram demo&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//plot-5.py">Source code</a>, <a class="reference external" href=".//plot-5.png">png</a>, <a class="reference external" href=".//plot-5.hires.png">hires.png</a>, <a class="reference external" href=".//plot-5.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="_images/plot-5.png" src="_images/plot-5.png" />
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -265,6 +313,18 @@
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">plot</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">400</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">400</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plot</span><span class="o">.</span><span class="n">show_scatterplot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="s">&quot;scatter plot demo&quot;</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//plot-6.py">Source code</a>, <a class="reference external" href=".//plot-6.png">png</a>, <a class="reference external" href=".//plot-6.hires.png">hires.png</a>, <a class="reference external" href=".//plot-6.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="_images/plot-6.png" src="_images/plot-6.png" />
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -291,6 +351,27 @@
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">plot</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sources</span> <span class="kn">import</span> <span class="n">Source</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">height</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">width</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Sources</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">a</span> <span class="o">=</span> <span class="n">Source</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">a</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">200.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">a</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">200.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">a</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">a</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">Sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> 
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plot</span><span class="o">.</span><span class="n">show_source</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">Sources</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//plot-7.py">Source code</a>, <a class="reference external" href=".//plot-7.png">png</a>, <a class="reference external" href=".//plot-7.hires.png">hires.png</a>, <a class="reference external" href=".//plot-7.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="_images/plot-7.png" src="_images/plot-7.png" />
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -318,6 +399,14 @@
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">plot</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">path</span> <span class="o">=</span> <span class="s">&quot;output&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plot</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>    
+</pre></div>
+</div>
 </dd></dl>
 
 </div>

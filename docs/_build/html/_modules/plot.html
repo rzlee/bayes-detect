@@ -55,7 +55,7 @@
 <span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="n">figure</span><span class="p">,</span><span class="n">show</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
-<span class="kn">import</span> <span class="nn">sources</span> 
+
 
 
 <div class="viewcode-block" id="show_source"><a class="viewcode-back" href="../plot.html#plot.show_source">[docs]</a><span class="k">def</span> <span class="nf">show_source</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">sources</span><span class="p">):</span>
@@ -71,6 +71,42 @@
 <span class="sd">        width of the image</span>
 <span class="sd">    sources : array</span>
 <span class="sd">        Array of source objects to show</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import plot</span>
+<span class="sd">    &gt;&gt;&gt; from sources import Source</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; height = 200</span>
+<span class="sd">    &gt;&gt;&gt; width = 200</span>
+<span class="sd">    &gt;&gt;&gt; Sources = []</span>
+<span class="sd">    &gt;&gt;&gt; for i in range(4):</span>
+<span class="sd">    &gt;&gt;&gt;     a = Source()</span>
+<span class="sd">    &gt;&gt;&gt;     a.X = np.random.uniform(0.0, 200.0)</span>
+<span class="sd">    &gt;&gt;&gt;     a.Y = np.random.uniform(0.0, 200.0)</span>
+<span class="sd">    &gt;&gt;&gt;     a.A = np.random.uniform(1.0, 15.0)</span>
+<span class="sd">    &gt;&gt;&gt;     a.R = np.random.uniform(2.0, 9.0)</span>
+<span class="sd">    &gt;&gt;&gt;     Sources.append(a) </span>
+<span class="sd">    &gt;&gt;&gt; plot.show_source(height, width, Sources)</span>
+<span class="sd">    </span>
+<span class="sd">    .. plot::</span>
+
+<span class="sd">        import plot</span>
+<span class="sd">        from sources import Source</span>
+<span class="sd">        import numpy as np</span>
+<span class="sd">        height = 200</span>
+<span class="sd">        width = 200</span>
+<span class="sd">        Sources = []</span>
+<span class="sd">        for i in range(4):</span>
+<span class="sd">            a = Source()</span>
+<span class="sd">            a.X = np.random.uniform(0.0, 200.0)</span>
+<span class="sd">            a.Y = np.random.uniform(0.0, 200.0)</span>
+<span class="sd">            a.A = np.random.uniform(1.0, 15.0)</span>
+<span class="sd">            a.R = np.random.uniform(2.0, 9.0)</span>
+<span class="sd">            Sources.append(a) </span>
+<span class="sd">        plot.show_source(height, width, Sources)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -81,33 +117,6 @@
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
         <span class="n">z</span> <span class="o">+=</span> <span class="n">i</span><span class="o">.</span><span class="n">A</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="p">((</span><span class="n">xx</span><span class="o">-</span><span class="n">i</span><span class="o">.</span><span class="n">X</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">yy</span><span class="o">-</span><span class="n">i</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">R</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-
-</div>
-<div class="viewcode-block" id="show_samples"><a class="viewcode-back" href="../plot.html#plot.show_samples">[docs]</a><span class="k">def</span> <span class="nf">show_samples</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">samples</span><span class="p">):</span>
-
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Show samples according to their likelihood.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    height : int</span>
-<span class="sd">        Height of the image</span>
-<span class="sd">    width : int</span>
-<span class="sd">        width of the image    </span>
-<span class="sd">    samples : array</span>
-<span class="sd">        Array of samples to plot according to their likelihood</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">min_likelihood</span> <span class="o">=</span> <span class="mi">999999999</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">logL</span> <span class="o">&lt;</span> <span class="n">min_likelihood</span><span class="p">:</span>
-            <span class="n">min_likelihood</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">logL</span>
-    <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">height</span><span class="p">,</span><span class="n">width</span><span class="p">),</span><span class="nb">float</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
-        <span class="n">arr</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">Y</span><span class="p">)][</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">X</span><span class="p">)]</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">logL</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">min_likelihood</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
 </div>
@@ -123,9 +132,25 @@
 <span class="sd">    bins : int</span>
 <span class="sd">        number of bins to hold</span>
 <span class="sd">    title : str</span>
-<span class="sd">        title of the plot          </span>
+<span class="sd">        title of the plot</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import plot</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; X = np.random.randn(400)</span>
+<span class="sd">    &gt;&gt;&gt; plot.plot_histogram(X, 10, &quot;Histogram demo&quot;)</span>
+
+<span class="sd">    .. plot::</span>
+
+<span class="sd">        import plot</span>
+<span class="sd">        import numpy as np</span>
+<span class="sd">        X = np.random.randn(400)</span>
+<span class="sd">        plot.plot_histogram(X, 10, &quot;Histogram demo&quot;)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">bins</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
@@ -148,6 +173,23 @@
 <span class="sd">    width : int</span>
 <span class="sd">        width limit of the scatter plot</span>
 
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import plot</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; X = np.random.randn(400)</span>
+<span class="sd">    &gt;&gt;&gt; Y = np.random.randn(400)</span>
+<span class="sd">    &gt;&gt;&gt; plot.show_scatterplot(X, Y, &quot;scatter plot demo&quot;, 400, 400)</span>
+
+<span class="sd">    .. plot::</span>
+
+<span class="sd">        import plot</span>
+<span class="sd">        import numpy as np</span>
+<span class="sd">        X = np.random.rand(1, 400)</span>
+<span class="sd">        Y = np.random.rand(1, 400)</span>
+<span class="sd">        plot.show_scatterplot(X, Y, &quot;scatter plot demo&quot;, 1, 1)</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">Y</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span><span class="s">&quot;.&quot;</span><span class="p">)</span>
@@ -157,22 +199,35 @@
     <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
 </div>
-<div class="viewcode-block" id="plot_ellipse"><a class="viewcode-back" href="../plot.html#plot.plot_ellipse">[docs]</a><span class="k">def</span> <span class="nf">plot_ellipse</span><span class="p">(</span><span class="n">num_points</span> <span class="o">=</span> <span class="mi">100</span><span class="p">):</span>
+<div class="viewcode-block" id="plot_ellipse"><a class="viewcode-back" href="../plot.html#plot.plot_ellipse">[docs]</a><span class="k">def</span> <span class="nf">plot_ellipse</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Plots minimum bounding ellipse around a set of points</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    num_points : int</span>
-<span class="sd">        number of points around which ellipse is to be built </span>
+<span class="sd">    points : 2Darray</span>
+<span class="sd">        Two dimensional array for plotting the ellipse</span>
+<span class="sd">    </span>
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import plot</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; X = np.random.rand(10,2)</span>
+<span class="sd">    &gt;&gt;&gt; plot.plot_ellipse(X)</span>
+
+<span class="sd">    .. plot::</span>
+<span class="sd">        </span>
+<span class="sd">        import plot</span>
+<span class="sd">        import numpy as np</span>
+<span class="sd">        X = np.random.rand(10,2)</span>
+<span class="sd">        plot.plot_ellipse(X)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     
     <span class="c">#Getting some test samples from prior to fit an ellipse in X,Y</span>
-    <span class="n">Sources</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">get_sources</span><span class="p">(</span><span class="n">num_points</span><span class="p">)</span>
-    <span class="n">X</span> <span class="o">=</span> <span class="p">[[</span><span class="n">i</span><span class="o">.</span><span class="n">X</span><span class="p">,</span><span class="n">i</span><span class="o">.</span><span class="n">Y</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">Sources</span><span class="p">]</span>
-    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
     <span class="n">centroid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     
     <span class="c">#Transforming the coordinates so that centroid lies at origin</span>
@@ -216,6 +271,15 @@
 <span class="sd">    out : str</span>
 <span class="sd">        The location to be stored at</span>
 
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import plot</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; arr = np.random.randn(4,4)</span>
+<span class="sd">    &gt;&gt;&gt; path = &quot;output&quot;</span>
+<span class="sd">    &gt;&gt;&gt; plot.write(arr, path)    </span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="s">&#39;w+b&#39;</span><span class="p">)</span>
@@ -240,7 +304,39 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    z : array</span>
-<span class="sd">        Source image in numpy format     </span>
+<span class="sd">        Source image in numpy format</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import plot</span>
+<span class="sd">    &gt;&gt;&gt; height = 200</span>
+<span class="sd">    &gt;&gt;&gt; width = 200</span>
+<span class="sd">    &gt;&gt;&gt; srces =  [[43.71, 22.91, 10.54, 3.34],</span>
+<span class="sd">                  [101.62, 40.60, 1.37, 3.40],</span>
+<span class="sd">                  [92.63, 110.56, 1.81, 3.66],</span>
+<span class="sd">                  [183.60, 85.90, 1.23, 5.06],</span>
+<span class="sd">                  [34.12, 162.54, 1.95, 6.02],</span>
+<span class="sd">                  [153.87, 169.18, 1.06, 6.61],</span>
+<span class="sd">                  [155.54, 32.14, 1.46, 4.05],</span>
+<span class="sd">                  [130.56, 183.48, 1.63, 4.11]] </span>
+<span class="sd">    &gt;&gt;&gt; im_data = plot.make_source(srces, height, width)</span>
+<span class="sd">    </span>
+<span class="sd">    .. plot::</span>
+
+<span class="sd">        import plot</span>
+<span class="sd">        height = 200</span>
+<span class="sd">        width = 200</span>
+<span class="sd">        srces =  [[43.71, 22.91, 10.54, 3.34],</span>
+<span class="sd">                      [101.62, 40.60, 1.37, 3.40],</span>
+<span class="sd">                      [92.63, 110.56, 1.81, 3.66],</span>
+<span class="sd">                      [183.60, 85.90, 1.23, 5.06],</span>
+<span class="sd">                      [34.12, 162.54, 1.95, 6.02],</span>
+<span class="sd">                      [153.87, 169.18, 1.06, 6.61],</span>
+<span class="sd">                      [155.54, 32.14, 1.46, 4.05],</span>
+<span class="sd">                      [130.56, 183.48, 1.63, 4.11]] </span>
+<span class="sd">        im_data = plot.make_source(srces, height, width)</span>
+
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -273,9 +369,44 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    noised : array</span>
-<span class="sd">        noised data        </span>
+<span class="sd">        noised data</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import plot</span>
+<span class="sd">    &gt;&gt;&gt; srces = [[43.71, 22.91, 10.54, 3.34],</span>
+<span class="sd">                [101.62, 40.60, 1.37, 3.40],</span>
+<span class="sd">                [92.63, 110.56, 1.81, 3.66],</span>
+<span class="sd">                [183.60, 85.90, 1.23, 5.06],</span>
+<span class="sd">                [34.12, 162.54, 1.95, 6.02],</span>
+<span class="sd">                [153.87, 169.18, 1.06, 6.61],</span>
+<span class="sd">                [155.54, 32.14, 1.46, 4.05],</span>
+<span class="sd">                [130.56, 183.48, 1.63, 4.11]]</span>
+<span class="sd">    &gt;&gt;&gt; height = 200a</span>
+<span class="sd">    &gt;&gt;&gt; width = 200            </span>
+<span class="sd">    &gt;&gt;&gt; im_data = plot.make_source(srces, height, width)            </span>
+<span class="sd">    &gt;&gt;&gt; z = plot.add_gaussian_noise(0, 2.0, im_data)</span>
+<span class="sd">    </span>
+<span class="sd">    .. plot::</span>
+<span class="sd">        </span>
+<span class="sd">        import plot</span>
+<span class="sd">        srces = [[43.71, 22.91, 10.54, 3.34],</span>
+<span class="sd">                [101.62, 40.60, 1.37, 3.40],</span>
+<span class="sd">                [92.63, 110.56, 1.81, 3.66],</span>
+<span class="sd">                [183.60, 85.90, 1.23, 5.06],</span>
+<span class="sd">                [34.12, 162.54, 1.95, 6.02],</span>
+<span class="sd">                [153.87, 169.18, 1.06, 6.61],</span>
+<span class="sd">                [155.54, 32.14, 1.46, 4.05],</span>
+<span class="sd">                [130.56, 183.48, 1.63, 4.11]]</span>
+<span class="sd">        height = 200</span>
+<span class="sd">        width = 200            </span>
+<span class="sd">        im_data = plot.make_source(srces, height, width)        </span>
+<span class="sd">        z = plot.add_gaussian_noise(0, 2.0, im_data)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+
+
     <span class="n">height</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="n">width</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">my_noise</span><span class="o">=</span><span class="n">stats</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span><span class="n">sd</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">))</span>
@@ -304,7 +435,27 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    z : array</span>
-<span class="sd">        Source Image                 </span>
+<span class="sd">        Source Image</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import plot</span>
+<span class="sd">    &gt;&gt;&gt; lim = [[0.0, 200.0], [0.0, 200.0], [1.0, 14.0], [2.0, 9.0]]</span>
+<span class="sd">    &gt;&gt;&gt; height = 200</span>
+<span class="sd">    &gt;&gt;&gt; width = 200</span>
+<span class="sd">    &gt;&gt;&gt; number_src = 7</span>
+<span class="sd">    &gt;&gt;&gt; z = plot.make_random_source(lim, width, height, number_src)</span>
+
+<span class="sd">    .. plot::</span>
+
+<span class="sd">        import plot</span>
+<span class="sd">        lim = [[0.0, 200.0], [0.0, 200.0], [1.0, 14.0], [2.0, 9.0]]</span>
+<span class="sd">        height = 200</span>
+<span class="sd">        width = 200</span>
+<span class="sd">        number_src = 7</span>
+<span class="sd">        z = plot.make_random_source(lim, width, height, number_src) </span>
+
 <span class="sd">    </span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
