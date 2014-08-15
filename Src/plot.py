@@ -22,6 +22,42 @@ def show_source(height, width, sources):
         width of the image
     sources : array
         Array of source objects to show
+    
+    
+    Examples
+    --------
+
+    >>> import plot
+    >>> from sources import Source
+    >>> import numpy as np
+    >>> height = 200
+    >>> width = 200
+    >>> Sources = []
+    >>> for i in range(4):
+    >>>     a = Source()
+    >>>     a.X = np.random.uniform(0.0, 200.0)
+    >>>     a.Y = np.random.uniform(0.0, 200.0)
+    >>>     a.A = np.random.uniform(1.0, 15.0)
+    >>>     a.R = np.random.uniform(2.0, 9.0)
+    >>>     Sources.append(a) 
+    >>> plot.show_source(height, width, Sources)
+    
+    .. plot::
+
+        import plot
+        from sources import Source
+        import numpy as np
+        height = 200
+        width = 200
+        Sources = []
+        for i in range(4):
+            a = Source()
+            a.X = np.random.uniform(0.0, 200.0)
+            a.Y = np.random.uniform(0.0, 200.0)
+            a.A = np.random.uniform(1.0, 15.0)
+            a.R = np.random.uniform(2.0, 9.0)
+            Sources.append(a) 
+        plot.show_source(height, width, Sources)
 
     """
 
@@ -32,33 +68,6 @@ def show_source(height, width, sources):
     for i in sources:
         z += i.A*np.exp(-1*((xx-i.X)**2+(yy-i.Y)**2)/(2*(i.R**2)))
     plt.imshow(z)
-    plt.show()
-
-
-def show_samples(height, width, samples):
-
-    """
-    Show samples according to their likelihood.
-
-    Parameters
-    ----------
-    height : int
-        Height of the image
-    width : int
-        width of the image    
-    samples : array
-        Array of samples to plot according to their likelihood
-
-    """
-
-    min_likelihood = 999999999
-    for i in samples:
-        if i.logL < min_likelihood:
-            min_likelihood = i.logL
-    arr = np.zeros((height,width),float)
-    for i in samples:
-        arr[int(i.Y)][int(i.X)] = i.logL + abs(min_likelihood)
-    plt.imshow(arr)
     plt.show()
 
 
@@ -74,9 +83,25 @@ def plot_histogram(data, bins, title):
     bins : int
         number of bins to hold
     title : str
-        title of the plot          
+        title of the plot
+
+    Examples
+    --------
+
+    >>> import plot
+    >>> import numpy as np
+    >>> X = np.random.randn(400)
+    >>> plot.plot_histogram(X, 10, "Histogram demo")
+
+    .. plot::
+
+        import plot
+        import numpy as np
+        X = np.random.randn(400)
+        plot.plot_histogram(X, 10, "Histogram demo")
 
     """
+
     plt.hist(data,bins)
     plt.title(title)
     plt.show()
@@ -99,6 +124,23 @@ def show_scatterplot(X,Y,title, height, width):
     width : int
         width limit of the scatter plot
 
+    Examples
+    --------
+
+    >>> import plot
+    >>> import numpy as np
+    >>> X = np.random.randn(400)
+    >>> Y = np.random.randn(400)
+    >>> plot.show_scatterplot(X, Y, "scatter plot demo", 400, 400)
+
+    .. plot::
+
+        import plot
+        import numpy as np
+        X = np.random.rand(1, 400)
+        Y = np.random.rand(1, 400)
+        plot.show_scatterplot(X, Y, "scatter plot demo", 1, 1)
+
     """
 
     plt.scatter(X,Y, marker =".")
@@ -108,22 +150,35 @@ def show_scatterplot(X,Y,title, height, width):
     plt.show()
 
 
-def plot_ellipse(num_points = 100):
+def plot_ellipse(points):
 
     """
     Plots minimum bounding ellipse around a set of points
 
     Parameters
     ----------
-    num_points : int
-        number of points around which ellipse is to be built 
+    points : 2Darray
+        Two dimensional array for plotting the ellipse
+    
+    Examples
+    --------
+
+    >>> import plot
+    >>> import numpy as np
+    >>> X = np.random.rand(10,2)
+    >>> plot.plot_ellipse(X)
+
+    .. plot::
+        
+        import plot
+        import numpy as np
+        X = np.random.rand(10,2)
+        plot.plot_ellipse(X)
 
     """
     
     #Getting some test samples from prior to fit an ellipse in X,Y
-    Sources = sources.get_sources(num_points)
-    X = [[i.X,i.Y] for i in Sources]
-    X = np.array(X)
+    X = np.array(points)
     centroid = np.mean(X,axis=0)
     
     #Transforming the coordinates so that centroid lies at origin
@@ -167,6 +222,15 @@ def write(data, out):
     out : str
         The location to be stored at
 
+    Examples
+    --------
+
+    >>> import plot
+    >>> import numpy as np
+    >>> arr = np.random.randn(4,4)
+    >>> path = "output"
+    >>> plot.write(arr, path)    
+
     """
 
     f = open(out,'w+b')
@@ -191,7 +255,39 @@ def make_source(src_array,height,width):
     Returns
     -------
     z : array
-        Source image in numpy format     
+        Source image in numpy format
+
+    Examples
+    --------
+
+    >>> import plot
+    >>> height = 200
+    >>> width = 200
+    >>> srces =  [[43.71, 22.91, 10.54, 3.34],
+                  [101.62, 40.60, 1.37, 3.40],
+                  [92.63, 110.56, 1.81, 3.66],
+                  [183.60, 85.90, 1.23, 5.06],
+                  [34.12, 162.54, 1.95, 6.02],
+                  [153.87, 169.18, 1.06, 6.61],
+                  [155.54, 32.14, 1.46, 4.05],
+                  [130.56, 183.48, 1.63, 4.11]] 
+    >>> im_data = plot.make_source(srces, height, width)
+    
+    .. plot::
+
+        import plot
+        height = 200
+        width = 200
+        srces =  [[43.71, 22.91, 10.54, 3.34],
+                      [101.62, 40.60, 1.37, 3.40],
+                      [92.63, 110.56, 1.81, 3.66],
+                      [183.60, 85.90, 1.23, 5.06],
+                      [34.12, 162.54, 1.95, 6.02],
+                      [153.87, 169.18, 1.06, 6.61],
+                      [155.54, 32.14, 1.46, 4.05],
+                      [130.56, 183.48, 1.63, 4.11]] 
+        im_data = plot.make_source(srces, height, width)
+
 
     """
 
@@ -224,9 +320,44 @@ def add_gaussian_noise(mean, sd, data):
     Returns
     -------
     noised : array
-        noised data        
+        noised data
+
+    Examples
+    --------
+
+    >>> import plot
+    >>> srces = [[43.71, 22.91, 10.54, 3.34],
+                [101.62, 40.60, 1.37, 3.40],
+                [92.63, 110.56, 1.81, 3.66],
+                [183.60, 85.90, 1.23, 5.06],
+                [34.12, 162.54, 1.95, 6.02],
+                [153.87, 169.18, 1.06, 6.61],
+                [155.54, 32.14, 1.46, 4.05],
+                [130.56, 183.48, 1.63, 4.11]]
+    >>> height = 200a
+    >>> width = 200            
+    >>> im_data = plot.make_source(srces, height, width)            
+    >>> z = plot.add_gaussian_noise(0, 2.0, im_data)
+    
+    .. plot::
+        
+        import plot
+        srces = [[43.71, 22.91, 10.54, 3.34],
+                [101.62, 40.60, 1.37, 3.40],
+                [92.63, 110.56, 1.81, 3.66],
+                [183.60, 85.90, 1.23, 5.06],
+                [34.12, 162.54, 1.95, 6.02],
+                [153.87, 169.18, 1.06, 6.61],
+                [155.54, 32.14, 1.46, 4.05],
+                [130.56, 183.48, 1.63, 4.11]]
+        height = 200
+        width = 200            
+        im_data = plot.make_source(srces, height, width)        
+        z = plot.add_gaussian_noise(0, 2.0, im_data)
 
     """
+
+
     height = len(data)
     width = len(data[0])
     my_noise=stats.distributions.norm.rvs(mean,sd,size=(height, width))
@@ -255,7 +386,27 @@ def make_random_source(limits, width, height, number_of_sources):
     Returns
     -------
     z : array
-        Source Image                 
+        Source Image
+
+    Examples
+    --------
+
+    >>> import plot
+    >>> lim = [[0.0, 200.0], [0.0, 200.0], [1.0, 14.0], [2.0, 9.0]]
+    >>> height = 200
+    >>> width = 200
+    >>> number_src = 7
+    >>> z = plot.make_random_source(lim, width, height, number_src)
+
+    .. plot::
+
+        import plot
+        lim = [[0.0, 200.0], [0.0, 200.0], [1.0, 14.0], [2.0, 9.0]]
+        height = 200
+        width = 200
+        number_src = 7
+        z = plot.make_random_source(lim, width, height, number_src) 
+
     
     """
     
