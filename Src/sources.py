@@ -1,6 +1,6 @@
 # Bayesian Source detection and characterization
 # Author : Krishna Chaitanya Chavati
-
+# Email  : chaithukrishnazz2@gmail.com
 
 import sys
 import numpy as np
