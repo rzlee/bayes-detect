@@ -52,7 +52,7 @@ if config_found==1:
 
 if config_found==0:
     
-    File = "C:/Users/chaithuzz2/Desktop/Bayes_detect/assets/simulated_images/ufig_20_g_gal_sub_500_sub_small.fits"
+    File = "C:/Users/chaithuzz2/Desktop/Bayes_detect/assets/simulated_images/multinest_toy_noised"
 
     if File[-5:] == '.fits':
         hdulist   = fits.open(File)
@@ -410,7 +410,7 @@ class Nested_Sampler(object):
         stop = None
         prev_stop = 0.0
        
-        for iteration in range(1,self.maximum_iterations):
+        for iteration in range(1,60000):
             smallest = 0
             
             #Finding the object with smallest likelihood
@@ -421,10 +421,6 @@ class Nested_Sampler(object):
             
             largest = np.argmax(LogL)
 
-            stop = self.active_samples[largest].logL + self.log_width - self.log_evidence
-
-            if iteration%100 == 0 or iteration==1:
-                print str(iteration)
             
             #Calculating the updated evidence
             temp_evidence = np.logaddexp(self.log_evidence, self.active_samples[smallest].logWt)
@@ -438,11 +434,19 @@ class Nested_Sampler(object):
             self.log_evidence = temp_evidence
 
             stopping = self.active_samples[largest].logL + self.log_width - self.log_evidence 
-            #print str(stopping) 
+            #print str(stopping)
+
+
+            if iteration%100 == 0 or iteration==1:
+                print "Iteration: "+str(iteration) + "  maxZ: "+str(stopping)  
 
             if stopping < self.convergence_threshold:
-                break
-
+                if stop == 1:
+                    break
+            
+            if iteration >= self.maximum_iterations:
+                if stop == 0:
+                    break
             #print str(self.active_samples[smallest].X)+" "+str(self.active_samples[smallest].Y)+" "+str(self.active_samples[smallest].logL)
             
             sample = Source()
@@ -900,7 +904,7 @@ class Clustered_Sampler(object):
         
         """
         
-        db = DBSCAN(eps=6, min_samples=10).fit(activepoint_set)
+        db = DBSCAN(eps=10, min_samples=10).fit(activepoint_set)
         labels = db.labels_
         number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
         #print str(labels)
@@ -943,7 +947,7 @@ class Clustered_Sampler(object):
                 #print str(i)
                 invalid.append(i)
         ellipsoids = np.delete(ellipsoids, invalid)
-        print len(ellipsoids)         
+        #print len(ellipsoids)         
         return ellipsoids
 
 
@@ -1021,7 +1025,15 @@ class Clustered_Sampler(object):
         #        break
         #print "Sampling from ellipsoid : "+ str(z)
         #print str(z)        
-        points = self.ellipsoid_set[z].sample(n_points=50)
+        points = None
+        try:
+            points = self.ellipsoid_set[z].sample(n_points=50)
+        except IndexError:
+            print "\n"
+            print "\n"
+            print "Please adjust the clustering parameters and try again."
+            print "\n"
+            print "\n"            
         max_likelihood = self.LC
         #print "likelihood_constraint: "+str(max_likelihood)
         count = 0
@@ -1256,7 +1268,8 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
     global noise
     global K
     global dispersion
-    global output_loc 
+    global output_loc
+    global stop 
 
     if mode == "ipython":
         dispersion = disp
@@ -1272,6 +1285,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         max_iter = iterations
         sample_type = sample_method
         output_loc = 'C:\Users\chaithuzz2\Desktop\Bayes_detect\output\samples.dat'
+        stop = 0
 
     if mode == "Manual":
         dispersion = float(Config['DISPERSION'])
@@ -1288,6 +1302,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         n = int(Config['ACTIVE_POINTS'])
         sample_type = str(Config['SAMPLER'])
         output_loc = str(Config['OUTPUT_DATA_PATH'])
+        stop = int(Config['STOP_BY_EVIDENCE'])
     
     print output_loc 
     nested = Nested_Sampler(no_active_samples = n, max_iter = max_iter, sample = sample_type)
