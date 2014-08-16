@@ -1,3 +1,7 @@
+# Bayesian Source detection and characterization
+# Author : Krishna Chaitanya Chavati
+
+
 import sys
 import numpy as np
 from matplotlib import pyplot as plt
@@ -343,7 +347,11 @@ class Nested_Sampler(object):
     References 
     ----------
     .. [1] http://www.inference.phy.cam.ac.uk/bayesys/
-    .. [2] Shaw, Bridges, Hobson 2007, MNRAS, 378, 1365 
+    .. [2] Sivia D., Skilling J., 2006, Data Analysis; a Bayesian tutorial,
+           2nd ed., Oxford University Press, Oxford
+    .. [3] Shaw, Bridges, Hobson 2007, MNRAS, 378, 1365
+
+    This method is based on Nested sampling(2004) method proposed by John Skilling and Sivia.  
 
     """
     
