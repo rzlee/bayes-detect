@@ -14,15 +14,17 @@ http://www.sjsu.edu/faculty/watkins/ellipsoid.htm
 """
 
 import numpy as np
-from math import *
-from sources import *
+import math
+#from sources import *
 import random
 import copy
 from sklearn.cluster import AffinityPropagation
 import warnings
 from sklearn.cluster import DBSCAN
 from scipy.cluster.vq import kmeans2
-
+from matplotlib import pyplot as plt
+from matplotlib.patches import Ellipse
+from pylab import figure,show
 
 class Clustered_Sampler(object):
 
@@ -34,7 +36,7 @@ class Clustered_Sampler(object):
         self.enlargement = 1.5
         self.clustered_point_set = None
         self.number_of_clusters = None
-        self.activepoint_set = self.build_set()
+        self.activepoint_set = self.points#self.build_set()
         self.ellipsoid_set = self.optimal_ellipsoids()
         self.total_vol = None
         #self.found = False
@@ -63,7 +65,7 @@ class Clustered_Sampler(object):
         #print str(labels)
         # Number of clusters in labels, ignoring noise if present.
         number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)"""
-        centroid, labels = kmeans2(activepoint_set, 5)
+        centroid, labels = kmeans2(activepoint_set, 10)
         #print str(len(centroid))
         number_of_clusters = len(centroid)  
         return number_of_clusters, labels, activepoint_set    
@@ -83,7 +85,7 @@ class Clustered_Sampler(object):
             if len(clust_points[i]) > 1:
                 try:
                     ellipsoids[i] = Ellipsoid(points=clust_points[i],
-                              enlargement_factor = 1.5)#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))
+                              enlargement_factor = 1.0)#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))
                 except np.linalg.linalg.LinAlgError:
                     ellipsoids[i] = None
                     #print str(i)
@@ -200,10 +202,6 @@ class Ellipsoid(object):
         dim = 2
         points = np.empty((n_points, dim), dtype = float)
         values, vects = np.linalg.eig(self.covariance_matrix)
-        x_l, x_u = getPrior_X()
-        y_l, y_u = getPrior_Y()
-        r_l, r_u = getPrior_R()
-        a_l, a_u = getPrior_A()        
         #print str(values)
         scaled = np.dot(vects, np.diag(np.sqrt(np.absolute(values))))
         #print str(scaled)
@@ -211,20 +209,10 @@ class Ellipsoid(object):
         new = None    
         for i in range(n_points):
             #count = 0
-            while bord==1:
-                bord = 0
-                randpt = np.random.randn(dim)
-                point  = randpt* np.random.rand()**(1./dim) / np.sqrt(np.sum(randpt**2))
-                new =  np.dot(scaled, point) + self.centroid
-
-                #print str(new)
-
-                if(new[0] > x_u or new[0] < x_l): bord = 1;
-                if(new[1] > y_u or new[1] < y_l): bord = 1;
-                #count+=1
-                #if(count >=200): new = self.centroid
-
-            bord = 1     
+            randpt = np.random.randn(dim)
+            point  = randpt* np.random.rand()**(1./dim) / np.sqrt(np.sum(randpt**2))
+            new =  np.dot(scaled, point) + self.centroid
+     
             points[i, :] = copy.deepcopy(new)
         return points
 
@@ -235,20 +223,15 @@ class Ellipsoid(object):
         
 
 
-if __name__ == '__main__':
-    
-    #file = "sub_1000_400_source"
-    #f = open(file,'r')
-    #sources = pickle.load(f)
-    #f.close()
-    sources = get_sources(200)
-    clustellip = Clustered_Sampler(active_samples = sources,likelihood_constraint=0.0, enlargement= 1.0,no=1)
-    X0 = [i.X for i in sources]
-    Y0 = [i.Y for i in sources]
+def show_minimum_bounding_ellipsoids(Xr, with_sampled = False):
+    clustellip = Clustered_Sampler(active_samples = Xr,likelihood_constraint=0.0, enlargement= 1.0,no=1)
     ellipsoids = clustellip.ellipsoid_set
+    X0 = [i[0] for i in Xr]
+    Y0 = [i[1] for i in Xr] 
     plt.figure()
     ax = plt.gca()
     points = []
+    #print len(ellipsoids)
     for i in range(len(ellipsoids)):
         if ellipsoids[i]!=None:
             a, b = np.linalg.eig(ellipsoids[i].covariance_matrix)
@@ -262,8 +245,9 @@ if __name__ == '__main__':
             ax.add_patch(ellipse)
     X = [i[0] for i in points]
     Y = [i[1] for i in points]
-    plt.plot(X, Y, 'bo')
-    plt.plot(X0,Y0, 'ro')
+    if with_sampled == True:
+        plt.plot(X, Y, 'bo')
+    plt.plot(X0, Y0, 'ro')
     plt.show()
      
 
