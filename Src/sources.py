@@ -448,13 +448,13 @@ class Nested_Sampler(object):
             if iteration%100 == 0 or iteration==1:
                 print "Iteration: "+str(iteration) + "  maxZ: "+str(stopping)  
 
-            if stopping < self.convergence_threshold:
-                if stop == 1:
-                    break
+            if stopping < self.convergence_threshold and int(Config['STOP_BY_EVIDENCE'])==1:
+                break
             
-            if iteration >= self.maximum_iterations:
-                if stop == 0:
-                    break
+            #print str(iteration) + " "+ str(int(Config['STOP_BY_EVIDENCE']))
+
+            if iteration >= self.maximum_iterations and int(Config['STOP_BY_EVIDENCE'])==0:
+                break
             #print str(self.active_samples[smallest].X)+" "+str(self.active_samples[smallest].Y)+" "+str(self.active_samples[smallest].logL)
             
             sample = Source()
@@ -1317,7 +1317,6 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         eps = float(Config['EPS'])
         minPts = float(Config['MINPTS'])
     
-    print output_loc 
     nested = Nested_Sampler(no_active_samples = n, max_iter = max_iter, sample = sample_type)
     out  = nested.fit()
 
