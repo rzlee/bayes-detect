@@ -18,7 +18,7 @@ Robert J. Brunner
 
 [Tutorial and results](http://nbviewer.ipython.org/github/chaithuzz2/bayes-detect/blob/master/Bayesian_Source_Detection.ipynb)
 
-[API documentation]()
+[API documentation](http://chaithuzz2.github.io/)
 
 
 ##References
