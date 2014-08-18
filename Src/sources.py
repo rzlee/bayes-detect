@@ -912,7 +912,7 @@ class Clustered_Sampler(object):
         
         """
         
-        db = DBSCAN(eps=10, min_samples=10).fit(activepoint_set)
+        db = DBSCAN(eps=eps, min_samples=minPts).fit(activepoint_set)
         labels = db.labels_
         number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
         #print str(labels)
@@ -1277,7 +1277,9 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
     global K
     global dispersion
     global output_loc
-    global stop 
+    global stop
+    global eps
+    global minPts 
 
     if mode == "ipython":
         dispersion = disp
@@ -1294,6 +1296,8 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         sample_type = sample_method
         output_loc = 'C:\Users\chaithuzz2\Desktop\Bayes_detect\output\samples.dat'
         stop = 0
+        eps = 10
+        minPts = 10
 
     if mode == "Manual":
         dispersion = float(Config['DISPERSION'])
@@ -1311,6 +1315,8 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         sample_type = str(Config['SAMPLER'])
         output_loc = str(Config['OUTPUT_DATA_PATH'])
         stop = int(Config['STOP_BY_EVIDENCE'])
+        eps = float(Config['EPS'])
+        minPts = float(Config['MINPTS'])
     
     print output_loc 
     nested = Nested_Sampler(no_active_samples = n, max_iter = max_iter, sample = sample_type)
