@@ -13,8 +13,11 @@ Robert J. Brunner
 ## Documentation
 
 [Installing required packages](http://nbviewer.ipython.org/github/chaithuzz2/bayes-detect/blob/master/docs/Installing%20required%20packages.ipynb)
+
 [Running the program](http://nbviewer.ipython.org/github/chaithuzz2/bayes-detect/blob/master/docs/Running%20the%20program.ipynb)
+
 [Tutorial and results](http://nbviewer.ipython.org/github/chaithuzz2/bayes-detect/blob/master/Bayesian_Source_Detection.ipynb)
+
 [API documentation]()
 
 
