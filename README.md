@@ -20,6 +20,8 @@ Robert J. Brunner
 
 [API documentation](http://chaithuzz2.github.io/)
 
+[Notes](http://nbviewer.ipython.org/github/chaithuzz2/bayes-detect/blob/master/docs/Notes.ipynb) 
+
 
 ##References
 [1] Multinest paper by Feroz and Hobson et al(2008)
