@@ -56,8 +56,7 @@
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Implementation of clustered ellipsoidal method for using in multimodal nested sampling as
 an improvement to detect modes in the posterior. This was proposed in multinest paper by Feroz
-and Hobson(2008). This method is closer in spirit to the recursive technique advocated in Shaw
-et al.</p>
+and Hobson(2008).</p>
 <p class="rubric">References</p>
 <table class="docutils citation" frame="void" id="r1" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
@@ -130,7 +129,7 @@ et al.</p>
 <td>Builds set of the active samples in array format for clustering.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#sources.Clustered_Sampler.cluster" title="sources.Clustered_Sampler.cluster"><tt class="xref py py-obj docutils literal"><span class="pre">cluster</span></tt></a>(activepoint_set)</td>
-<td>Clusters an array of samples using kmeans2</td>
+<td>Clusters an array of samples using DBSCAN</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#sources.Clustered_Sampler.optimal_ellipsoids" title="sources.Clustered_Sampler.optimal_ellipsoids"><tt class="xref py py-obj docutils literal"><span class="pre">optimal_ellipsoids</span></tt></a>()</td>
 <td>Method for calculating ellipsoids around the individual clusters.</td>
@@ -164,7 +163,7 @@ et al.</p>
 <dl class="method">
 <dt id="sources.Clustered_Sampler.cluster">
 <tt class="descname">cluster</tt><big>(</big><em>activepoint_set</em><big>)</big><a class="reference internal" href="_modules/sources.html#Clustered_Sampler.cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sources.Clustered_Sampler.cluster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clusters an array of samples using kmeans2</p>
+<dd><p>Clusters an array of samples using DBSCAN</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -476,9 +475,17 @@ constraint in the current nested sampling phase.</p>
 <table class="docutils citation" frame="void" id="r8" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id8">[R8]</a></td><td>Shaw, Bridges, Hobson 2007, MNRAS, 378, 1365</td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id8">[R8]</a></td><td>Sivia D., Skilling J., 2006, Data Analysis; a Bayesian tutorial,
+2nd ed., Oxford University Press, Oxford</td></tr>
 </tbody>
 </table>
+<table class="docutils citation" frame="void" id="r9" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id9">[R9]</a></td><td>Shaw, Bridges, Hobson 2007, MNRAS, 378, 1365</td></tr>
+</tbody>
+</table>
+<p>This method is based on Nested sampling(2004) method proposed by John Skilling and Sivia.</p>
 <p class="rubric">Attributes</p>
 <table border="1" class="docutils">
 <colgroup>
