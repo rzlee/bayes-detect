@@ -56,7 +56,7 @@ if config_found==1:
 
 if config_found==0:
     
-    File = "C:/Users/chaithuzz2/Desktop/Bayes_detect/assets/simulated_images/multinest_toy_noised"
+    File = "../assets/simulated_images/multinest_toy_noised"
 
     if File[-5:] == '.fits':
         hdulist   = fits.open(File)
@@ -494,6 +494,7 @@ class Nested_Sampler(object):
                 LogL[smallest] = self.active_samples[smallest].logL
                 self.no_likelihood = number
 
+                              
 
             #Shrink width  
             self.log_width -= 1.0 / self.no_active_samples;
@@ -810,8 +811,7 @@ class Clustered_Sampler(object):
     """
     Implementation of clustered ellipsoidal method for using in multimodal nested sampling as
     an improvement to detect modes in the posterior. This was proposed in multinest paper by Feroz
-    and Hobson(2008). This method is closer in spirit to the recursive technique advocated in Shaw
-    et al.
+    and Hobson(2008). 
 
     Attributes
     ----------
@@ -894,7 +894,7 @@ class Clustered_Sampler(object):
     def cluster(self, activepoint_set):
 
         """ 
-        Clusters an array of samples using kmeans2
+        Clusters an array of samples using DBSCAN
 
         Parameters
         ----------
@@ -1303,7 +1303,6 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         dispersion = float(Config['DISPERSION'])
         amplitude_upper = float(Config['A_PRIOR_UPPER'])
         amplitude_lower = float(Config['A_PRIOR_LOWER'])
-        # FIX : Don't forget to change
         x_upper = float(Config['X_PRIOR_UPPER'])
         y_upper = float(Config['Y_PRIOR_UPPER'])
         R_upper = float(Config['R_PRIOR_UPPER'])
