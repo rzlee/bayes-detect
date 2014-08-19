@@ -10,10 +10,10 @@ SrcArray = [[43.71, 22.91, 10.54, 3.34],
             [155.54, 32.14, 1.46, 4.05],
             [130.56, 183.48, 1.63, 4.11]]
 
-prior_array = [[0.0,100.0],[0.0,100.0],[1.0,12.5],[2.0,9.0]]
+#prior_array = [[0.0,100.0],[0.0,100.0],[1.0,12.5],[2.0,9.0]]
 
 # When making a fake image with new prior limits. Don't forget update the prior values in config.cfg before running. 
-data_map = plot.make_random_source(limits = prior_array,width=100, height=100, number_of_sources= 4)
+data_map = plot.make_source(SrcArray, 200, 200)
 noise = 2.0
 data_map = plot.add_gaussian_noise(mean=0,sd=noise,data=data_map)
 plot.write(data_map, "assets/simulated_images/multinest_toy_noised")
