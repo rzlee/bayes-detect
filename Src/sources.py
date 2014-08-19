@@ -389,6 +389,7 @@ class Nested_Sampler(object):
         self.log_width             = None # Log width of the prior
         self.Information           = None # Information for error estimation in evidence
         self.no_likelihood         = no_active_samples # To keep track of number of likelihood evaluations made
+        self.ellipsoids            = None
 
     
     def fit(self):
@@ -494,7 +495,49 @@ class Nested_Sampler(object):
                 LogL[smallest] = self.active_samples[smallest].logL
                 self.no_likelihood = number
 
-                              
+            if self.sample == "new":
+
+                if iteration ==1 or iteration%30==0 :
+                    Clust_ellip = Clustered_Sampler(active_samples=self.active_samples, likelihood_constraint= likelihood_constraint, enlargement=1.0, no=self.no_likelihood)
+                    self.ellipsoids = Clust_ellip.ellipsoid_set
+                found = 0
+                r_l, r_u = getPrior_R()
+                a_l, a_u = getPrior_A() 
+                while found == 0:
+                    arbit = np.random.uniform(0,1)
+                    trial = Source()
+                    clust = Source()
+                    z = int((len(self.ellipsoids))*arbit)
+                    points = None
+                    try:
+                        points = self.ellipsoids[z].sample(n_points=50)
+                    except IndexError:
+                        print "\n"
+                        print "\n"
+                        print "Please adjust the clustering parameters and try again."
+                        print "\n"
+                        print "\n"            
+                    max_likelihood = likelihood_constraint
+                    #print "likelihood_constraint: "+str(max_likelihood)
+                    count = 0
+                    while count<50:
+                        trial.X = points[count][0]
+                        trial.Y = points[count][1]
+                        trial.A = np.random.uniform(a_l,a_u)
+                        trial.R = np.random.uniform(r_l,r_u)            
+                        trial.logL = log_likelihood(trial)
+                        #print "Trial likelihood for point"+" "+str(count)+": "+str(trial.logL)
+                        self.no_likelihood+=1
+
+                        if(trial.logL > max_likelihood):
+                            clust.__dict__ = trial.__dict__.copy()
+                            max_likelihood = trial.logL
+                            found = 1
+                            break
+                                
+                        count+=1    
+                    self.active_samples[smallest].__dict__ = clust.__dict__.copy()
+                    LogL[smallest] = self.active_samples[smallest].logL          
 
             #Shrink width  
             self.log_width -= 1.0 / self.no_active_samples;
