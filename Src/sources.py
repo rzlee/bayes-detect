@@ -443,21 +443,18 @@ class Nested_Sampler(object):
             self.log_evidence = temp_evidence
 
             stopping = self.active_samples[largest].logL + self.log_width - self.log_evidence 
-            #print str(stopping)
+            
 
-
-            if iteration%100 == 0 or iteration==1:
+            if iteration%1000 == 0 or iteration==1:
                 print "Iteration: "+str(iteration) + "  maxZ: "+str(stopping)  
 
             if stopping < self.convergence_threshold and int(Config['STOP_BY_EVIDENCE'])==1:
                 break
             
-            #print str(iteration) + " "+ str(int(Config['STOP_BY_EVIDENCE']))
-
+            
             if iteration >= self.maximum_iterations and int(Config['STOP_BY_EVIDENCE'])==0:
                 break
-            #print str(self.active_samples[smallest].X)+" "+str(self.active_samples[smallest].Y)+" "+str(self.active_samples[smallest].logL)
-            
+                        
             sample = Source()
             sample.__dict__ = self.active_samples[smallest].__dict__.copy()
 
@@ -518,7 +515,6 @@ class Nested_Sampler(object):
                         print "\n"
                         print "\n"            
                     max_likelihood = likelihood_constraint
-                    #print "likelihood_constraint: "+str(max_likelihood)
                     count = 0
                     while count<50:
                         trial.X = points[count][0]
@@ -526,7 +522,6 @@ class Nested_Sampler(object):
                         trial.A = np.random.uniform(a_l,a_u)
                         trial.R = np.random.uniform(r_l,r_u)            
                         trial.logL = log_likelihood(trial)
-                        #print "Trial likelihood for point"+" "+str(count)+": "+str(trial.logL)
                         self.no_likelihood+=1
 
                         if(trial.logL > max_likelihood):
@@ -611,7 +606,6 @@ class Nested_Sampler(object):
         while True:
             sample, number = Clust.sample()
             if(sample.logL > LC):
-                #print "In nest: found from clustered sampling"
                 break
             Clust = Clustered_Sampler(active_samples=active_points, likelihood_constraint=LC, enlargement=1.0, no=number)   
         return sample, number
@@ -958,9 +952,6 @@ class Clustered_Sampler(object):
         db = DBSCAN(eps=eps, min_samples=minPts).fit(activepoint_set)
         labels = db.labels_
         number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-        #print str(labels)
-        #centroid, labels = kmeans2(activepoint_set, 5)
-        #number_of_clusters = len(centroid)  
         return number_of_clusters, labels, activepoint_set    
 
 
@@ -988,17 +979,14 @@ class Clustered_Sampler(object):
             if len(clust_points[i]) > 1:
                 try:
                     ellipsoids[i] = Ellipsoid(points=clust_points[i],
-                              enlargement_factor = 2.0)#enlargement*np.sqrt(len(self.activepoint_set)/len(clust_points[i]))
+                              enlargement_factor = 2.0)
                 except np.linalg.linalg.LinAlgError:
                     ellipsoids[i] = None
-                    #print str(i)
                     invalid.append(i)
             else:
                 ellipsoids[i] = None
-                #print str(i)
                 invalid.append(i)
         ellipsoids = np.delete(ellipsoids, invalid)
-        #print len(ellipsoids)         
         return ellipsoids
 
 
@@ -1060,22 +1048,10 @@ class Clustered_Sampler(object):
 
         """
 
-        #vols = np.array([len(i.clpoints) for i in self.ellipsoid_set])
-        #print str(vols)
-        #print str(np.sum(vols))
-        #vols = vols/np.sum(vols)
-        #print str(np.sum(vols))
         arbit = np.random.uniform(0,1)
         trial = Source()
         clust = Source()
         z = int((len(self.ellipsoid_set))*arbit)
-        #z = None
-        #for i in range(len(vols)):
-        #    if(arbit<=vols[i]):
-        #        z = i
-        #        break
-        #print "Sampling from ellipsoid : "+ str(z)
-        #print str(z)        
         points = None
         try:
             points = self.ellipsoid_set[z].sample(n_points=50)
@@ -1086,7 +1062,6 @@ class Clustered_Sampler(object):
             print "\n"
             print "\n"            
         max_likelihood = self.LC
-        #print "likelihood_constraint: "+str(max_likelihood)
         count = 0
         r_l, r_u = getPrior_R()
         a_l, a_u = getPrior_A()
@@ -1096,7 +1071,6 @@ class Clustered_Sampler(object):
             trial.A = np.random.uniform(a_l,a_u)
             trial.R = np.random.uniform(r_l,r_u)            
             trial.logL = log_likelihood(trial)
-            #print "Trial likelihood for point"+" "+str(count)+": "+str(trial.logL)
             self.number+=1
 
             if(trial.logL > max_likelihood):
@@ -1105,8 +1079,6 @@ class Clustered_Sampler(object):
                 break
                                 
             count+=1
-        #if(clust.logL > self.LC):
-            #print "Found the point with likelihood greater than : "+ str(self.LC) 
         
         return clust,self.number     
              
@@ -1162,8 +1134,7 @@ class Ellipsoid(object):
         self.enlargement_factor = enlargement_factor
         self.covariance_matrix = self.build_cov(self.centroid, self.clpoints)
         self.inv_cov_mat = np.linalg.inv(self.covariance_matrix)
-        #self.volume = self.find_volume()
-        
+                
 
     def build_cov(self, center, clpoints):
 
@@ -1220,26 +1191,19 @@ class Ellipsoid(object):
         y_l, y_u = getPrior_Y()
         r_l, r_u = getPrior_R()
         a_l, a_u = getPrior_A()        
-        #print str(values)
         scaled = np.dot(vects, np.diag(np.sqrt(np.absolute(values))))
-        #print str(scaled)
         bord = 1
         new = None    
         for i in range(n_points):
-            #count = 0
             while bord==1:
                 bord = 0
                 randpt = np.random.randn(dim)
                 point  = randpt* np.random.rand()**(1./dim) / np.sqrt(np.sum(randpt**2))
                 new =  np.dot(scaled, point) + self.centroid
 
-                #print str(new)
-
                 if(new[0] > x_u or new[0] < x_l): bord = 1;
                 if(new[1] > y_u or new[1] < y_l): bord = 1;
-                #count+=1
-                #if(count >=200): new = self.centroid
-
+                
             bord = 1     
             points[i, :] = copy.deepcopy(new)
         return points
