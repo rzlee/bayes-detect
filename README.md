@@ -2,7 +2,7 @@
 
 Bayesian Source detection and characterization in astronomical images.
 
-This is a library for performing source detection in single band sky images using Bayesian approach. This employs Multimodal modal nested sampling procedure to detect and characterize wide range of sources present in an image.
+This is a library for performing source detection in single band sky images using Bayesian approach. Multimodal nested sampling procedure is employed to detect and characterize wide range of sources present in an image.
 
 
 ## Authors
