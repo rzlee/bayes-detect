@@ -1,4 +1,5 @@
 # Main toy example
+# from Feroz and Hobson paper
 from Src import plot
 
 
