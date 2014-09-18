@@ -1,3 +1,4 @@
+# Main toy example
 from Src import plot
 
 
