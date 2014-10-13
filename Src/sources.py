@@ -1,6 +1,6 @@
 # Bayesian Source detection and characterization
-# Author : Krishna Chaitanya Chavati
-# Email  : chaithukrishnazz2@gmail.com
+# Authors : Krishna Chaitanya Chavati, Richard Lee
+# Email  : chaithukrishnazz2@gmail.com, rlee46@illinois.edu
 
 import sys
 import numpy as np
@@ -17,6 +17,7 @@ import warnings
 from scipy.cluster.vq import kmeans2
 from sklearn.cluster import DBSCAN
 import os
+import platform
 
 Config = {}
 
@@ -25,47 +26,47 @@ config_found = 1
 data_map = None
 
 try:
-    ConfigFile = open(os.path.dirname(os.path.realpath(__file__))+"\config.cfg", "r")
+    filepath = os.path.dirname(os.path.realpath(__file__))
+    if platform.system() == "Windows":
+        filepath = filepath+"\config.cfg"
+    else:
+        filepath = filepath+"/config.cfg"
+    #workaround for windows and unix having opposite slashes
+    config_file = open(filepath)
 except IndexError:
     print "Can't find the config file"
     config_found = 0
 
-if config_found==1:
-    Lines = ConfigFile.readlines()
+if config_found:
+    params = filter(lambda x: (x[0] != '#') and (x[0] != '\n'), config_file.readlines())
+    #only read the lines with params
+    params = [line.rstrip('\n').split('=') for line in params]
+    #strip extraneous characters
+    Config = dict(params)
+    #store everything into (dict) Config
 
-    for line in Lines:
-        if line[0]=='#' or line[0]=='\n':
-            pass
-        else:
-            try:
-                Config[line.split('=')[0]]= line.split('=')[1].rstrip()
-            except IndexError:
-                pass
+    #note: config has the absolute file path
+    image_path = (Config['IMAGE_PATH'])
 
-         
-    File = (Config['IMAGE_PATH'])
-
-    if File[-5:] == '.fits':
-        hdulist   = fits.open(File)
+    if image_path.endswith(".fits"):
+        hdulist    = fits.open(image_path)
         data_map   = (hdulist[0].data)
 
-    if File[-5:] != '.fits':
-        s = open(File,'r')
-        data_map = pickle.load(s)
-        s.close()
+    else:
+        with open(image_path, 'r') as f:
+            data_map = pickle.load(f)
 
-if config_found==0:
-    
-    File = "../assets/simulated_images/multinest_toy_noised"
+else:
+    image_path = os.path.join(os.path.dirname(__file__), os.pardir)
+    image_path = image_path + "/assets/simulated_images/multinest_toy_noised"
 
-    if File[-5:] == '.fits':
-        hdulist   = fits.open(File)
+    if image_path.endswith(".fits"):
+        hdulist   = fits.open(image_path)
         data_map   = (hdulist[0].data)
 
-    if File[-5:] != '.fits':
-        s = open(File,'r')
-        data_map = pickle.load(s)
-        s.close()
+    else:
+        with open(image_path, 'r') as f:
+            data_map = pickle.load(f)
 
 
 height, width = len(data_map), len(data_map[0])
@@ -82,7 +83,7 @@ xx, yy = np.meshgrid(x_forcalc, y_forcalc, sparse=True)
 
 
 class Source:
-    
+
     """
      This is a class which instantiates a source object with its attributes.
 
@@ -96,11 +97,11 @@ class Source:
         Amplitude of the object
     R : float
         Spatial extent of the object
-    logL : float 
+    logL : float
         Log likelihood of the object
     logWt : float
         Log weight of the object"""
-          
+
     def __init__(self):
 
         self.X = None
@@ -130,12 +131,12 @@ def log_likelihood(Source):
     ------
         TypeError : When we pass an object with any of X, Y, A, R attributes as None type
 
-    """           
+    """
 
     simulated_map = Source.A*np.exp(-1*((xx-Source.X)**2+(yy-Source.Y)**2)/(2*(Source.R**2)))
     diff_map = data_map - simulated_map.flatten()
-    return -0.5*np.dot(diff_map, np.transpose((1/(noise**2))*diff_map)) - K    
-    
+    return -0.5*np.dot(diff_map, np.transpose((1/(noise**2))*diff_map)) - K
+
 
 def proposed_model(x, y, X, Y, A, R):
 
@@ -155,18 +156,18 @@ def proposed_model(x, y, X, Y, A, R):
     A : float
         The value of amplitude of the source under consideration
     R : float
-        The value of spatial extent of the source under consideration         
+        The value of spatial extent of the source under consideration
 
     Returns
     -------
-    Intensity value at (x,y)           
+    Intensity value at (x,y)
 
     """
     return A*np.exp(((x-X)**2 + (y-Y)**2)/(2*(R**2)))
-    
+
 
 def sample_source():
-    
+
     """
     Sampling the object from prior distribution.
 
@@ -175,12 +176,12 @@ def sample_source():
     src : object
         The source object with X,Y,A,R sampled from their prior distribution and log likelihood calculated.
 
-    
+
     """
 
     src = Source()
     src.X = random.uniform(0.0, x_upper)
-    src.Y = random.uniform(0.0, y_upper) 
+    src.Y = random.uniform(0.0, y_upper)
     src.A = random.uniform(amplitude_lower, amplitude_upper)
     src.R = random.uniform(R_lower, R_upper)
     src.logL = log_likelihood(src)
@@ -205,10 +206,10 @@ def get_sources(no_active_points):
     """
 
     src_array = []
-    
+
     for i in range(no_active_points):
         src_array.append(sample_source())
-    
+
     return src_array
 
 
@@ -236,7 +237,7 @@ def getPrior_R():
 
     """
 
-    bounds = R_lower, R_upper; 
+    bounds = R_lower, R_upper;
     return bounds
 
 
@@ -263,25 +264,25 @@ def getPrior_Y():
         a tuple of the Y bounds.
 
     """
-    
+
     bounds = 0.0, height;
     return bounds
 
 
 def write(data, out):
 
-    """ 
+    """
     Writes an array to a pickle
-    
+
     Parameters
     ----------
     data : array
-        Array to be stored      
+        Array to be stored
     out : str
         The location to be stored at
 
     """
-    
+
     f = open(out,'w+b')
     pickle.dump(data, f)
     f.close()
@@ -335,26 +336,26 @@ class Nested_Sampler(object):
     log_evidence : float
         Log evidence
     posterior_inferences : array
-        Posterior samples 
+        Posterior samples
     log_width : float
         Log width of the prior
     Information : float
         Information for error estimation in evidence
     no_likelihood : int
-        To keep track of number of likelihood evaluations made    
+        To keep track of number of likelihood evaluations made
 
 
-    References 
+    References
     ----------
     .. [1] http://www.inference.phy.cam.ac.uk/bayesys/
     .. [2] Sivia D., Skilling J., 2006, Data Analysis; a Bayesian tutorial,
            2nd ed., Oxford University Press, Oxford
     .. [3] Shaw, Bridges, Hobson 2007, MNRAS, 378, 1365
 
-    This method is based on Nested sampling(2004) method proposed by John Skilling and Sivia.  
+    This method is based on Nested sampling(2004) method proposed by John Skilling and Sivia.
 
     """
-    
+
     def __init__(self, no_active_samples, max_iter, sample = "metropolis", conv_thresh=0.1):
 
         """
@@ -368,30 +369,30 @@ class Nested_Sampler(object):
             Maximum number of iterations to run
         sample : str
             Sampling mode
-            
-            * "uniform" = Samples the points randomly from a uniform distribution.  
+
+            * "uniform" = Samples the points randomly from a uniform distribution.
             * "metropolis" = Samples the points according to Metropolis principle.
             * "clustered_ellipsoidal" = Samples the points according to Clustered ellipsoidal method.
-            
+
         conv_thresh : float
-            Stopping criterion based on the current evidence in an iteration.  
-            
+            Stopping criterion based on the current evidence in an iteration.
+
         """
 
- 
+
         self.no_active_samples     = no_active_samples
         self.maximum_iterations    = max_iter
         self.sample                = sample
         self.convergence_threshold = 0.1
         self.active_samples        = get_sources(self.no_active_samples)
         self.log_evidence          = None # Log evidence
-        self.posterior_inferences  = []   # Posterior samples 
+        self.posterior_inferences  = []   # Posterior samples
         self.log_width             = None # Log width of the prior
         self.Information           = None # Information for error estimation in evidence
         self.no_likelihood         = no_active_samples # To keep track of number of likelihood evaluations made
         self.ellipsoids            = None
 
-    
+
     def fit(self):
 
         """
@@ -402,7 +403,7 @@ class Nested_Sampler(object):
         A dict mapping the following to their values.
 
             *  src - Active points
-            *  samples - Posterior samples 
+            *  samples - Posterior samples
             *  logZ - The log evidence
             *  Information - The Information for error estimation
             *  likelihood_calculations - Number of likelihood evaluations
@@ -418,50 +419,50 @@ class Nested_Sampler(object):
         iteration = None
         stop = None
         prev_stop = 0.0
-       
+
         for iteration in range(1,60000):
             smallest = 0
-            
+
             #Finding the object with smallest likelihood
             smallest = np.argmin(LogL)
-            
+
             #Assigning local evidence to the smallest sample
             self.active_samples[smallest].logWt = self.log_width + self.active_samples[smallest].logL;
-            
+
             largest = np.argmax(LogL)
 
-            
+
             #Calculating the updated evidence
             temp_evidence = np.logaddexp(self.log_evidence, self.active_samples[smallest].logWt)
-            
+
             #Calculating the information which will be helpful in calculating the uncertainity
             self.Information = exp(self.active_samples[smallest].logWt - temp_evidence) * self.active_samples[smallest].logL + \
             exp(self.log_evidence - temp_evidence) * (self.Information + self.log_evidence) - temp_evidence;
-            
-            # FIX ME : Add a stopping criterion condition 
+
+            # FIX ME : Add a stopping criterion condition
 
             self.log_evidence = temp_evidence
 
-            stopping = self.active_samples[largest].logL + self.log_width - self.log_evidence 
-            
+            stopping = self.active_samples[largest].logL + self.log_width - self.log_evidence
+
 
             if iteration%1000 == 0 or iteration==1:
-                print "Iteration: "+str(iteration) + "  maxZ: "+str(stopping)  
+                print "Iteration: "+str(iteration) + "  maxZ: "+str(stopping)
 
             if stopping < self.convergence_threshold and int(Config['STOP_BY_EVIDENCE'])==1:
                 break
-            
-            
+
+
             if iteration >= self.maximum_iterations and int(Config['STOP_BY_EVIDENCE'])==0:
                 break
-                        
+
             sample = Source()
             sample.__dict__ = self.active_samples[smallest].__dict__.copy()
 
             #storing posterior points
             self.posterior_inferences.append(sample)
-            
-            #New likelihood constraint 
+
+            #New likelihood constraint
             likelihood_constraint = self.active_samples[smallest].logL
 
             survivor = int(smallest)
@@ -483,7 +484,7 @@ class Nested_Sampler(object):
                 updated, number = self.clustered_sampling(active_points = self.active_samples, LC = likelihood_constraint, likelihood_calc =self.no_likelihood)
                 self.active_samples[smallest].__dict__ = updated.__dict__.copy()
                 LogL[smallest] = self.active_samples[smallest].logL
-                self.no_likelihood = number  
+                self.no_likelihood = number
 
             if self.sample == "uniform":
                 #Obtain new sample using uniform sampling principle
@@ -499,7 +500,7 @@ class Nested_Sampler(object):
                     self.ellipsoids = Clust_ellip.ellipsoid_set
                 found = 0
                 r_l, r_u = getPrior_R()
-                a_l, a_u = getPrior_A() 
+                a_l, a_u = getPrior_A()
                 while found == 0:
                     arbit = np.random.uniform(0,1)
                     trial = Source()
@@ -513,14 +514,14 @@ class Nested_Sampler(object):
                         print "\n"
                         print "Please adjust the clustering parameters and try again."
                         print "\n"
-                        print "\n"            
+                        print "\n"
                     max_likelihood = likelihood_constraint
                     count = 0
                     while count<50:
                         trial.X = points[count][0]
                         trial.Y = points[count][1]
                         trial.A = np.random.uniform(a_l,a_u)
-                        trial.R = np.random.uniform(r_l,r_u)            
+                        trial.R = np.random.uniform(r_l,r_u)
                         trial.logL = log_likelihood(trial)
                         self.no_likelihood+=1
 
@@ -529,28 +530,28 @@ class Nested_Sampler(object):
                             max_likelihood = trial.logL
                             found = 1
                             break
-                                
-                        count+=1    
-                    self.active_samples[smallest].__dict__ = clust.__dict__.copy()
-                    LogL[smallest] = self.active_samples[smallest].logL          
 
-            #Shrink width  
+                        count+=1
+                    self.active_samples[smallest].__dict__ = clust.__dict__.copy()
+                    LogL[smallest] = self.active_samples[smallest].logL
+
+            #Shrink width
             self.log_width -= 1.0 / self.no_active_samples;
 
         # FIX ME: Incorporate the active samples into evidence calculation and information after the loop
         return { "src":self.active_samples,
-            "samples":self.posterior_inferences, 
+            "samples":self.posterior_inferences,
             "logZ":self.log_evidence,
             "Information":self.Information,
             "likelihood_calculations":self.no_likelihood,
-            "iterations":self.maximum_iterations 
+            "iterations":self.maximum_iterations
             }
 
 
     def metropolis_sampling(self, obj, LC, likelihood_calc):
 
         """
-        Returns the sample satisfying the likelihood condition by metropolis sampling 
+        Returns the sample satisfying the likelihood condition by metropolis sampling
 
         Parameters
         ----------
@@ -579,7 +580,7 @@ class Nested_Sampler(object):
     def clustered_sampling(self, active_points, LC, likelihood_calc ):
 
         """
-        Returns the sample satisfying the likelihood condition by clustered ellipsoidal sampling 
+        Returns the sample satisfying the likelihood condition by clustered ellipsoidal sampling
 
         Parameters
         ----------
@@ -607,14 +608,14 @@ class Nested_Sampler(object):
             sample, number = Clust.sample()
             if(sample.logL > LC):
                 break
-            Clust = Clustered_Sampler(active_samples=active_points, likelihood_constraint=LC, enlargement=1.0, no=number)   
+            Clust = Clustered_Sampler(active_samples=active_points, likelihood_constraint=LC, enlargement=1.0, no=number)
         return sample, number
 
-    
+
     def uniform_sampling(self, LC, likelihood_calc):
 
         """
-        Returns the sample satisfying the likelihood condition by uniform random sampling 
+        Returns the sample satisfying the likelihood condition by uniform random sampling
 
         Parameters
         ----------
@@ -634,7 +635,7 @@ class Nested_Sampler(object):
 
         unif = uniform_sampler(likelihood_constraint = LC, no =likelihood_calc)
         evolved, number = unif.sample()
-        return evolved, number      
+        return evolved, number
 
 
 #---------------------------------------------------------------------------------------------------------------
@@ -654,7 +655,7 @@ class uniform_sampler(object):
     LC : float
         likelihood constraint for the point
     number : int
-        likelihood calculations until now        
+        likelihood calculations until now
 
     """
 
@@ -674,8 +675,8 @@ class uniform_sampler(object):
 
         self.LC     = likelihood_constraint
         self.number = no
-                
-    
+
+
     def sample(self):
 
         """
@@ -684,31 +685,31 @@ class uniform_sampler(object):
         Returns
         -------
         new : object
-            The evolved sample  
+            The evolved sample
         number : int
-            Number of likelihood calculations after sampling  
+            Number of likelihood calculations after sampling
 
         """
 
         new   = Source()
-                        
+
         x_l, x_u = getPrior_X()
         y_l, y_u = getPrior_Y()
         r_l, r_u = getPrior_R()
         a_l, a_u = getPrior_A()
 
         while(True):
-            
+
             new.X = np.random.uniform(x_l,x_u)
             new.Y = np.random.uniform(y_l,y_u)
             new.A = np.random.uniform(a_l,a_u)
             new.R = np.random.uniform(r_l,r_u)
             new.logL = log_likelihood(new)
             self.number+=1
-            
+
             if(new.logL > self.LC):
                 break
-                        
+
         return new, self.number
 
 #---------------------------------------------------------------------------------------------------------------
@@ -720,7 +721,7 @@ class Metropolis_sampler(object):
 
     """
     An Implementation of Metropolis sampling to pick a sample satisfying the likelihood
-    constraint in the current nested sampling phase.  
+    constraint in the current nested sampling phase.
 
     Attributes
     ----------
@@ -732,7 +733,7 @@ class Metropolis_sampler(object):
         dispersion of the gaussian proposal distribution
     number : int
         likelihood calculations until now
-    
+
     """
 
     def __init__(self, to_evolve, likelihood_constraint, no):
@@ -748,15 +749,15 @@ class Metropolis_sampler(object):
             name says it all
         no : int
             Number of likelihood evaluations until this point
-        
+
         """
 
         self.source = to_evolve
         self.LC     = likelihood_constraint
         self.step   = dispersion
         self.number = no
-                
-    
+
+
     def sample(self):
 
         """
@@ -765,9 +766,9 @@ class Metropolis_sampler(object):
         Returns
         -------
         metro : object
-            The evolved sample  
+            The evolved sample
         number : int
-            Number of likelihood calculations until now  
+            Number of likelihood calculations until now
 
         """
 
@@ -780,7 +781,7 @@ class Metropolis_sampler(object):
         count = 0
         hit = 0
         miss = 0
-        
+
         x_l, x_u = getPrior_X()
         y_l, y_u = getPrior_Y()
         r_l, r_u = getPrior_R()
@@ -791,12 +792,12 @@ class Metropolis_sampler(object):
         stepX    = self.step
         stepY    = stepnormalize*(y_u-y_l)
         stepA    = stepnormalize*(a_u - a_l)
-        stepR    = stepnormalize*(r_u-r_l)        
-        
+        stepR    = stepnormalize*(r_u-r_l)
+
         bord = 1
 
         while(count<20):
-            
+
             while bord==1:
                 bord = 0
                 new.X    = metro.X + stepX * (2.*np.random.uniform(0, 1) - 1.);
@@ -804,36 +805,36 @@ class Metropolis_sampler(object):
                 new.A    = metro.A + stepA * (2.*np.random.uniform(0, 1) - 1.);
                 new.R    = metro.R + stepR * (2.*np.random.uniform(0, 1) - 1.);
 
-                
+
 
                 if(new.X > x_u or new.X < x_l): bord = 1;
                 if(new.Y > y_u or new.Y < y_l): bord = 1;
                 if(new.A > a_u or new.A < a_l): bord = 1;
-                if(new.R > r_u or new.R < r_l): bord = 1;                
+                if(new.R > r_u or new.R < r_l): bord = 1;
 
             new.logL = log_likelihood(new)
             self.number+=1
-            
+
             if(new.logL > self.LC):
                 metro.__dict__ = new.__dict__.copy()
                 hit+=1
             else:
                 miss+=1
-            
+
             if( hit > miss ):   self.step *= exp(1.0 / hit);
             if( hit < miss ):   self.step /= exp(1.0 / miss);
 
-            stepnormalize = self.step/x_u         
+            stepnormalize = self.step/x_u
 
             stepX    = self.step
             stepY    = stepnormalize*(y_u-y_l)
             stepA    = stepnormalize*(a_u - a_l)
-            stepR    = stepnormalize*(r_u-r_l)        
-        
-            
+            stepR    = stepnormalize*(r_u-r_l)
+
+
             count+=1
             bord=1
-                    
+
         return metro, self.number
 
 
@@ -848,7 +849,7 @@ class Clustered_Sampler(object):
     """
     Implementation of clustered ellipsoidal method for using in multimodal nested sampling as
     an improvement to detect modes in the posterior. This was proposed in multinest paper by Feroz
-    and Hobson(2008). 
+    and Hobson(2008).
 
     Attributes
     ----------
@@ -869,14 +870,14 @@ class Clustered_Sampler(object):
     total_vol : float
         Total volume enclosed by the optimal ellipsoids
     number : float
-        Number of likelihood evaluations until now 
+        Number of likelihood evaluations until now
 
     References
     ----------
     .. [1] Multinest paper by Feroz and Hobson 2008.
     .. [2] Shaw R., Bridges M., Hobson M.P., 2007, MNRAS, in press (astro-ph/0701867)
     .. [3] A Nested Sampling Algorithm for Cosmological Model Selection(2006) Pia Mukherjee , David Parkinson , and Andrew R. Liddle
-    .. [4] http://www.sjsu.edu/faculty/watkins/ellipsoid.htm 
+    .. [4] http://www.sjsu.edu/faculty/watkins/ellipsoid.htm
 
     """
 
@@ -895,7 +896,7 @@ class Clustered_Sampler(object):
         enlargement_factor : float
             The enlargement factor for ellipsoids
         no : int
-            Number of likelihood calculations until the current sampling phase  
+            Number of likelihood calculations until the current sampling phase
 
         """
 
@@ -909,7 +910,7 @@ class Clustered_Sampler(object):
         self.total_vol = None
         self.number = no
 
-    
+
     def build_set(self):
 
         """
@@ -918,19 +919,19 @@ class Clustered_Sampler(object):
         Returns
         -------
         array : array
-            Array containing the active samples. Each element [X,Y] represents an object 
+            Array containing the active samples. Each element [X,Y] represents an object
 
         """
 
         array = []
         for active_sample in self.points:
             array.append([float(active_sample.X), float(active_sample.Y)])
-        return np.array(array)            
-        
+        return np.array(array)
+
 
     def cluster(self, activepoint_set):
 
-        """ 
+        """
         Clusters an array of samples using DBSCAN
 
         Parameters
@@ -945,14 +946,14 @@ class Clustered_Sampler(object):
         labels : array
             Cluster labels assigned by kmeans for each sample
         activepoint_set : array
-            The point set       
-        
+            The point set
+
         """
-        
+
         db = DBSCAN(eps=eps, min_samples=minPts).fit(activepoint_set)
         labels = db.labels_
         number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-        return number_of_clusters, labels, activepoint_set    
+        return number_of_clusters, labels, activepoint_set
 
 
     def optimal_ellipsoids(self):
@@ -964,7 +965,7 @@ class Clustered_Sampler(object):
         Returns
         -------
         ellipsoids : array
-            An array of ellipsoids to sample from.  
+            An array of ellipsoids to sample from.
 
         """
 
@@ -974,7 +975,7 @@ class Clustered_Sampler(object):
         ellipsoids = np.empty(self.number_of_clusters,dtype=object)
         for i in range(self.number_of_clusters):
             clust_points[i] = np.array(pointset[np.where(point_labels==i)])
-        invalid = []    
+        invalid = []
         for i in range(self.number_of_clusters):
             if len(clust_points[i]) > 1:
                 try:
@@ -993,7 +994,7 @@ class Clustered_Sampler(object):
     def recursive_bounding_ellipsoids(self, data, ellipsoid=None):
 
         """
-        Implementation of finding minimum bounding ellipsoids recursively. (work in progress) 
+        Implementation of finding minimum bounding ellipsoids recursively. (work in progress)
 
         Parameters
         ----------
@@ -1005,7 +1006,7 @@ class Clustered_Sampler(object):
         Returns
         -------
         ellipsoids : array
-           Array of ellipsoids satisfying all the conditions               
+           Array of ellipsoids satisfying all the conditions
 
         """
 
@@ -1017,11 +1018,11 @@ class Clustered_Sampler(object):
         clustered_data[0] = [data[i] for i in range(len(data)) if labels[i]==0]
         clustered_data[1] = [data[i] for i in range(len(data)) if labels[i]==1]
         vol = [0.0,0.0]
-        clustered_ellipsoids = np.empty(2,object)  
+        clustered_ellipsoids = np.empty(2,object)
         for i in [0, 1]:
             if(len(clustered_data[i]) <= 1):
                 clustered_ellipsoids[i] = Ellipsoid(clustered_data[i],1.0)
-                vol[i]= clustered_ellipsoids[i].volume 
+                vol[i]= clustered_ellipsoids[i].volume
         do = True
 
         if(vol[0] + vol[1] < ellipsoid.volume ):
@@ -1030,10 +1031,10 @@ class Clustered_Sampler(object):
                     ellipsoids.extend(self.recursive_bounding_ellipsoids(np.array(clustered_data[i]), clustered_ellipsoids[i]))
         else:
             ellipsoids.append(ellipsoid)
-        print len(ellipsoids)    
-        return ellipsoids    
+        print len(ellipsoids)
+        return ellipsoids
 
-     
+
     def sample(self):
 
         """
@@ -1060,7 +1061,7 @@ class Clustered_Sampler(object):
             print "\n"
             print "Please adjust the clustering parameters and try again."
             print "\n"
-            print "\n"            
+            print "\n"
         max_likelihood = self.LC
         count = 0
         r_l, r_u = getPrior_R()
@@ -1069,7 +1070,7 @@ class Clustered_Sampler(object):
             trial.X = points[count][0]
             trial.Y = points[count][1]
             trial.A = np.random.uniform(a_l,a_u)
-            trial.R = np.random.uniform(r_l,r_u)            
+            trial.R = np.random.uniform(r_l,r_u)
             trial.logL = log_likelihood(trial)
             self.number+=1
 
@@ -1077,17 +1078,17 @@ class Clustered_Sampler(object):
                 clust.__dict__ = trial.__dict__.copy()
                 max_likelihood = trial.logL
                 break
-                                
+
             count+=1
-        
-        return clust,self.number     
-             
+
+        return clust,self.number
+
 
 #---------------------------------------------------------------------------------------------------------------
 #                                     ELLIPSOID CLASS
 #---------------------------------------------------------------------------------------------------------------
 
-       
+
 class Ellipsoid(object):
 
     """
@@ -1134,7 +1135,7 @@ class Ellipsoid(object):
         self.enlargement_factor = enlargement_factor
         self.covariance_matrix = self.build_cov(self.centroid, self.clpoints)
         self.inv_cov_mat = np.linalg.inv(self.covariance_matrix)
-                
+
 
     def build_cov(self, center, clpoints):
 
@@ -1144,16 +1145,16 @@ class Ellipsoid(object):
         Parameters
         ----------
         center : array
-            The centroid of the point cluster 
+            The centroid of the point cluster
         clpoints : array
             The point set of interest
 
         Returns
         -------
         cov_mat : array
-            Scaled covariance matrix  
+            Scaled covariance matrix
 
-        """ 
+        """
 
         points = np.array(clpoints)
         transformed = points - center
@@ -1179,7 +1180,7 @@ class Ellipsoid(object):
         Returns
         -------
         points : array
-            The array of sampled points     
+            The array of sampled points
 
         """
 
@@ -1190,10 +1191,10 @@ class Ellipsoid(object):
         x_l, x_u = getPrior_X()
         y_l, y_u = getPrior_Y()
         r_l, r_u = getPrior_R()
-        a_l, a_u = getPrior_A()        
+        a_l, a_u = getPrior_A()
         scaled = np.dot(vects, np.diag(np.sqrt(np.absolute(values))))
         bord = 1
-        new = None    
+        new = None
         for i in range(n_points):
             while bord==1:
                 bord = 0
@@ -1203,12 +1204,12 @@ class Ellipsoid(object):
 
                 if(new[0] > x_u or new[0] < x_l): bord = 1;
                 if(new[1] > y_u or new[1] < y_l): bord = 1;
-                
-            bord = 1     
+
+            bord = 1
             points[i, :] = copy.deepcopy(new)
         return points
 
-    
+
     def find_volume(self):
 
         """
@@ -1220,13 +1221,13 @@ class Ellipsoid(object):
             volume of the ellipsoid under consideration
 
         """
-        
+
         volume = (np.pi**2)*(np.sqrt(np.linalg.det(self.covariance_matrix)))/2.
-        return volume 
+        return volume
 
 
 def run_source_detect(samples = None, iterations = None, sample_method = None, prior= None,noise_rms = None, disp = None,mode = "Manual" ):
-    
+
     """
     The main method for Bayesian source detection. Runs and generates plots and histograms for posterior samples and
     active samples. Outputs the source positions, posterior inferences and other details for reference and analysis.
@@ -1250,30 +1251,30 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
 
         * "Manual" : Can be ran manually form the Command line . In this case all the above params are obtained
                    from the config file.
-        * "ipython" : Can be ran independently from ipython console. In this case we have to provide all the parameters                        
+        * "ipython" : Can be ran independently from ipython console. In this case we have to provide all the parameters
 
     Notes
     -----
     Generates the following plots successively.
 
-        * X-histogram of the posterior samples 
+        * X-histogram of the posterior samples
         * Y-histogram of the posterior samples
         * Scatter plot of the posterior samples in 2D i.e (X,Y)
-        * X-histogram of the active samples 
+        * X-histogram of the active samples
         * Y-histogram of the active samples
         * Scatter plot of the active samples in 2D i.e (X,Y)
 
     Outputs the posterior samples and the following information to ASCII file
-        
+
         * Time elapsed
         * Log evidence
         * Number of iterations
-        * Number of likelihood evaluations                 
+        * Number of likelihood evaluations
 
     """
 
     startTime = time.time()
-    
+
     global amplitude_upper
     global amplitude_lower
     global x_upper
@@ -1286,7 +1287,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
     global output_loc
     global stop
     global eps
-    global minPts 
+    global minPts
 
     if mode == "ipython":
         dispersion = disp
@@ -1296,7 +1297,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         y_upper = prior[1][1]
         R_upper = prior[3][1]
         R_lower = prior[3][0]
-        noise   = noise_rms  
+        noise   = noise_rms
         K = (no_pixels/2)*(np.log(2*np.pi) + 4*np.log(abs(noise)))
         n = samples
         max_iter = iterations
@@ -1323,30 +1324,30 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         stop = int(Config['STOP_BY_EVIDENCE'])
         eps = float(Config['EPS'])
         minPts = float(Config['MINPTS'])
-    
+
     nested = Nested_Sampler(no_active_samples = n, max_iter = max_iter, sample = sample_type)
     out  = nested.fit()
 
     elapsedTime = time.time() - startTime
-    print "elapsed time: "+str(elapsedTime) 
+    print "elapsed time: "+str(elapsedTime)
     print "log evidence: "+str(out["logZ"])
     print "number of iterations: "+str(out["iterations"])
     print "likelihood calculations: "+str(out["likelihood_calculations"])
 
     data = np.array(out["samples"])
-    
+
     X = np.array([i.X for i in data])
     Y = np.array([i.Y for i in data])
     A = np.array([i.A for i in data])
     R = np.array([i.R for i in data])
     logL = np.array([i.logL for i in data])
 
-    ascii.write([X, Y, A, R, logL], output_loc, names=['X', 'Y', 'A', 'R', 'logL']) 
+    ascii.write([X, Y, A, R, logL], output_loc, names=['X', 'Y', 'A', 'R', 'logL'])
 
     srcdata = np.array(out["src"])
-    
+
     outX = [i.X for i in out["samples"]]
-    outY = [height-i.Y for i in out["samples"]]   
+    outY = [height-i.Y for i in out["samples"]]
 
     plot_histogram(data = outX, bins = width, title = "X_histogram of posterior samples")
     plot_histogram(data = outY, bins = height, title = "Y_histogram of posterior samples")
