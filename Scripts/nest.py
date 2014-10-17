@@ -201,7 +201,7 @@ class Metropolis_sampler(object):
 
         self.source = to_evolve
         self.LC     = likelihood_constraint
-        self.step   = 8.0
+        self.step   = 8.0 #set to dispersion
         self.number = no
                 
     """Sampling from the prior subject to constraints according to Metropolis method 

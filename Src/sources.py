@@ -1274,7 +1274,6 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
     """
 
     startTime = time.time()
-
     global amplitude_upper
     global amplitude_lower
     global x_upper
@@ -1302,12 +1301,13 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         n = samples
         max_iter = iterations
         sample_type = sample_method
-        output_loc = 'C:\Users\chaithuzz2\Desktop\Bayes_detect\output\samples.dat'
+        output_loc = os.path.join(os.path.dirname(__file__), os.pardir) + "\samples.dat"
         stop = 0
         eps = 10
         minPts = 10
 
-    if mode == "Manual":
+    #elif mode == "Manual":
+    else:
         dispersion = float(Config['DISPERSION'])
         amplitude_upper = float(Config['A_PRIOR_UPPER'])
         amplitude_lower = float(Config['A_PRIOR_LOWER'])
@@ -1324,6 +1324,8 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         stop = int(Config['STOP_BY_EVIDENCE'])
         eps = float(Config['EPS'])
         minPts = float(Config['MINPTS'])
+
+
 
     nested = Nested_Sampler(no_active_samples = n, max_iter = max_iter, sample = sample_type)
     out  = nested.fit()
