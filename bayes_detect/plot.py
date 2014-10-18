@@ -6,6 +6,8 @@ import math
 from pylab import figure,show
 import pickle
 from scipy import stats
+from source import Source
+from clustered import Clustered_Sampler
 
 
 
@@ -22,8 +24,8 @@ def show_source(height, width, sources):
         width of the image
     sources : array
         Array of source objects to show
-    
-    
+
+
     Examples
     --------
 
@@ -39,9 +41,9 @@ def show_source(height, width, sources):
     >>>     a.Y = np.random.uniform(0.0, 200.0)
     >>>     a.A = np.random.uniform(1.0, 15.0)
     >>>     a.R = np.random.uniform(2.0, 9.0)
-    >>>     Sources.append(a) 
+    >>>     Sources.append(a)
     >>> plot.show_source(height, width, Sources)
-    
+
     .. plot::
 
         import plot
@@ -56,7 +58,7 @@ def show_source(height, width, sources):
             a.Y = np.random.uniform(0.0, 200.0)
             a.A = np.random.uniform(1.0, 15.0)
             a.R = np.random.uniform(2.0, 9.0)
-            Sources.append(a) 
+            Sources.append(a)
         plot.show_source(height, width, Sources)
 
     """
@@ -120,7 +122,7 @@ def show_scatterplot(X,Y,title, height, width):
     title : str
         title of the scatter plot
     height : int
-        height limit of the scatter plot                 
+        height limit of the scatter plot
     width : int
         width limit of the scatter plot
 
@@ -159,7 +161,7 @@ def plot_ellipse(points):
     ----------
     points : 2Darray
         Two dimensional array for plotting the ellipse
-    
+
     Examples
     --------
 
@@ -169,38 +171,38 @@ def plot_ellipse(points):
     >>> plot.plot_ellipse(X)
 
     .. plot::
-        
+
         import plot
         import numpy as np
         X = np.random.rand(10,2)
         plot.plot_ellipse(X)
 
     """
-    
+
     #Getting some test samples from prior to fit an ellipse in X,Y
     X = np.array(points)
     centroid = np.mean(X,axis=0)
-    
+
     #Transforming the coordinates so that centroid lies at origin
     transformed = X - centroid
     cov_mat = np.cov(m=transformed, rowvar=0)
     inv_cov_mat = np.linalg.inv(cov_mat)
-    
+
     #Calculating a scaling factor for covariance matrix so that all the points lie in the ellipse
     pars = [np.dot(np.dot(transformed[i,:], inv_cov_mat), transformed[i,:]) for i in range(len(X))]
     pars = np.array(pars)
-    
+
     #Corresponds to the point with max value
     scale_factor = np.max(pars)
     cov_mat = cov_mat*scale_factor
-    
+
     #Calculating the width,height and angle of the ellipse from eigen vectors of the scaled covariance matrix
     a, b = np.linalg.eig(cov_mat)
     c = np.dot(b, np.diag(np.sqrt(a)))
     width = np.sqrt(np.sum(c[:,1]**2)) * 2.
     height = np.sqrt(np.sum(c[:,0]**2)) * 2.
     angle = math.atan(c[1,1] / c[0,1]) * 180./math.pi
-    
+
     #Plotting the ellipse
     ellipse = Ellipse(centroid, width, height, angle)
     ellipse.set_facecolor('None')
@@ -212,13 +214,13 @@ def plot_ellipse(points):
 
 def write(data, out):
 
-    """ 
+    """
     Writes an array to a pickle
-    
+
     Parameters
     ----------
     data : array
-        Array to be stored      
+        Array to be stored
     out : str
         The location to be stored at
 
@@ -229,13 +231,11 @@ def write(data, out):
     >>> import numpy as np
     >>> arr = np.random.randn(4,4)
     >>> path = "output"
-    >>> plot.write(arr, path)    
+    >>> plot.write(arr, path)
 
     """
-
-    f = open(out,'w+b')
-    pickle.dump(data, f)
-    f.close()
+    with open(out, 'w+b') as f:
+        pickle.dump(data, f)
 
 
 def make_source(src_array,height,width):
@@ -270,9 +270,9 @@ def make_source(src_array,height,width):
                   [34.12, 162.54, 1.95, 6.02],
                   [153.87, 169.18, 1.06, 6.61],
                   [155.54, 32.14, 1.46, 4.05],
-                  [130.56, 183.48, 1.63, 4.11]] 
+                  [130.56, 183.48, 1.63, 4.11]]
     >>> im_data = plot.make_source(srces, height, width)
-    
+
     .. plot::
 
         import plot
@@ -285,7 +285,7 @@ def make_source(src_array,height,width):
                       [34.12, 162.54, 1.95, 6.02],
                       [153.87, 169.18, 1.06, 6.61],
                       [155.54, 32.14, 1.46, 4.05],
-                      [130.56, 183.48, 1.63, 4.11]] 
+                      [130.56, 183.48, 1.63, 4.11]]
         im_data = plot.make_source(srces, height, width)
 
 
@@ -335,12 +335,12 @@ def add_gaussian_noise(mean, sd, data):
                 [155.54, 32.14, 1.46, 4.05],
                 [130.56, 183.48, 1.63, 4.11]]
     >>> height = 200a
-    >>> width = 200            
-    >>> im_data = plot.make_source(srces, height, width)            
+    >>> width = 200
+    >>> im_data = plot.make_source(srces, height, width)
     >>> z = plot.add_gaussian_noise(0, 2.0, im_data)
-    
+
     .. plot::
-        
+
         import plot
         srces = [[43.71, 22.91, 10.54, 3.34],
                 [101.62, 40.60, 1.37, 3.40],
@@ -351,8 +351,8 @@ def add_gaussian_noise(mean, sd, data):
                 [155.54, 32.14, 1.46, 4.05],
                 [130.56, 183.48, 1.63, 4.11]]
         height = 200
-        width = 200            
-        im_data = plot.make_source(srces, height, width)        
+        width = 200
+        im_data = plot.make_source(srces, height, width)
         z = plot.add_gaussian_noise(0, 2.0, im_data)
 
     """
@@ -405,12 +405,12 @@ def make_random_source(limits, width, height, number_of_sources):
         height = 200
         width = 200
         number_src = 7
-        z = plot.make_random_source(lim, width, height, number_src) 
+        z = plot.make_random_source(lim, width, height, number_src)
 
-    
+
     """
-    
-    x_l, x_u = limits[0] 
+
+    x_l, x_u = limits[0]
     y_l, y_u = limits[1]
     a_l, a_u = limits[2]
     r_l, r_u = limits[3]
@@ -426,7 +426,34 @@ def make_random_source(limits, width, height, number_of_sources):
     plt.show()
     return z
 
+def show_minimum_bounding_ellipsoids(data_map, params, Xr, with_sampled = False):
+    #warning this function has not been tested
+    clustellip = Clustered_Sampler(data_map, params, active_samples = Xr,likelihood_constraint=0.0, enlargement= 1.0, no=1)
+    ellipsoids = clustellip.ellipsoid_set
+    X0 = [i[0] for i in Xr]
+    Y0 = [i[1] for i in Xr] 
+    plt.figure()
+    ax = plt.gca()
+    points = []
 
+    for i in range(len(ellipsoids)):
+        if ellipsoids[i]!=None:
+            a, b = np.linalg.eig(ellipsoids[i].covariance_matrix)
+            c = np.dot(b, np.diag(np.sqrt(a)))
+            width = np.sqrt(np.sum(c[:,1]**2)) * 2.
+            height = np.sqrt(np.sum(c[:,0]**2)) * 2.
+            angle = math.atan(c[1,1] / c[0,1]) * 180./math.pi
+            points = ellipsoids[i].sample(n_points = 50)
+            ellipse = Ellipse(ellipsoids[i].centroid, width, height, angle)
+            ellipse.set_facecolor('None')
+            ax.add_patch(ellipse)
+
+    if with_sampled == True:
+        X = [i[0] for i in points]
+        Y = [i[1] for i in points]
+        plt.plot(X, Y, 'bo')
+    plt.plot(X0, Y0, 'ro')
+    plt.show()
 
 if __name__ == '__main__':
         srces =  [[43.71, 22.91, 10.54, 3.34],
@@ -437,12 +464,4 @@ if __name__ == '__main__':
                   [153.87, 169.18, 1.06, 6.61],
                   [155.54, 32.14, 1.46, 4.05],
                   [130.56, 183.48, 1.63, 4.11]]
-        make_source(srces, 200, 200)              
-
-
-
-
-
-
-
-       
+        make_source(srces, 200, 200)
