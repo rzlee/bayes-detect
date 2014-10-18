@@ -234,8 +234,8 @@ class Clustered_Sampler(Sampler):
             print "\n"
         max_likelihood = self.LC
         count = 0
-        r_l, r_u = getPrior_R()
-        a_l, a_u = getPrior_A()
+        r_l, r_u = self.getPrior_R()
+        a_l, a_u = self.getPrior_A()
         while count<50:
             trial.X = points[count][0]
             trial.Y = points[count][1]

@@ -152,7 +152,8 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         params['stop'] = 0
         params['eps'] = 10
         params['minPts'] = 10
-        params['stop_by_evidence'] = 1
+        params['stop_by_evidence'] = 0
+        #it will stop on max_iterations
 
     else:
         params['dispersion'] = float(Config['DISPERSION'])
@@ -193,7 +194,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
     R = np.array([i.R for i in data])
     logL = np.array([i.logL for i in data])
 
-    ascii.write([X, Y, A, R, logL], output_loc, names=['X', 'Y', 'A', 'R', 'logL'])
+    ascii.write([X, Y, A, R, logL], params['output_loc'], names=['X', 'Y', 'A', 'R', 'logL'])
 
     srcdata = np.array(out["src"])
 

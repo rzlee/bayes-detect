@@ -277,7 +277,7 @@ class Nested_Sampler(Sampler):
         """
 
         #Instantiating the metropolis sampler object
-        Metro = Metropolis(self.data_map, self.params, to_evolve = obj, likelihood_constraint = LC, no =likelihood_calc )
+        Metro = Metropolis_Sampler(self.data_map, self.params, to_evolve = obj, likelihood_constraint = LC, no =likelihood_calc )
         evolved, number = Metro.sample()
         return evolved, number
 

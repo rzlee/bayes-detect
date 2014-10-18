@@ -42,7 +42,7 @@ class Metropolis_Sampler(Sampler):
 
         self.source = to_evolve
         self.LC     = likelihood_constraint
-        self.step   = dispersion
+        self.step   = params['dispersion']
         self.number = no
 
 
@@ -70,10 +70,10 @@ class Metropolis_Sampler(Sampler):
         hit = 0
         miss = 0
 
-        x_l, x_u = getPrior_X()
-        y_l, y_u = getPrior_Y()
-        r_l, r_u = getPrior_R()
-        a_l, a_u = getPrior_A()
+        x_l, x_u = self.getPrior_X()
+        y_l, y_u = self.getPrior_Y()
+        r_l, r_u = self.getPrior_R()
+        a_l, a_u = self.getPrior_A()
 
         stepnormalize = self.step/x_u
 
