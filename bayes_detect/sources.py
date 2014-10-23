@@ -152,7 +152,7 @@ def run_source_detect(samples = None, iterations = None, sample_method = None, p
         params['stop'] = 0
         params['eps'] = 10
         params['minPts'] = 10
-        params['stop_by_evidence'] = 0
+        params['stop_by_evidence'] = 1
         #it will stop on max_iterations
 
     else:
