@@ -6,18 +6,18 @@ This is a library for performing source detection in single band sky images usin
 
 
 ## Authors
-Richard Lee
+Richard Lee 
 Krishna Chaitanya Chavati  
 Edward Kim  
 Robert J. Brunner
 
 ## Required packages
-Python 2.7
-Numpy
-Scipy
-IPython
-IPython Notebook
-Matplotlib
+Python 2.7 
+Numpy 
+Scipy 
+IPython 
+IPython Notebook 
+Matplotlib 
 Scikit-Learn
 
 We found that using the Anaconda python environment makes installation of these dependencies easy
@@ -28,7 +28,7 @@ Check out [demo.ipynb](http://nbviewer.ipython.org/github/ProfessorBrunner/bayes
 
 ## Documentation
 
-[Notes](http://nbviewer.ipython.org/github/ProfessorBrunner/bayes-detect/blob/master/Bayesian_Source_Detection.ipynb)
+[Notes](http://nbviewer.ipython.org/github/ProfessorBrunner/bayes-detect/blob/master/Bayesian_Source_Detection.ipynb) 
 The code examples in this notebook are slightly out of date,
 refer to [demo.ipynb](http://nbviewer.ipython.org/github/ProfessorBrunner/bayes-detect/blob/master/demo.ipynb)
 for a more up to date example of the code's usage.
@@ -36,9 +36,9 @@ for a more up to date example of the code's usage.
 
 ##References
 
-[arXiv:0704.3704] (http://arxiv.org/abs/0704.3704)
-[arXiv:astro-ph/0701867] (http://arxiv.org/abs/astro-ph/0701867)
-[Metropolis Hastings](http://en.wikipedia.org/wiki/Metropolis-Hastings_algorithm)
-[arXiv:astro-ph/0204457] (http://arxiv.org/abs/astro-ph/0204457)
-[Nested Sampling](http://www.inference.phy.cam.ac.uk/bayesys/Valencia.pdf)
-Data Analysis: A Bayesian Tutorial by Sivia et al(2006)
+[arXiv:0704.3704] (http://arxiv.org/abs/0704.3704) 
+[arXiv:astro-ph/0701867] (http://arxiv.org/abs/astro-ph/0701867) 
+[Metropolis Hastings](http://en.wikipedia.org/wiki/Metropolis-Hastings_algorithm) 
+[arXiv:astro-ph/0204457] (http://arxiv.org/abs/astro-ph/0204457) 
+[Nested Sampling](http://www.inference.phy.cam.ac.uk/bayesys/Valencia.pdf) 
+Data Analysis: A Bayesian Tutorial by Sivia et al(2006) 
