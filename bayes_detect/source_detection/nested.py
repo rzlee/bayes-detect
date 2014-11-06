@@ -148,7 +148,7 @@ class Nested_Sampler(Sampler):
             stopping = self.active_samples[largest].logL + self.log_width - self.log_evidence
 
 
-            if iteration%1000 == 0 or iteration==1:
+            if iteration%10 == 0 or iteration==1:
                 print "Iteration: "+str(iteration) + "  maxZ: "+str(stopping)
 
             if stopping < self.convergence_threshold and self.params['stop_by_evidence']==True:
@@ -279,7 +279,7 @@ class Nested_Sampler(Sampler):
         unif = Uniform_Sampler(self.data_map, self.params, likelihood_constraint = LC, no =likelihood_calc)
         evolved, number = unif.sample()
         return evolved, number
-    
+
     def setup_sampler(self, data_map, params, active_samples):
         #we do the setup of the various samplers in here
         #first we need to know what sampler we are going to be dealing with
@@ -318,10 +318,13 @@ class Nested_Sampler(Sampler):
         if self.sampler_type == "uniform":
            return self.sampler.sample()
         if self.sampler_type == "metropolis":
-           return self.sampler.sample()
+           res = self.sampler.sample()
+           self.sampler = self.setup_sampler(self.data_map, self.params, active_samples)
+           #hacky, write a function in MH to update such values
+           #self.sampler.update_values(active_samples, self.no_active_samples)
+           #this function doens't work
+           return res
         if self.sampler_type == "clustered_sampler": 
             if self.wait == 0 or num_iter % self.wait:
                 self.sampler.run_clustering(active_samples)
-
-            #check if we need to cluster on this one
-           return self.sampler.sample(active_samples)
+            return self.sampler.sample(active_samples)
