@@ -80,7 +80,7 @@ class Nested_Sampler(Sampler):
         self.no_active_samples     = params['n']
         self.maximum_iterations    = params['max_iter']
         self.params                = params
-        self.sample                = sampler
+        self.sampler_type           = sampler
         self.convergence_threshold = conv_thresh
         self.active_samples        = self.get_sources(self.no_active_samples)
         self.log_evidence          = None # Log evidence
@@ -90,8 +90,8 @@ class Nested_Sampler(Sampler):
         self.no_likelihood         = self.no_active_samples
         # To keep track of number of likelihood evaluations made
         self.ellipsoids            = None
-        
-    
+        self.sampler               = None
+        self.params                = params
 
 
     def fit(self):
@@ -111,6 +111,7 @@ class Nested_Sampler(Sampler):
             *  iterations - Number of iterations until stopping
 
         """
+        #self note: we implementation of clustered_sampler will be a special case of "new"
 
         #Initializing evidence and prior mass
         self.log_evidence = -1e300
@@ -120,6 +121,8 @@ class Nested_Sampler(Sampler):
         iteration = None
         stop = None
         prev_stop = 0.0
+
+        self.sampler = setup_sampler(self.data_map, self.params, self.active_samples)
 
         for iteration in range(1,60000):
             smallest = 0
@@ -172,8 +175,7 @@ class Nested_Sampler(Sampler):
                 survivor = int(self.no_active_samples * np.random.uniform(0,1)) % self.no_active_samples  # force 0 <= copy < n
                 if survivor != smallest:
                     break
-
-            if self.sample == "metropolis":
+            if self.sampler_type == "metropolis":
                 #Obtain new sample using Metropolis principle
                 updated, number = self.metropolis_sampling(obj = self.active_samples[survivor],
                                                            LC = likelihood_constraint, likelihood_calc =self.no_likelihood)
@@ -181,7 +183,7 @@ class Nested_Sampler(Sampler):
                 LogL[smallest] = self.active_samples[smallest].logL
                 self.no_likelihood = number
 
-            if self.sample == "clustered_ellipsoidal":
+            if self.sampler_type == "clustered_ellipsoidal":
                 #Obtain new sample using Clustered ellipsoidal sampling
                 updated, number = self.clustered_sampling(active_points = self.active_samples,
                                                           LC = likelihood_constraint, likelihood_calc =self.no_likelihood)
@@ -189,14 +191,14 @@ class Nested_Sampler(Sampler):
                 LogL[smallest] = self.active_samples[smallest].logL
                 self.no_likelihood = number
 
-            if self.sample == "uniform":
+            if self.sampler_type == "uniform":
                 #Obtain new sample using uniform sampling principle
                 updated, number = self.uniform_sampling(LC = likelihood_constraint, likelihood_calc =self.no_likelihood)
                 self.active_samples[smallest].__dict__ = updated.__dict__.copy()
                 LogL[smallest] = self.active_samples[smallest].logL
                 self.no_likelihood = number
 
-            if self.sample == "new":
+            if self.sampler_type == "new":
 
                 if iteration ==1 or iteration%30==0 :
                     Clust_ellip = Clustered_Sampler(self.data_map, self.params, active_samples=self.active_samples,
@@ -313,11 +315,13 @@ class Nested_Sampler(Sampler):
         while True:
             sample, number = Clust.sample()
             if(sample.logL > LC):
+                sampler_type = params['type']
                 break
             Clust = Clustered_Sampler(self.data_map, self.params,
                                       active_samples=active_points, likelihood_constraint=LC,
                                       enlargement=1.0, no=number)
         return sample, number
+
 
 
     def uniform_sampling(self, LC, likelihood_calc):
@@ -344,3 +348,44 @@ class Nested_Sampler(Sampler):
         unif = Uniform_Sampler(self.data_map, self.params, likelihood_constraint = LC, no =likelihood_calc)
         evolved, number = unif.sample()
         return evolved, number
+    
+    def setup_sampler(self, data_map, params, active_samples):
+        #we do the setup of the various samplers in here
+        #first we need to know what sampler we are going to be dealing with
+        sampler_type = params['type']
+        like_constraint = self.active_samples[smallest].logL
+        like_calc = self.no_likelihood # number of active samples
+
+        sampler = None
+
+        if sampler_type == "uniform":
+            sampler = Uniform_Sampler(data_map, params,
+                                      likelihood_constraint = like_constraint,
+                                      no = like_calc)
+
+        if sampler_type == "metropolis":
+            smallest = int(np.argmin([i.logL for i in active_samples]))
+            while True:
+                survivor = int(self.no_active_samples * np.random.uniform(0,1)) % self.no_active_samples  # force 0 <= copy < n
+                if survivor != smallest:
+                    break
+            obj = active_samples[survivor]
+            sampler = Metropolis_Sampler(data_map, params, to_evolve = obj,
+                                         likelihood_constraint = like_constraint,
+                                         no = like_calc)
+
+        if sampler_type == "clustered_sampler":
+            sampler = Clustered_Sampler(data_map, params, active_samples = active_samples,
+                                        likelihood_constraint = like_constraint, enlargement = 1.0,
+                                        no = like_calc)
+
+        return sampler
+
+    def draw_sample(self, active_samples):
+        #wrap interaction with samplers inside here
+        if self.sampler_type == "uniform":
+           return self.sampler.sample()
+        if self.sampler_type == "metropolis":
+           return self.sampler.sample()
+        if self.sampler_type == "clustered_sampler": 
+           return self.sampler.sample(active_samples)

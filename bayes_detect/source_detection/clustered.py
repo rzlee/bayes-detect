@@ -58,7 +58,6 @@ class Clustered_Sampler(Sampler):
         likelihood_constraint : float
             Name says it all
         enlargement_factor : float
-            The enlargement factor for ellipsoids
         no : int
             Number of likelihood calculations until the current sampling phase
 
@@ -69,19 +68,19 @@ class Clustered_Sampler(Sampler):
         self.eps = params['eps']
         self.minPts = params['minPts']
         self.params = params
-        self.points = copy.deepcopy(active_samples)
+        #self.points = copy.deepcopy(active_samples)
         self.LC = likelihood_constraint
         self.enlargement = 1.5
         self.clustered_point_set = None
         self.number_of_clusters = None
-        self.activepoint_set = self.build_set()
-        self.ellipsoid_set = self.optimal_ellipsoids()
+        activepoint_set = self.build_set(active_samples)
+        self.ellipsoid_set = self.optimal_ellipsoids(activepoint_set)
         self.total_vol = None
         self.number = no
 
 
 
-    def build_set(self):
+    def build_set(self, points):
 
         """
         Builds set of the active samples in array format for clustering.
@@ -92,10 +91,12 @@ class Clustered_Sampler(Sampler):
             Array containing the active samples. Each element [X,Y] represents an object
 
         """
-
+        array = [[float(active_sample.X), float(active_sample.Y)] for active_sample in points]
+        """
         array = []
         for active_sample in self.points:
             array.append([float(active_sample.X), float(active_sample.Y)])
+        """
         return np.array(array)
 
 
@@ -114,7 +115,7 @@ class Clustered_Sampler(Sampler):
         number_of_clusters : int
             name says it all
         labels : array
-            Cluster labels assigned by kmeans for each sample
+            Cluster labels assigned by dbscan for each sample
         activepoint_set : array
             The point set
 
@@ -122,11 +123,12 @@ class Clustered_Sampler(Sampler):
 
         db = DBSCAN(eps=self.eps, min_samples=self.minPts).fit(activepoint_set)
         labels = db.labels_
-        number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+        labelset = set(labels) #its O(1) to check membership in set vs O(n) in list
+        number_of_clusters = len(labelset) - (1 if -1 in labelset else 0)
         return number_of_clusters, labels, activepoint_set
 
 
-    def optimal_ellipsoids(self):
+    def optimal_ellipsoids(self, activepoint_set):
 
         """
 
@@ -139,8 +141,7 @@ class Clustered_Sampler(Sampler):
 
         """
 
-
-        self.number_of_clusters, point_labels, pointset = self.cluster(self.activepoint_set)#Cluster and find centroids
+        self.number_of_clusters, point_labels, pointset = self.cluster(activepoint_set)#Cluster and find centroids
         clust_points = np.empty(self.number_of_clusters,dtype=object)
         ellipsoids = np.empty(self.number_of_clusters,dtype=object)
         for i in range(self.number_of_clusters):
@@ -198,12 +199,16 @@ class Clustered_Sampler(Sampler):
         if(vol[0] + vol[1] < ellipsoid.volume ):
             for i in [0, 1]:
                 if(vol[i]>0.0):
-                    ellipsoids.extend(self.recursive_bounding_ellipsoids(np.array(clustered_data[i]), clustered_ellipsoids[i]))
+                    ellipsoids.extend(self.recursive_bounding_ellipsoids(
+                                      np.array(clustered_data[i]), clustered_ellipsoids[i]))
         else:
             ellipsoids.append(ellipsoid)
         print len(ellipsoids)
         return ellipsoids
 
+    def run_clustering(self, active_samples):
+        activepoint_set = self.build_set(active_samples)
+        self.ellipsoid_set = self.optimal_ellipsoids(activepoint_set)
 
     def sample(self):
 
@@ -222,7 +227,7 @@ class Clustered_Sampler(Sampler):
         arbit = np.random.uniform(0,1)
         trial = Source()
         clust = Source()
-        z = int((len(self.ellipsoid_set))*arbit)
+        z = int(len(self.ellipsoid_set)*arbit)
         points = None
         try:
             points = self.ellipsoid_set[z].sample(n_points=50)
