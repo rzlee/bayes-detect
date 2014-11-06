@@ -88,14 +88,29 @@ def run_source_detect(data_map = None, height = -1, width = -2, active_samples =
         #it needs to be flattened
         data_map = data_map.flatten()
 
+    #some error catching
+    if "metropolis" in sample_params and "disp" not in sample_params:
+        #we don't have a default dispersion value, just throw an error
+        raise Exception("Metropolis Hastings sampler selected without a dispersion value")
+
     params = dict()
     if "disp" in sample_params:
         #only in metropolis hastings
+        if sample_params['disp'] <= 0:
+            raise Exception("Dispersion value must be non negative")
+
         params['dispersion'] = sample_params['disp']
-    if "minPts" in sample_params and "eps" in sample_params:
-        #only used in clustered samplers
+
+    if "clustered_sampler" in sample_params:
+        if "minPts" not in sample_params:
+           raise Exception("minPts value missing")
+        if "eps" not in sample_params:
+           raise Exception("eps value missing")
+        if sample_params['break'] < 0:
+            raise Exception("invalid break period")
         params['eps'] = sample_params['eps'] 
         params['minPts'] = sample_params['minPts']
+        params['wait'] = sample_params['wait']
 
     no_pixels = height * width
 
