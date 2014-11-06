@@ -10,6 +10,24 @@ from astropy.io import ascii
 from nested import Nested_Sampler
 
 def load_config(path):
+    """
+    Read the config file and return relevant information
+    Parameters
+    __________
+    path : str
+        Absolute file path to the config file
+
+    Returns
+    ______
+        Config : dict
+            The config file in the form of a dictionary
+        data_map : array
+            Array that represents the image
+        height : int
+            Height of the image
+        width : int
+            Width of the image
+    """
     with open(path) as config_file:
         params = filter(lambda x: (x[0] != '#') and (x[0] != '\n'), config_file.readlines())
         #only read the lines with params

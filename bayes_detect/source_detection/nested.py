@@ -117,7 +117,6 @@ class Nested_Sampler(Sampler):
         self.log_evidence = -1e300
         self.log_width = log(1.0 - exp(-1.0 / self.no_active_samples))
         self.Information = 0.0
-        LogL = [i.logL for i in self.active_samples]
         iteration = 1
 
         self.sampler = self.setup_sampler(self.data_map, self.params, self.active_samples)
@@ -125,6 +124,9 @@ class Nested_Sampler(Sampler):
         while True: #we run until either max_iter or convergence
             smallest = 0
 
+            self.active_samples = filter(lambda x: x.logL != None, self.active_samples)
+            #clean out invalid values
+            LogL = [i.logL for i in self.active_samples]
             #Finding the object with smallest likelihood
             smallest = np.argmin(LogL)
 
@@ -141,14 +143,12 @@ class Nested_Sampler(Sampler):
             self.Information = exp(self.active_samples[smallest].logWt - temp_evidence) * self.active_samples[smallest].logL + \
             exp(self.log_evidence - temp_evidence) * (self.Information + self.log_evidence) - temp_evidence;
 
-            # FIX ME : Add a stopping criterion condition
-
             self.log_evidence = temp_evidence
 
+            #compute value that may be used for the stopping criterion
             stopping = self.active_samples[largest].logL + self.log_width - self.log_evidence
 
-
-            if iteration%100 == 0 or iteration==1:
+            if iteration%1000 == 0 or iteration==1:
                 print "Iteration: "+str(iteration) + "  maxZ: "+str(stopping)
 
             if stopping < self.convergence_threshold and self.params['stop_by_evidence']==True:
@@ -183,101 +183,6 @@ class Nested_Sampler(Sampler):
             "likelihood_calculations":self.no_likelihood,
             "iterations":self.maximum_iterations
             }
-
-
-    def metropolis_sampling(self, obj, LC, likelihood_calc):
-
-        """
-        Returns the sample satisfying the likelihood condition by metropolis sampling
-
-        Parameters
-        ----------
-        obj : object
-            The sample to evolve
-        LC  : float
-            likelihood constraint
-        likelihood_calc : int
-            Number of likelihood calculations until this point
-
-        Returns
-        -------
-        evolved - object
-            The evolved sample satisfying the likelihood constraint
-        number - int
-            The updated likelihood calculations number
-
-        """
-
-        #Instantiating the metropolis sampler object
-        Metro = Metropolis_Sampler(self.data_map, self.params, to_evolve = obj, likelihood_constraint = LC, no =likelihood_calc )
-        evolved, number = Metro.sample()
-        return evolved, number
-
-
-    def clustered_sampling(self, active_points, LC, likelihood_calc ):
-
-        """
-        Returns the sample satisfying the likelihood condition by clustered ellipsoidal sampling
-
-        Parameters
-        ----------
-        active_points : array
-            The full set of active points at current state
-        LC : float
-            likelihood constraint
-        likelihood_calc : int
-            Number of likelihood calculations until this point
-
-        Returns
-        -------
-        sample : object
-            The evolved sample satisfying the likelihood constraint
-        number : int
-            The updated likelihood calculations number
-
-        """
-
-
-        Clust = Clustered_Sampler(self.data_map, self.params, active_samples=active_points,
-                                  likelihood_constraint=LC, enlargement=1.0, no=likelihood_calc)
-        sample = None
-        number = None
-        while True:
-            sample, number = Clust.sample()
-            if(sample.logL > LC):
-                sampler_type = params['type']
-                break
-            Clust = Clustered_Sampler(self.data_map, self.params,
-                                      active_samples=active_points, likelihood_constraint=LC,
-                                      enlargement=1.0, no=number)
-        return sample, number
-
-
-
-    def uniform_sampling(self, LC, likelihood_calc):
-
-        """
-        Returns the sample satisfying the likelihood condition by uniform random sampling
-
-        Parameters
-        ----------
-        LC  : float
-            likelihood constraint
-        likelihood_calc : int
-            Number of likelihood calculations until this point
-
-        Returns
-        -------
-        evolved : object
-            The evolved sample satisfying the likelihood constraint
-        number : int
-            The updated likelihood calculations number
-
-        """
-
-        unif = Uniform_Sampler(self.data_map, self.params, likelihood_constraint = LC, no =likelihood_calc)
-        evolved, number = unif.sample()
-        return evolved, number
 
     def setup_sampler(self, data_map, params, active_samples):
         #we do the setup of the various samplers in here
@@ -321,14 +226,9 @@ class Nested_Sampler(Sampler):
         if self.sampler_type == "metropolis":
             res = self.sampler.sample()
             self.sampler = self.setup_sampler(self.data_map, self.params, active_samples)
-            #self.sampler.update_values(active_samples, self.no_active_samples)
-            #hacky, todo is to fix update_values
-            return res
-            #self.sampler = self.setup_sampler(self.data_map, self.params, active_samples)
-            #hacky, write a function in MH to update such values
-            #this function doens't work
             return res
         if self.sampler_type == "clustered_sampler": 
             if self.wait == 0 or num_iter % self.wait == 0:
-                self.sampler.run_clustering(active_samples)
+                #self.sampler.run_clustering(active_samples)
+                self.sampler = self.setup_sampler(self.data_map, self.params, active_samples)
             return self.sampler.sample()

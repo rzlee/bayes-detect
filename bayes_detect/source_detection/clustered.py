@@ -53,11 +53,16 @@ class Clustered_Sampler(Sampler):
 
         Parameters
         ----------
+        data_map : array
+            Data map we want to sample on
+        params : dict
+            Dictionary of various parameters
         active_samples : array
             The array containing the active samples for this clustered sampling phase
         likelihood_constraint : float
             Name says it all
-        enlargement_factor : float
+        enlargement : float
+            Enlargement factor for ellipsoid
         no : int
             Number of likelihood calculations until the current sampling phase
 
@@ -92,11 +97,6 @@ class Clustered_Sampler(Sampler):
 
         """
         array = [[float(active_sample.X), float(active_sample.Y)] for active_sample in points]
-        """
-        array = []
-        for active_sample in self.points:
-            array.append([float(active_sample.X), float(active_sample.Y)])
-        """
         return np.array(array)
 
 
@@ -207,6 +207,14 @@ class Clustered_Sampler(Sampler):
         return ellipsoids
 
     def run_clustering(self, active_samples):
+        """
+        Run clustering on this set of active samples
+
+        Parameters
+        _________
+        active_samples : array
+            The active samples to cluster on
+        """
         activepoint_set = self.build_set(active_samples)
         self.ellipsoid_set = self.optimal_ellipsoids(activepoint_set)
 
