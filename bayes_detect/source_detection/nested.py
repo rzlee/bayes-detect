@@ -229,6 +229,5 @@ class Nested_Sampler(Sampler):
             return res
         if self.sampler_type == "clustered_sampler": 
             if self.wait == 0 or num_iter % self.wait == 0:
-                #self.sampler.run_clustering(active_samples)
                 self.sampler = self.setup_sampler(self.data_map, self.params, active_samples)
             return self.sampler.sample()
