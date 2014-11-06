@@ -150,11 +150,11 @@ class Nested_Sampler(Sampler):
             if iteration%1000 == 0 or iteration==1:
                 print "Iteration: "+str(iteration) + "  maxZ: "+str(stopping)
 
-            if stopping < self.convergence_threshold and self.params['stop_by_evidence']==1:
+            if stopping < self.convergence_threshold and self.params['stop_by_evidence']==True:
                 break
 
 
-            if iteration >= self.maximum_iterations and self.params['stop_by_evidence']==0:
+            if iteration >= self.maximum_iterations and self.params['stop_by_evidence']==False:
                 break
 
             sample = Source()

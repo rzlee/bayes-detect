@@ -1,10 +1,7 @@
 import numpy as np
 from scipy import stats
 from matplotlib import pyplot as plt
-from matplotlib.transforms import *
 import math
-
-
 
 def show_source(height, width, sources):
 
