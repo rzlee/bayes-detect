@@ -148,12 +148,11 @@ class Nested_Sampler(Sampler):
             stopping = self.active_samples[largest].logL + self.log_width - self.log_evidence
 
 
-            if iteration%10 == 0 or iteration==1:
+            if iteration%100 == 0 or iteration==1:
                 print "Iteration: "+str(iteration) + "  maxZ: "+str(stopping)
 
             if stopping < self.convergence_threshold and self.params['stop_by_evidence']==True:
                 break
-
 
             if iteration >= self.maximum_iterations and self.params['stop_by_evidence']==False:
                 break
@@ -295,7 +294,7 @@ class Nested_Sampler(Sampler):
                                       likelihood_constraint = like_constraint,
                                       no = like_calc)
 
-        if sampler_type == "metropolis":
+        elif sampler_type == "metropolis":
             while True:
                 survivor = int(self.no_active_samples * np.random.uniform(0,1)) % self.no_active_samples  # force 0 <= copy < n
                 if survivor != smallest:
@@ -305,7 +304,7 @@ class Nested_Sampler(Sampler):
                                          likelihood_constraint = like_constraint,
                                          no = like_calc)
 
-        if sampler_type == "clustered_sampler":
+        elif sampler_type == "clustered_sampler":
             sampler = Clustered_Sampler(data_map, params, active_samples = active_samples,
                                         likelihood_constraint = like_constraint, enlargement = 1.0,
                                         no = like_calc)
@@ -318,15 +317,18 @@ class Nested_Sampler(Sampler):
     def draw_sample(self, active_samples, num_iter):
         #wrap interaction with samplers inside here
         if self.sampler_type == "uniform":
-           return self.sampler.sample()
+            return self.sampler.sample()
         if self.sampler_type == "metropolis":
-           res = self.sampler.sample()
-           self.sampler = self.setup_sampler(self.data_map, self.params, active_samples)
-           #hacky, write a function in MH to update such values
-           #self.sampler.update_values(active_samples, self.no_active_samples)
-           #this function doens't work
-           return res
+            res = self.sampler.sample()
+            self.sampler = self.setup_sampler(self.data_map, self.params, active_samples)
+            #self.sampler.update_values(active_samples, self.no_active_samples)
+            #hacky, todo is to fix update_values
+            return res
+            #self.sampler = self.setup_sampler(self.data_map, self.params, active_samples)
+            #hacky, write a function in MH to update such values
+            #this function doens't work
+            return res
         if self.sampler_type == "clustered_sampler": 
-            if self.wait == 0 or num_iter % self.wait:
+            if self.wait == 0 or num_iter % self.wait == 0:
                 self.sampler.run_clustering(active_samples)
             return self.sampler.sample()

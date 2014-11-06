@@ -224,19 +224,14 @@ class Clustered_Sampler(Sampler):
 
         """
 
-        arbit = np.random.uniform(0,1)
         trial = Source()
         clust = Source()
-        z = int(len(self.ellipsoid_set)*arbit)
+        z = int(np.random.uniform(0, len(self.ellipsoid_set)))
         points = None
         try:
             points = self.ellipsoid_set[z].sample(n_points=50)
         except IndexError:
-            print "\n"
-            print "\n"
-            print "Please adjust the clustering parameters and try again."
-            print "\n"
-            print "\n"
+            raise Exception("Adjust clustering parameters or number of active samples")
         max_likelihood = self.LC
         count = 0
         r_l, r_u = self.getPrior_R()
@@ -254,6 +249,6 @@ class Clustered_Sampler(Sampler):
                 max_likelihood = trial.logL
                 break
 
-            count+=1
+            count += 1
 
-        return clust,self.number
+        return clust, self.number
