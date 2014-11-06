@@ -310,6 +310,8 @@ class Nested_Sampler(Sampler):
                                         likelihood_constraint = like_constraint, enlargement = 1.0,
                                         no = like_calc)
             self.wait = params['wait']
+        else:
+            raise Exception("invalid sampler requested")
 
         return sampler
 
@@ -327,4 +329,4 @@ class Nested_Sampler(Sampler):
         if self.sampler_type == "clustered_sampler": 
             if self.wait == 0 or num_iter % self.wait:
                 self.sampler.run_clustering(active_samples)
-            return self.sampler.sample(active_samples)
+            return self.sampler.sample()
