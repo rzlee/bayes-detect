@@ -47,7 +47,7 @@ def load_config(path):
             with open(image_path, 'r') as f:
                 data_map = pickle.load(f)
 
-    (height, width) = (len(data_map), len(data_map[0]))
+    (height, width) = data_map.shape
     data_map = data_map.flatten()
     return (Config, data_map, height, width)
 
