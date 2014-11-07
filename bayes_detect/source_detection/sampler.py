@@ -1,4 +1,3 @@
-import pickle
 import random
 import numpy as np
 
@@ -183,41 +182,3 @@ class Sampler(object):
 
         """
         return (0.0, self.height)
-
-
-    def write(self, data, out):
-
-        """
-        Writes an array to a pickle
-
-        Parameters
-        ----------
-        data : array
-            Array to be stored
-        out : str
-            The location to be stored at
-
-        """
-
-        with open(out, 'w+b') as f:
-            pickle.dump(data, f)
-
-    def read(self, filename):
-
-        """
-        Reads an array from a pickle and returns it.
-
-        Parameters
-        ----------
-        filename : str
-            location of the pickle
-
-        Returns
-        -------
-        data : array
-            Pickle data
-
-        """
-        with open(filename) as f:
-            data = pickle.load(f)
-        return data

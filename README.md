@@ -6,33 +6,50 @@ This is a library for performing source detection in single band sky images usin
 
 
 ## Authors
+Richard Lee
+
 Krishna Chaitanya Chavati  
-Edward Kim  
+
+Edward Kim
+
 Robert J. Brunner
+
+## Required packages
+Python 2.7 
+
+Numpy 1.8.2
+
+Scipy 0.14.0
+
+IPython, IPython Notebook 2.2.0
+
+Matplotlib 1.4.0
+
+Scikit-Learn 0.15.0b1
+
+## How to use
+Check out [demo.ipynb](http://nbviewer.ipython.org/github/ProfessorBrunner/bayes-detect/blob/master/demo.ipynb)
+
 
 ## Documentation
 
-[Installing required packages](http://nbviewer.ipython.org/github/chaithuzz2/bayes-detect/blob/master/docs/Installing%20required%20packages.ipynb)
+[Notes](http://nbviewer.ipython.org/github/ProfessorBrunner/bayes-detect/blob/master/Bayesian_Source_Detection.ipynb) 
 
-[Running the program](http://nbviewer.ipython.org/github/chaithuzz2/bayes-detect/blob/master/docs/Running%20the%20program.ipynb)
-
-[Tutorial and results](http://nbviewer.ipython.org/github/chaithuzz2/bayes-detect/blob/master/Bayesian_Source_Detection.ipynb)
-
-[API documentation](http://chaithuzz2.github.io/)
-
-[Notes](http://nbviewer.ipython.org/github/chaithuzz2/bayes-detect/blob/master/docs/Notes.ipynb) 
+The code examples in this notebook are slightly out of date,
+refer to [demo.ipynb](http://nbviewer.ipython.org/github/ProfessorBrunner/bayes-detect/blob/master/demo.ipynb)
+for a more up to date example of the code's usage.
 
 
 ##References
-[1] Multinest paper by Feroz and Hobson et al(2008)
 
-[2] Data Analysis: A Bayesian Tutorial by Sivia et al(2006)
+[arXiv:0704.3704] (http://arxiv.org/abs/0704.3704) 
 
-[3] http://en.wikipedia.org/wiki/Metropolis-Hastings_algorithm
+[arXiv:astro-ph/0701867] (http://arxiv.org/abs/astro-ph/0701867) 
 
-[4] http://www.inference.phy.cam.ac.uk/bayesys/
+[Metropolis Hastings](http://en.wikipedia.org/wiki/Metropolis-Hastings_algorithm) 
 
-[5] Hobson, Machlachlan, Bayesian object detection in astronomical images(2003)
+[arXiv:astro-ph/0204457] (http://arxiv.org/abs/astro-ph/0204457) 
 
+[Nested Sampling](http://www.inference.phy.cam.ac.uk/bayesys/Valencia.pdf) 
 
-
+Data Analysis: A Bayesian Tutorial by Sivia et al(2006) 
