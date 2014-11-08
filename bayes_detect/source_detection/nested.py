@@ -181,7 +181,7 @@ class Nested_Sampler(Sampler):
             "logZ":self.log_evidence,
             "Information":self.Information,
             "likelihood_calculations":self.no_likelihood,
-            "iterations":self.maximum_iterations
+            "iterations":iteration
             }
 
     def setup_sampler(self, data_map, params, active_samples):
