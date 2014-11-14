@@ -52,18 +52,22 @@ def load_config(path):
     return (Config, data_map, height, width)
 
 def visualize(out, height, width):
+    """
     outX = [i.X for i in out["samples"]]
     outY = [height-i.Y for i in out["samples"]]
 
     plot.plot_histogram(data = outX, bins = width, title = "X_histogram of posterior samples")
     plot.plot_histogram(data = outY, bins = height, title = "Y_histogram of posterior samples")
     plot.show_scatterplot(outX,outY, title= "Scatter plot of posterior samples", height = height, width = width)
+    """
 
     outsrcX = [src.X for src in out["src"]]
     outsrcY = [height - src.Y for src in out["src"]]
     plot.plot_histogram(data = outsrcX, bins = width, title="Xsrc")
     plot.plot_histogram(data = outsrcY, bins = height, title="Ysrc")
     plot.show_scatterplot(outsrcX, outsrcY, title= "Scatter plot of sources", height = height, width = width)
+
+
 
 def manual_source_detection(path, show_plot = True):
     """

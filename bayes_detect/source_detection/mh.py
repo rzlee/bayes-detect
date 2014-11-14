@@ -23,7 +23,7 @@ class Metropolis_Sampler(Sampler):
 
     """
 
-    def __init__(self, data_map, params, to_evolve, likelihood_constraint, no):
+    def __init__(self, data_map, params):
 
         """
         Initializes the Metropolis sampler
@@ -40,21 +40,7 @@ class Metropolis_Sampler(Sampler):
         """
         Sampler.__init__(self, data_map, params)
 
-        self.source = to_evolve
-        self.LC     = likelihood_constraint
-        self.step   = params['dispersion']
-        self.number = no
-
-    def update_values(self, active_samples, no_active_samples):
-        smallest = int(np.argmin([i.logL for i in active_samples]))
-        self.LC = active_samples[smallest].logL
-        while True:
-            survivor = int(no_active_samples * np.random.uniform(0,1)) % no_active_samples  # force 0 <= copy < n
-            if survivor != smallest:
-                break
-        self.source = active_samples[survivor]
-
-    def sample(self):
+    def sample(self, lc):
 
         """
         Method to pick the sample satisfying the likelihood constraint using metropolis sampling

@@ -101,6 +101,7 @@ class Nested_Sampler(Sampler):
 
         Returns
         -------
+        (maybe returns this, tbd)
         A dict mapping the following to their values.
 
             *  src - Active points
@@ -111,78 +112,54 @@ class Nested_Sampler(Sampler):
             *  iterations - Number of iterations until stopping
 
         """
-        #self note: we implementation of clustered_sampler will be a special case of "new"
-
-        #Initializing evidence and prior mass
-        self.log_evidence = -1e300
-        self.log_width = log(1.0 - exp(-1.0 / self.no_active_samples))
-        self.Information = 0.0
-        iteration = 1
-
         self.sampler = self.setup_sampler(self.data_map, self.params, self.active_samples)
+        iteration = 0
 
-        while True: #we run until either max_iter or convergence
-            smallest = 0
-
-            self.active_samples = filter(lambda x: x.logL != None, self.active_samples)
-            #clean out invalid values
-            LogL = [i.logL for i in self.active_samples]
-            #Finding the object with smallest likelihood
-            smallest = np.argmin(LogL)
-
-            #Assigning local evidence to the smallest sample
-            self.active_samples[smallest].logWt = self.log_width + self.active_samples[smallest].logL;
-
-            largest = np.argmax(LogL)
-
-
-            #Calculating the updated evidence
-            temp_evidence = np.logaddexp(self.log_evidence, self.active_samples[smallest].logWt)
-
-            #Calculating the information which will be helpful in calculating the uncertainity
-            self.Information = exp(self.active_samples[smallest].logWt - temp_evidence) * self.active_samples[smallest].logL + \
-            exp(self.log_evidence - temp_evidence) * (self.Information + self.log_evidence) - temp_evidence;
-
-            self.log_evidence = temp_evidence
-
-            #compute value that may be used for the stopping criterion
-            stopping = self.active_samples[largest].logL + self.log_width - self.log_evidence
-
-            if iteration%1000 == 0 or iteration==1:
-                print "Iteration: "+str(iteration) + "  maxZ: "+str(stopping)
-
-            if stopping < self.convergence_threshold and self.params['stop_by_evidence']==True:
-                break
-
-            if iteration >= self.maximum_iterations and self.params['stop_by_evidence']==False:
-                break
+        while True:
+            log_values = [samp.logL for samp in self.active_samples]
+            min_index = np.argmin(log_values)
+            min_logL = self.active_samples[min_index].logL
 
             sample = Source()
-            sample.__dict__ = self.active_samples[smallest].__dict__.copy()
-
-            #storing posterior points
+            sample.__dict__ = self.active_samples[min_index].__dict__.copy()
             self.posterior_inferences.append(sample)
 
-            #New likelihood constraint
-            likelihood_constraint = self.active_samples[smallest].logL
+            while True:
+                #keeps on sampling until we find a point with log_prob > min_logL
+                updated, num_computations  = self.draw_sample(self.active_samples, iteration)
+                self.no_likelihood += num_computations
+                if updated.logL > min_logL:
+                    self.active_samples[min_index].__dict__ = updated.__dict__.copy()
+                    #replace the lowest likelihood active point with our new one
+                    break
 
-            updated, number = self.draw_sample(self.active_samples, iteration)
-            self.active_samples[smallest].__dict__ = updated.__dict__.copy()
-            LogL[smallest] = self.active_samples[smallest].logL
-            self.no_likelihood = number
+            max_index = np.argmax(log_values)
+            log_stopping = self.active_samples[max_index].logL - (1.0 * iteration) / len(self.active_samples)
+            #log delta_i = log(L_MAX) + log(exp(-i/N))
 
-            #Shrink width
-            self.log_width -= 1.0 / self.no_active_samples;
-            iteration += 1  #increment iteration
+            if iteration % 500 == 0:
+                plot.show_scatterplot([s.X for s in self.active_samples], [s.Y for s in self.active_samples],
+                                       title = "scatterplot of sources", height = self.params['height'],
+                                       width = self.params['width'])
 
-        # FIX ME: Incorporate the active samples into evidence calculation and information after the loop
-        return { "src":self.active_samples,
-            "samples":self.posterior_inferences,
-            "logZ":self.log_evidence,
-            "Information":self.Information,
-            "likelihood_calculations":self.no_likelihood,
-            "iterations":iteration
-            }
+                print iteration, log_stopping
+
+            #figure out if we want to terminate
+            if log_stopping < self.convergence_threshold and self.params['stop_by_evidence'] == True:
+                break
+            if iteration >= self.maximum_iterations and self.params['stop_by_evidence'] == False:
+                break
+
+            iteration += 1 #increment iteration
+
+        return {"src": self.active_samples,
+                "samples": self.posterior_inferences,
+                "likelihood_calculations":self.no_likelihood,
+                "iterations":iteration,
+                #TODO: remove these or do the computation for them
+                "logZ":0,
+                "Information":0
+               }
 
     def setup_sampler(self, data_map, params, active_samples):
         #we do the setup of the various samplers in here
@@ -195,9 +172,7 @@ class Nested_Sampler(Sampler):
         sampler = None
 
         if sampler_type == "uniform":
-            sampler = Uniform_Sampler(data_map, params,
-                                      likelihood_constraint = like_constraint,
-                                      no = like_calc)
+            sampler = Uniform_Sampler(data_map, params)
 
         elif sampler_type == "metropolis":
             while True:
@@ -210,9 +185,7 @@ class Nested_Sampler(Sampler):
                                          no = like_calc)
 
         elif sampler_type == "clustered_sampler":
-            sampler = Clustered_Sampler(data_map, params, active_samples = active_samples,
-                                        likelihood_constraint = like_constraint, enlargement = 1.0,
-                                        no = like_calc)
+            sampler = Clustered_Sampler(data_map, params, active_samples = active_samples, enlargement = 1.0)
             self.wait = params['wait']
         else:
             raise Exception("invalid sampler requested")
@@ -220,14 +193,19 @@ class Nested_Sampler(Sampler):
         return sampler
 
     def draw_sample(self, active_samples, num_iter):
-        #wrap interaction with samplers inside here
+        #draws 1 sample from the sampler requested
+        #returns (sample, num_likelihood_computations)
         if self.sampler_type == "uniform":
-            return self.sampler.sample()
+            return (self.sampler.sample(), 1)
+        """
+                
         if self.sampler_type == "metropolis":
-            res = self.sampler.sample()
+            res = self.sampler.sample(lc)
             self.sampler = self.setup_sampler(self.data_map, self.params, active_samples)
             return res
+        """
         if self.sampler_type == "clustered_sampler": 
             if self.wait == 0 or num_iter % self.wait == 0:
                 self.sampler = self.setup_sampler(self.data_map, self.params, active_samples)
             return self.sampler.sample()
+        raise Exception("only uniform and clustered sampling works currently")

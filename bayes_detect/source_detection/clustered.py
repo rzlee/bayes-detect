@@ -46,7 +46,7 @@ class Clustered_Sampler(Sampler):
     """
 
 
-    def __init__(self, data_map, params, active_samples, likelihood_constraint, enlargement, no):
+    def __init__(self, data_map, params, active_samples, enlargement, no):
 
         """
         Initializes the clustered ellipsoidal sampler.
@@ -74,7 +74,6 @@ class Clustered_Sampler(Sampler):
         self.minPts = params['minPts']
         self.params = params
         #self.points = copy.deepcopy(active_samples)
-        self.LC = likelihood_constraint
         self.enlargement = 1.5
         self.clustered_point_set = None
         self.number_of_clusters = None
@@ -236,17 +235,19 @@ class Clustered_Sampler(Sampler):
         clust = Source()
         z = int(np.random.uniform(0, len(self.ellipsoid_set)))
         points = None
+        npoints = 50
         try:
-            points = self.ellipsoid_set[z].sample(n_points=50)
+            points = self.ellipsoid_set[z].sample(n_points=npoints)
         except IndexError:
             raise Exception("Adjust clustering parameters or number of active samples")
-        max_likelihood = self.LC
+        max_likelihood = -1 * np.inf
         count = 0
         r_l, r_u = self.getPrior_R()
         a_l, a_u = self.getPrior_A()
-        while count<50:
-            trial.X = points[count][0]
-            trial.Y = points[count][1]
+        for i in range(npoints):
+            #sample npoints within the ellipsoid, return the best point
+            trial.X = points[i][0]
+            trial.Y = points[i][1]
             trial.A = np.random.uniform(a_l,a_u)
             trial.R = np.random.uniform(r_l,r_u)
             trial.logL = self.log_likelihood(trial)
@@ -255,8 +256,5 @@ class Clustered_Sampler(Sampler):
             if(trial.logL > max_likelihood):
                 clust.__dict__ = trial.__dict__.copy()
                 max_likelihood = trial.logL
-                break
 
-            count += 1
-
-        return clust, self.number
+        return clust, npoints 

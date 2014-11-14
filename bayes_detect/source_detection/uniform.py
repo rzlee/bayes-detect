@@ -18,7 +18,7 @@ class Uniform_Sampler(Sampler):
 
     """
 
-    def __init__(self, data_map, params, likelihood_constraint, no):
+    def __init__(self, data_map, params):
 
         """
         Initializes the uniform sampler
@@ -31,10 +31,6 @@ class Uniform_Sampler(Sampler):
             Number of likelihood evaluations until this point
 
         """
-
-        self.LC     = likelihood_constraint
-        self.number = no
-
         Sampler.__init__(self, data_map, params)
 
 
@@ -59,16 +55,10 @@ class Uniform_Sampler(Sampler):
         r_l, r_u = self.getPrior_R()
         a_l, a_u = self.getPrior_A()
 
-        while(True):
+        new.X = np.random.uniform(x_l,x_u)
+        new.Y = np.random.uniform(y_l,y_u)
+        new.A = np.random.uniform(a_l,a_u)
+        new.R = np.random.uniform(r_l,r_u)
+        new.logL = self.log_likelihood(new)
 
-            new.X = np.random.uniform(x_l,x_u)
-            new.Y = np.random.uniform(y_l,y_u)
-            new.A = np.random.uniform(a_l,a_u)
-            new.R = np.random.uniform(r_l,r_u)
-            new.logL = self.log_likelihood(new)
-            self.number+=1
-
-            if(new.logL > self.LC):
-                break
-
-        return new, self.number
+        return new

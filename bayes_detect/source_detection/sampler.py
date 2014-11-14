@@ -1,11 +1,13 @@
 import random
 import numpy as np
+import abc
 
 from source import Source
 
 class Sampler(object):
     """
-    Abstract class that has implementations of common functions
+    Base class with implementations of common functions that all samplers need to function.
+    Note that there is an abstract function sample() that every subclass is required to implement.
     """
 
     def __init__(self, data_map, params):
@@ -65,34 +67,6 @@ class Sampler(object):
         src.logL = self.log_likelihood(src)
         return src
         
-
-    def proposed_model(self, x, y, X, Y, A, R):
-
-        """
-        Returns the contribution to a pixel at (x,y) from source [X,Y,A,R]
-
-        Parameters
-        ----------
-        x : float
-            The x coordinate of the pixel of interest.
-        y : float
-            The y coordinate of the pixel of interest.
-        X : float
-            The x coordinate of the center of the source under consideration
-        Y : float
-            The y coordinate of the center of the source under consideration
-        A : float
-            The value of amplitude of the source under consideration
-        R : float
-            The value of spatial extent of the source under consideration
-
-        Returns
-        -------
-        Intensity value at (x,y)
-
-        """
-        return A*np.exp(((x-X)**2 + (y-Y)**2)/(2*(R**2)))
-
 
     def sample_source(self):
 
@@ -182,3 +156,14 @@ class Sampler(object):
 
         """
         return (0.0, self.height)
+
+    @abc.abstractmethod
+    def sample(self):
+        """
+        Draw a sample.
+        We implemented it as an abstract method
+        because we want every subclass to implement this.
+        This should greatly simplify the code as we can easily switch
+        samplers within the nested sampler's loop.
+        """
+        return
