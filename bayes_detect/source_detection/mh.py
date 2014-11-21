@@ -40,7 +40,7 @@ class Metropolis_Sampler(Sampler):
         """
         Sampler.__init__(self, data_map, params)
 
-    def sample(self, lc):
+    def sample(self):
 
         """
         Method to pick the sample satisfying the likelihood constraint using metropolis sampling
@@ -56,13 +56,6 @@ class Metropolis_Sampler(Sampler):
 
         metro = Source()
         metro.__dict__ = self.source.__dict__.copy()
-        start = Source()
-        start.__dict__ = self.source.__dict__.copy()
-        new   = Source()
-        self.number+=1
-        count = 0
-        hit = 0
-        miss = 0
 
         x_l, x_u = self.getPrior_X()
         y_l, y_u = self.getPrior_Y()
@@ -78,44 +71,30 @@ class Metropolis_Sampler(Sampler):
 
         bord = 1
 
-        while(count<20):
-
-            while bord==1:
-                bord = 0
-                new.X    = metro.X + stepX * (2.*np.random.uniform(0, 1) - 1.);
-                new.Y    = metro.Y + stepY * (2.*np.random.uniform(0, 1) - 1.);
-                new.A    = metro.A + stepA * (2.*np.random.uniform(0, 1) - 1.);
-                new.R    = metro.R + stepR * (2.*np.random.uniform(0, 1) - 1.);
-
+        while bord==1:
+            #compute a new sample
+            bord = 0
+            new.X    = metro.X + stepX * (2.*np.random.uniform(0, 1) - 1.);
+            new.Y    = metro.Y + stepY * (2.*np.random.uniform(0, 1) - 1.);
+            new.A    = metro.A + stepA * (2.*np.random.uniform(0, 1) - 1.);
+            new.R    = metro.R + stepR * (2.*np.random.uniform(0, 1) - 1.);
 
 
-                if(new.X > x_u or new.X < x_l): bord = 1;
-                if(new.Y > y_u or new.Y < y_l): bord = 1;
-                if(new.A > a_u or new.A < a_l): bord = 1;
-                if(new.R > r_u or new.R < r_l): bord = 1;
+            #recompute if it is invalid
+            if(new.X > x_u or new.X < x_l): bord = 1;
+            if(new.Y > y_u or new.Y < y_l): bord = 1;
+            if(new.A > a_u or new.A < a_l): bord = 1;
+            if(new.R > r_u or new.R < r_l): bord = 1;
 
-            new.logL = self.log_likelihood(new)
-            self.number+=1
+        metro.logL = self.log_likelihood(metro)
 
-            if(new.logL > self.LC):
-                metro.__dict__ = new.__dict__.copy()
-                hit+=1
-            else:
-                miss+=1
+        stepnormalize = self.step/x_u
 
-            if( hit > miss ):   self.step *= exp(1.0 / hit);
-            if( hit < miss ):   self.step /= exp(1.0 / miss);
-
-            stepnormalize = self.step/x_u
-
-            stepX    = self.step
-            stepY    = stepnormalize*(y_u-y_l)
-            stepA    = stepnormalize*(a_u - a_l)
-            stepR    = stepnormalize*(r_u-r_l)
+        stepX    = self.step
+        stepY    = stepnormalize*(y_u-y_l)
+        stepA    = stepnormalize*(a_u - a_l)
+        stepR    = stepnormalize*(r_u-r_l)
 
 
-            count+=1
-            bord=1
-
-        return metro, self.number
+        return metro, 1
 
