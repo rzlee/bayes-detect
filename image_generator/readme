@@ -1,0 +1,21 @@
+How to use this
+
+Example usage:
+We generate a 200x200 image with 30 sources where the amplitude ranges from 1 to 10,
+the radius ranges from 1 to 10, and the noise level is 3
+(np)richard@richards-mac image_generator (master) $ python test_image_gen.py --n 30 --width 200 --height 200 --maxamp 10 --minamp 1 --maxrad 10 --minrad 1 --noise 3
+(np)richard@richards-mac image_generator (master) $ ls
+no_noise_num_sources-30-width-200-height-200-a_min-1-a_max-10-rad_min-1-rad_max-10-noise-3.npy
+noised_num_sources-30-width-200-height-200-a_min-1-a_max-10-rad_min-1-rad_max-10-noise-3.npy
+src_array_num_sources-30-width-200-height-200-a_min-1-a_max-10-rad_min-1-rad_max-10-noise-3.npy
+readme
+test_image.py
+test_image_gen.py
+
+no_noise is the image before noise is added
+nosied is the output image with noise added
+src_array is an array with the positions, amplitudes, and radii for the sources
+[[x,y,a,r], ...] is the format of src_array
+
+
+All files are stored in the .npy binary format and can be loaded with numpy.load
