@@ -8,6 +8,8 @@ This is a library for performing source detection in single band sky images usin
 ## Authors
 Richard Lee
 
+Matias Carrasco Kind
+
 Krishna Chaitanya Chavati  
 
 Edward Kim
@@ -26,6 +28,8 @@ IPython, IPython Notebook 2.2.0
 Matplotlib 1.4.0
 
 Scikit-Learn 0.15.0b1
+
+Pyfits 3.3
 
 ## How to use
 Check out [demo.ipynb](http://nbviewer.ipython.org/github/ProfessorBrunner/bayes-detect/blob/master/demo.ipynb)
