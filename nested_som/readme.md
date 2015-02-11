@@ -7,3 +7,5 @@
 - Add stop criteria
 - Optional verbose/plotting
 
+##to compile somF
+f2py -c -m somF som.f90
