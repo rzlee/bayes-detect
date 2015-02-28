@@ -58,71 +58,107 @@ for i in xrange(len(xm)):
 
 mask=Lmx != 0.
 w=where(L > min(Lmx))[0]
-#computing the cut
+#computing max line 
 
 
 ax2=fig.add_subplot(2,3,1)
 ax2.plot(x[w],L[w],'k,')
 ax2.set_xlabel('X')
 ax2.set_ylabel('Likelihood')
-#ax2.plot(xm[mask],Lmx[mask],'r-')
+ax2.plot(xm[mask],Lmx[mask],'r-')
 ax2.set_title('X vs Likelhood after cut')
+
+"""
+#do kde for x vs like
+kernel = scipy.stats.gaussian_kde(Lmx[mask] + min(Lmx[mask]), bw_method=0.2)
+predicted = kernel(Lmx[mask])
+print predicted.shape
+ax2.plot(xm[mask], predicted)
+"""
 
 
 ax3=fig.add_subplot(2,3,3)
 
-X,Y = mgrid[0:width, 0:height]
-positions = vstack([X.ravel(), Y.ravel()])
-values = vstack([x[w], y[w]])
-kernel = scipy.stats.gaussian_kde(values)
-Z = reshape(kernel(positions).T, X.shape)
-
 ax3.scatter(x[w],y[w],s=3,marker='.')
 ax3.set_xlabel('X')
 ax3.set_ylabel('Y')
-ax3.imshow(rot90(Z), cmap=plt.cm.gist_earth_r, extent=[0, width, 0, height])
 ax3.set_xlim(0,width)
 ax3.set_ylim(0,height)
 ax3.set_title('posteriors after cut')
 
-
-yb=linspace(0,200,Nb+1)
+yb=linspace(0,height,Nb+1)
 ym=0.5*(yb[1:]+yb[:-1])
-Lmy=zeros(len(ym))
-dy=yb[1]-yb[0]
-idy=floor(y/dy)
-idy=idy.astype('int')
+Lmy=zeros(len(ym)) #storing each value
+dy=yb[1]-yb[0] #size of each "bin"
+idx=floor(y/dy) #putting each y value into a bin
+idx=idx.astype('int') 
 
 for i in xrange(len(ym)):
-    wi=where(idy == i)[0]
+    wi=where(idx == i)[0]
     if shape(wi)[0] == 0: continue
     else:
         Lmy[i]=max(L[wi])
 
 mask=Lmy != 0.
+w=where(L > min(Lmy))[0]
+#computing max line 
 
 ax4=fig.add_subplot(2,3,4)
 ax4.plot(y[w],L[w],'k,')
 ax4.set_xlim(0, width)
 ax4.set_xlabel('Y')
 ax4.set_ylabel('Likelihood')
-#ax4.plot(xm[mask],Lmx[mask],'r-')
+ax4.plot(ym[mask],Lmy[mask],'r-')
 ax4.set_title('Y vs Likelhood after cut')
+
+#computing max line  for r
+rb=linspace(rad_min,rad_max,Nb+1)
+rm=0.5*(rb[1:]+rb[:-1])
+Lmr=zeros(len(rm)) #storing each value
+dr=rb[1]-rb[0] #size of each "bin"
+idx=floor(r/dr) #putting each y value into a bin
+idx=idx.astype('int') 
+
+for i in xrange(len(rm)):
+    wi=where(idx == i)[0]
+    if shape(wi)[0] == 0: continue
+    else:
+        Lmr[i]=max(L[wi])
+
+mask=Lmr != 0.
+w=where(L > min(Lmr))[0]
     
 ax5=fig.add_subplot(2,3,5)
 ax5.plot(r[w],L[w],'k,')
 ax5.set_xlim(rad_min, rad_max)
 ax5.set_xlabel('R')
 ax5.set_ylabel('Likelihood')
-#ax5.plot(xm[mask],Lmx[mask],'r-')
+ax5.plot(rm[mask],Lmr[mask],'r-')
 ax5.set_title('R vs Likelhood after cut')
+
+#computing max line for a
+ab=linspace(amp_min,amp_max,Nb+1)
+am=0.5*(ab[1:]+ab[:-1])
+Lma=zeros(len(am)) #storing each value
+da=ab[1]-ab[0] #size of each "bin"
+idx=floor(a/da) #putting each y value into a bin
+idx=idx.astype('int') 
+
+for i in xrange(len(am)):
+    wi=where(idx == i)[0]
+    if shape(wi)[0] == 0: continue
+    else:
+        Lma[i]=max(L[wi])
+
+mask=Lma != 0.
+w=where(L > min(Lma))[0]
 
 ax6=fig.add_subplot(2,3,6)
 ax6.plot(a[w],L[w],'k,')
 ax6.set_xlim(amp_min, amp_max)
 ax6.set_xlabel('A')
 ax6.set_ylabel('Likelihood')
-#ax6.plot(xm[mask],Lmx[mask],'r-')
+ax6.plot(am[mask],Lma[mask],'r-')
 ax6.set_title('A vs Likelhood after cut')
 
 plt.savefig('plots/summary.png',bbox_inches='tight')
