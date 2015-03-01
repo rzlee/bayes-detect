@@ -24,6 +24,20 @@ rad_max = float(parser.get("Sampling", "rad_max"))
 x,y,r,a,L=loadtxt('../nested_som/out_points_som.txt',unpack=True)
 
 
+def smooth(values, window_len = 7, window="flat"):
+    #window_len must be odd
+    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'" 
+
+    s = r_[values[window_len-1:0:-1],values,values[-1:-window_len:-1]]
+    if window == "flat":
+        w=ones(window_len,'d')
+    else:
+        w=eval(window+'(window_len)')
+    result=convolve(w/w.sum(),s,mode='valid')
+    return result[:values.shape[0]]
+
+
 ml=mean(L)
 sL=std(L)
 w=where(L > ml)[0]
@@ -66,15 +80,8 @@ ax2.plot(x[w],L[w],'k,')
 ax2.set_xlabel('X')
 ax2.set_ylabel('Likelihood')
 ax2.plot(xm[mask],Lmx[mask],'r-')
+ax2.plot(xm[mask], smooth(Lmx[mask]), 'g-')
 ax2.set_title('X vs Likelhood after cut')
-
-"""
-#do kde for x vs like
-kernel = scipy.stats.gaussian_kde(Lmx[mask] + min(Lmx[mask]), bw_method=0.2)
-predicted = kernel(Lmx[mask])
-print predicted.shape
-ax2.plot(xm[mask], predicted)
-"""
 
 
 ax3=fig.add_subplot(2,3,3)
@@ -109,6 +116,7 @@ ax4.set_xlim(0, width)
 ax4.set_xlabel('Y')
 ax4.set_ylabel('Likelihood')
 ax4.plot(ym[mask],Lmy[mask],'r-')
+ax4.plot(ym[mask], smooth(Lmy[mask]), 'g-')
 ax4.set_title('Y vs Likelhood after cut')
 
 #computing max line  for r
@@ -134,6 +142,7 @@ ax5.set_xlim(rad_min, rad_max)
 ax5.set_xlabel('R')
 ax5.set_ylabel('Likelihood')
 ax5.plot(rm[mask],Lmr[mask],'r-')
+ax5.plot(rm[mask], smooth(Lmr[mask]), 'g-')
 ax5.set_title('R vs Likelhood after cut')
 
 #computing max line for a
@@ -159,6 +168,7 @@ ax6.set_xlim(amp_min, amp_max)
 ax6.set_xlabel('A')
 ax6.set_ylabel('Likelihood')
 ax6.plot(am[mask],Lma[mask],'r-')
+ax6.plot(am[mask], smooth(Lma[mask]), 'g-')
 ax6.set_title('A vs Likelhood after cut')
 
 plt.savefig('plots/summary.png',bbox_inches='tight')
@@ -174,7 +184,13 @@ proj.set_ylabel('Y')
 proj.set_zlabel('Likelihood')
 proj.set_title('Posteriors in 3D after cut')
 
+
+
+
 plt.show()
+
+
+
 """
 
 #DBSCAN
