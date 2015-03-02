@@ -10,6 +10,9 @@ from sklearn.preprocessing import StandardScaler
 from ConfigParser import SafeConfigParser
 from sklearn.neighbors import KernelDensity
 
+from scipy.signal import argrelextrema
+from matplotlib.lines import Line2D
+
 parser = SafeConfigParser()
 parser.read("../nested_som/config.ini")
 
@@ -55,6 +58,14 @@ def binned_max(xvalues, yvalues, start, stop, num_points):
     w=where(yvalues > min(Lval))[0]
     return (w, mask, bins, Lval)
 
+def compute_mins(xlocs, yvals, window_size = 10):
+    yval_locs = argrelextrema(yvals, less, order = window_size)[0]
+    return xlocs[yval_locs]
+
+def compute_maxes(xlocs, yvals, window_size = 10):
+    yval_locs = argrelextrema(yvals, greater, order = window_size)[0]
+    return xlocs[yval_locs]
+
 #first plot of parameter vs L
 fig=plt.figure(figsize=(14,8))
 ax1=fig.add_subplot(2,3,2)
@@ -75,6 +86,10 @@ ax2.set_ylabel('Likelihood')
 ax2.plot(xm[xmask],Lmx[xmask],'r-')
 smoothed_x = smooth(Lmx[xmask])
 ax2.plot(xm[xmask], smoothed_x, 'g-')
+mins = compute_mins(xm[xmask], smoothed_x)
+maxes = compute_maxes(xm[xmask], smoothed_x)
+[ax2.axvline(x = val, c="b") for val in mins]
+[ax2.axvline(x = val, c="r") for val in maxes]
 ax2.set_title('X vs Likelhood after cut')
 
 
@@ -97,6 +112,12 @@ ax4.set_ylabel('Likelihood')
 ax4.plot(ym[ymask],Lmy[ymask],'r-')
 smoothed_y = smooth(Lmy[ymask])
 ax4.plot(ym[ymask], smoothed_y, 'g-')
+
+mins = compute_mins(ym[ymask], smoothed_y)
+maxes = compute_maxes(ym[ymask], smoothed_y)
+[ax4.axvline(x = val, c="b") for val in mins]
+[ax4.axvline(x = val, c="r") for val in maxes]
+
 ax4.set_title('Y vs Likelhood after cut')
 
 w, rmask, rm, Lmr = binned_max(r, L, rad_min, rad_max, 350)
@@ -126,6 +147,7 @@ ax6.set_title('A vs Likelhood after cut')
 
 plt.savefig('plots/summary.png',bbox_inches='tight')
 
+"""
 #second plot of 3d parameters (x,y) vs L
 fig= plt.figure()
 
@@ -137,6 +159,7 @@ proj.set_xlabel('X')
 proj.set_ylabel('Y')
 proj.set_zlabel('Likelihood')
 proj.set_title('Posteriors in 3D after cut')
+"""
 
 plt.show()
 
