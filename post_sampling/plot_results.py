@@ -37,17 +37,27 @@ def smooth(values, window_len = 7, window="flat"):
     result=convolve(w/w.sum(),s,mode='valid')
     return result[:values.shape[0]]
 
+def binned_max(xvalues, yvalues, start, stop, num_points):
+    points=linspace(start,stop,num_points+1)
+    bins=0.5*(points[1:]+points[:-1])
+    Lval=zeros(len(bins))
+    bin_width=points[1]-points[0] #compute size of each bin
+    idx=floor(xvalues/bin_width) #reindex into bins
+    idx=idx.astype('int')
+    for i in xrange(len(bins)):
+        wi=where(idx == i)[0] #getting points inside the bin
+        if shape(wi)[0] == 0: continue
+        #if theres nothing there just continue
+        else:
+            Lval[i]=max(yvalues[wi]) #bin's value is the biggest value in the bin
 
-ml=mean(L)
-sL=std(L)
-w=where(L > ml)[0]
+    mask= (Lval != 0.)
+    w=where(yvalues > min(Lval))[0]
+    return (w, mask, bins, Lval)
 
-Nb=350
-
-
+#first plot of parameter vs L
 fig=plt.figure(figsize=(14,8))
 ax1=fig.add_subplot(2,3,2)
-
 
 ax1.scatter(x,y,s=3,marker='.')
 ax1.set_xlabel('X')
@@ -56,31 +66,15 @@ ax1.set_title('all posteriors before cut')
 ax1.set_xlim(0,width)
 ax1.set_ylim(0,height)
 
-
-xb=linspace(0,width,Nb+1)
-xm=0.5*(xb[1:]+xb[:-1])
-Lmx=zeros(len(xm))
-dx=xb[1]-xb[0]
-idx=floor(x/dx)
-idx=idx.astype('int')
-
-for i in xrange(len(xm)):
-    wi=where(idx == i)[0]
-    if shape(wi)[0] == 0: continue
-    else:
-        Lmx[i]=max(L[wi])
-
-mask=Lmx != 0.
-w=where(L > min(Lmx))[0]
-#computing max line 
-
+w, xmask, xm, Lmx = binned_max(x, L, 0, width, 350)
 
 ax2=fig.add_subplot(2,3,1)
 ax2.plot(x[w],L[w],'k,')
 ax2.set_xlabel('X')
 ax2.set_ylabel('Likelihood')
-ax2.plot(xm[mask],Lmx[mask],'r-')
-ax2.plot(xm[mask], smooth(Lmx[mask]), 'g-')
+ax2.plot(xm[xmask],Lmx[xmask],'r-')
+smoothed_x = smooth(Lmx[xmask])
+ax2.plot(xm[xmask], smoothed_x, 'g-')
 ax2.set_title('X vs Likelhood after cut')
 
 
@@ -93,86 +87,46 @@ ax3.set_xlim(0,width)
 ax3.set_ylim(0,height)
 ax3.set_title('posteriors after cut')
 
-yb=linspace(0,height,Nb+1)
-ym=0.5*(yb[1:]+yb[:-1])
-Lmy=zeros(len(ym)) #storing each value
-dy=yb[1]-yb[0] #size of each "bin"
-idx=floor(y/dy) #putting each y value into a bin
-idx=idx.astype('int') 
-
-for i in xrange(len(ym)):
-    wi=where(idx == i)[0]
-    if shape(wi)[0] == 0: continue
-    else:
-        Lmy[i]=max(L[wi])
-
-mask=Lmy != 0.
-w=where(L > min(Lmy))[0]
-#computing max line 
+w, ymask, ym, Lmy = binned_max(y, L, 0, height, 350)
 
 ax4=fig.add_subplot(2,3,4)
 ax4.plot(y[w],L[w],'k,')
 ax4.set_xlim(0, width)
 ax4.set_xlabel('Y')
 ax4.set_ylabel('Likelihood')
-ax4.plot(ym[mask],Lmy[mask],'r-')
-ax4.plot(ym[mask], smooth(Lmy[mask]), 'g-')
+ax4.plot(ym[ymask],Lmy[ymask],'r-')
+smoothed_y = smooth(Lmy[ymask])
+ax4.plot(ym[ymask], smoothed_y, 'g-')
 ax4.set_title('Y vs Likelhood after cut')
 
-#computing max line  for r
-rb=linspace(rad_min,rad_max,Nb+1)
-rm=0.5*(rb[1:]+rb[:-1])
-Lmr=zeros(len(rm)) #storing each value
-dr=rb[1]-rb[0] #size of each "bin"
-idx=floor(r/dr) #putting each y value into a bin
-idx=idx.astype('int') 
-
-for i in xrange(len(rm)):
-    wi=where(idx == i)[0]
-    if shape(wi)[0] == 0: continue
-    else:
-        Lmr[i]=max(L[wi])
-
-mask=Lmr != 0.
-w=where(L > min(Lmr))[0]
+w, rmask, rm, Lmr = binned_max(r, L, rad_min, rad_max, 350)
     
 ax5=fig.add_subplot(2,3,5)
 ax5.plot(r[w],L[w],'k,')
 ax5.set_xlim(rad_min, rad_max)
 ax5.set_xlabel('R')
 ax5.set_ylabel('Likelihood')
-ax5.plot(rm[mask],Lmr[mask],'r-')
-ax5.plot(rm[mask], smooth(Lmr[mask]), 'g-')
+ax5.plot(rm[rmask],Lmr[rmask],'r-')
+smooth_r = smooth(Lmr[rmask])
+ax5.plot(rm[rmask], smooth_r, 'g-')
 ax5.set_title('R vs Likelhood after cut')
 
-#computing max line for a
-ab=linspace(amp_min,amp_max,Nb+1)
-am=0.5*(ab[1:]+ab[:-1])
-Lma=zeros(len(am)) #storing each value
-da=ab[1]-ab[0] #size of each "bin"
-idx=floor(a/da) #putting each y value into a bin
-idx=idx.astype('int') 
 
-for i in xrange(len(am)):
-    wi=where(idx == i)[0]
-    if shape(wi)[0] == 0: continue
-    else:
-        Lma[i]=max(L[wi])
-
-mask=Lma != 0.
-w=where(L > min(Lma))[0]
+w, amask, am, Lma = binned_max(a, L, amp_min, amp_max, 350)
 
 ax6=fig.add_subplot(2,3,6)
 ax6.plot(a[w],L[w],'k,')
 ax6.set_xlim(amp_min, amp_max)
 ax6.set_xlabel('A')
 ax6.set_ylabel('Likelihood')
-ax6.plot(am[mask],Lma[mask],'r-')
-ax6.plot(am[mask], smooth(Lma[mask]), 'g-')
+ax6.plot(am[amask],Lma[amask],'r-')
+smooth_a = smooth(Lma[amask])
+ax6.plot(am[amask], smooth_a, 'g-')
 ax6.set_title('A vs Likelhood after cut')
 
 plt.savefig('plots/summary.png',bbox_inches='tight')
 
+#second plot of 3d parameters (x,y) vs L
 fig= plt.figure()
 
 proj = fig.add_subplot(111, projection='3d')
@@ -184,11 +138,7 @@ proj.set_ylabel('Y')
 proj.set_zlabel('Likelihood')
 proj.set_title('Posteriors in 3D after cut')
 
-
-
-
 plt.show()
-
 
 
 """
