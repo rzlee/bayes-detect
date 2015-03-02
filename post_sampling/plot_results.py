@@ -8,10 +8,10 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.preprocessing import StandardScaler
 
 from ConfigParser import SafeConfigParser
-from sklearn.neighbors import KernelDensity
 
 from scipy.signal import argrelextrema
-from matplotlib.lines import Line2D
+
+import seaborn as sns #makes the plots look pretty
 
 parser = SafeConfigParser()
 parser.read("../nested_som/config.ini")
@@ -66,6 +66,54 @@ def compute_maxes(xlocs, yvals, window_size = 10):
     yval_locs = argrelextrema(yvals, greater, order = window_size)[0]
     return xlocs[yval_locs]
 
+def compute_intervals(mins, maxes):
+    #tries to compute an array of ranges thta contain a peak
+    points = []
+    start = None
+    stop = None
+    min_index = 0
+    max_index = 0
+    encountered_peak = False
+    
+    #start and stop should have at least one peak between them
+    #start and stop are the locations of a min
+    
+    while min_index < mins.shape[0] and max_index < maxes.shape[0]:
+        if start is None:
+            start = mins[min_index]
+            min_index += 1
+        if not encountered_peak and maxes[max_index] < start:
+            #the peak we are at is behind our start, so we need to find the next one
+            max_index += 1
+        if not encountered_peak and maxes[max_index] > start:
+            #select the first peak we encounter, then try to find the next min to close off this segment
+            encountered_peak = True
+            max_index += 1
+        if encountered_peak and min_index < mins.shape[0]:
+            stop = mins[min_index]
+            points.append([start, stop])
+            start = None
+            stop = None
+        
+    return array(points)
+
+def random_color():
+    return plt.cm.gist_ncar(random.random())
+
+def plot_segments(ax, locs, vals, min_vals, max_vals):
+    """
+    plots each segment with a different color
+    where a segment should contain one peak
+    """
+    intervals = compute_intervals(min_vals, max_vals)
+    intervals = floor(intervals).astype("int")
+    for x,y in intervals:
+        lower_mask = locs > x
+        upper_mask = locs < y
+        mask = logical_and(lower_mask, upper_mask)
+        ax.plot(locs[mask], vals[mask], color=random_color())
+        #color is chosen randomly, so sometimes it makes a bad selection
+
 #first plot of parameter vs L
 fig=plt.figure(figsize=(14,8))
 ax1=fig.add_subplot(2,3,2)
@@ -88,8 +136,12 @@ smoothed_x = smooth(Lmx[xmask])
 ax2.plot(xm[xmask], smoothed_x, 'g-')
 mins = compute_mins(xm[xmask], smoothed_x)
 maxes = compute_maxes(xm[xmask], smoothed_x)
+"""
+#plots vertical lines
 [ax2.axvline(x = val, c="b") for val in mins]
 [ax2.axvline(x = val, c="r") for val in maxes]
+"""
+plot_segments(ax2, xm[xmask], smoothed_x, mins, maxes)
 ax2.set_title('X vs Likelhood after cut')
 
 
@@ -115,8 +167,11 @@ ax4.plot(ym[ymask], smoothed_y, 'g-')
 
 mins = compute_mins(ym[ymask], smoothed_y)
 maxes = compute_maxes(ym[ymask], smoothed_y)
+"""
 [ax4.axvline(x = val, c="b") for val in mins]
 [ax4.axvline(x = val, c="r") for val in maxes]
+"""
+plot_segments(ax4, ym[ymask], smoothed_y, mins, maxes)
 
 ax4.set_title('Y vs Likelhood after cut')
 
