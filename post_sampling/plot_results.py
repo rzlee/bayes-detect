@@ -1,5 +1,6 @@
 from numpy import *
 import scipy
+import os,sys
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import DBSCAN
@@ -13,6 +14,11 @@ from scipy.signal import argrelextrema
 
 import seaborn as sns #makes the plots look pretty
 
+try:
+    os.mkdir('plots')
+except:
+    pass
+
 parser = SafeConfigParser()
 parser.read("../nested_som/config.ini")
 
@@ -24,7 +30,7 @@ amp_max = float(parser.get("Sampling", "amp_max"))
 
 rad_min = float(parser.get("Sampling", "rad_min"))
 rad_max = float(parser.get("Sampling", "rad_max"))
-x,y,r,a,L=loadtxt('../nested_som/out_points_som.txt',unpack=True)
+x,y,r,a,L=loadtxt('../nested_som/som/out_points_som.txt',unpack=True)
 
 
 def smooth(values, window_len = 7, window="flat"):
