@@ -162,7 +162,7 @@ def sample():
 
 def sample_som(jj,active,neval,LLog_min,nt=5,nit=100,create='no',sample='yes',inM=''):
     if create=='yes':
-        DD=array([active[:,0],active[:,1]]).T
+        DD=array([active[:,0],active[:,1],active[:,2],active[:,3]]).T
         lmin=min(active[:,4])
         L=active[:,4]-lmin
         lmax=max(L)
@@ -190,7 +190,8 @@ def sample_som(jj,active,neval,LLog_min,nt=5,nit=100,create='no',sample='yes',in
             YY=random.rand(Nr)*height
             XX=concatenate((XX,zeros(500),ones(500)*width,linspace(0,width,500),linspace(0,width,500)))
             YY=concatenate((YY,linspace(0,height,500),linspace(0,height,500),ones(500)*height,zeros(500)))
-            RR=array([XX,YY]).T
+            TT=ones(len(XX))
+            RR=array([XX,YY,TT,TT]).T
             M.evaluate_map(inputX=RR,inputY=zeros(len(RR)))
             figt=plt.figure(2, frameon=False)
             figt.set_size_inches(5, 5)
@@ -248,8 +249,8 @@ def sample_som(jj,active,neval,LLog_min,nt=5,nit=100,create='no',sample='yes',in
         rt=random.normal(mean(active[M.ivals[cell],3]),max([std(active[M.ivals[cell],3]),0.01]))
         if (xt < 0) or (xt>width) : keep=False
         if (yt < 0) or (yt>height) : keep=False
-        if (at < 1.) : keep=False
-        if (rt < 1.) : keep=False
+        if (at < amp_min)  or (at > amp_max) : keep=False
+        if (rt < rad_min) or (rt > rad_max): keep=False
 
         if keep:
             new=array([xt,yt,at,rt])
@@ -327,8 +328,8 @@ AC=zeros((Np,5))
 
 AC[:,0]=random.rand(Np)*(width - 1.)
 AC[:,1]=random.rand(Np)*(height - 1.)
-AC[:,2]=random.rand(Np)*amp_max + amp_min
-AC[:,3]=random.rand(Np)*rad_max + rad_min
+AC[:,2]=random.rand(Np)*(amp_max-amp_min) + amp_min
+AC[:,3]=random.rand(Np)*(rad_max-rad_min) + rad_min
 
 for i in xrange(Np):
     AC[i,4],neval=lnlike(AC[i,0:4],data,nlog=neval)
