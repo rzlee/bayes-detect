@@ -120,162 +120,170 @@ def plot_segments(ax, locs, vals, min_vals, max_vals):
         ax.plot(locs[mask], vals[mask], color=random_color())
         #color is chosen randomly, so sometimes it makes a bad selection
 
+if __name__ == "__main__":
+
 #first plot of parameter vs L
-fig=plt.figure(figsize=(14,8))
-ax1=fig.add_subplot(2,3,2)
+    fig=plt.figure(figsize=(14,8))
+    ax1=fig.add_subplot(2,3,2)
 
-ax1.scatter(x,y,s=3,marker='.')
-ax1.set_xlabel('X')
-ax1.set_ylabel('Y')
-ax1.set_title('all posteriors before cut')
-ax1.set_xlim(0,width)
-ax1.set_ylim(0,height)
+    ax1.scatter(x,y,s=3,marker='.')
+    ax1.set_xlabel('X')
+    ax1.set_ylabel('Y')
+    ax1.set_title('all posteriors before cut')
+    ax1.set_xlim(0,width)
+    ax1.set_ylim(0,height)
 
-w, xmask, xm, Lmx = binned_max(x, L, 0, width, 350)
+    w, xmask, xm, Lmx = binned_max(x, L, 0, width, 350)
 
-ax2=fig.add_subplot(2,3,1)
-ax2.plot(x[w],L[w],'k,')
-ax2.set_xlabel('X')
-ax2.set_ylabel('Likelihood')
-ax2.plot(xm[xmask],Lmx[xmask],'r-')
-smoothed_x = smooth(Lmx[xmask])
-ax2.plot(xm[xmask], smoothed_x, 'g-')
-mins = compute_mins(xm[xmask], smoothed_x)
-maxes = compute_maxes(xm[xmask], smoothed_x)
-"""
+    ax2=fig.add_subplot(2,3,1)
+    ax2.plot(x[w],L[w],'k,')
+    ax2.set_xlabel('X')
+    ax2.set_ylabel('Likelihood')
+    ax2.plot(xm[xmask],Lmx[xmask],'r-')
+    smoothed_x = smooth(Lmx[xmask])
+    ax2.plot(xm[xmask], smoothed_x, 'g-')
+    mins = compute_mins(xm[xmask], smoothed_x)
+    maxes = compute_maxes(xm[xmask], smoothed_x)
+    """
 #plots vertical lines
-[ax2.axvline(x = val, c="b") for val in mins]
-[ax2.axvline(x = val, c="r") for val in maxes]
-"""
-plot_segments(ax2, xm[xmask], smoothed_x, mins, maxes)
-ax2.set_title('X vs Likelhood after cut')
+    [ax2.axvline(x = val, c="b") for val in mins]
+    [ax2.axvline(x = val, c="r") for val in maxes]
+    """
+    plot_segments(ax2, xm[xmask], smoothed_x, mins, maxes)
+    ax2.set_title('X vs Likelhood after cut')
 
 
-ax3=fig.add_subplot(2,3,3)
+    ax3=fig.add_subplot(2,3,3)
 
-ax3.scatter(x[w],y[w],s=3,marker='.')
-ax3.set_xlabel('X')
-ax3.set_ylabel('Y')
-ax3.set_xlim(0,width)
-ax3.set_ylim(0,height)
-ax3.set_title('posteriors after cut')
+    ax3.scatter(x[w],y[w],s=3,marker='.')
+    ax3.set_xlabel('X')
+    ax3.set_ylabel('Y')
+    ax3.set_xlim(0,width)
+    ax3.set_ylim(0,height)
+    ax3.set_title('posteriors after cut')
 
-w, ymask, ym, Lmy = binned_max(y, L, 0, height, 350)
+    w, ymask, ym, Lmy = binned_max(y, L, 0, height, 350)
 
-ax4=fig.add_subplot(2,3,4)
-ax4.plot(y[w],L[w],'k,')
-ax4.set_xlim(0, width)
-ax4.set_xlabel('Y')
-ax4.set_ylabel('Likelihood')
-ax4.plot(ym[ymask],Lmy[ymask],'r-')
-smoothed_y = smooth(Lmy[ymask])
-ax4.plot(ym[ymask], smoothed_y, 'g-')
+    ax4=fig.add_subplot(2,3,4)
+    ax4.plot(y[w],L[w],'k,')
+    ax4.set_xlim(0, width)
+    ax4.set_xlabel('Y')
+    ax4.set_ylabel('Likelihood')
+    ax4.plot(ym[ymask],Lmy[ymask],'r-')
+    smoothed_y = smooth(Lmy[ymask])
+    ax4.plot(ym[ymask], smoothed_y, 'g-')
 
-mins = compute_mins(ym[ymask], smoothed_y)
-maxes = compute_maxes(ym[ymask], smoothed_y)
-"""
-[ax4.axvline(x = val, c="b") for val in mins]
-[ax4.axvline(x = val, c="r") for val in maxes]
-"""
-plot_segments(ax4, ym[ymask], smoothed_y, mins, maxes)
+    mins = compute_mins(ym[ymask], smoothed_y)
+    maxes = compute_maxes(ym[ymask], smoothed_y)
+    """
+    [ax4.axvline(x = val, c="b") for val in mins]
+    [ax4.axvline(x = val, c="r") for val in maxes]
+    """
+    plot_segments(ax4, ym[ymask], smoothed_y, mins, maxes)
 
-ax4.set_title('Y vs Likelhood after cut')
+    ax4.set_title('Y vs Likelhood after cut')
 
-w, rmask, rm, Lmr = binned_max(r, L, rad_min, rad_max, 350)
-    
-ax5=fig.add_subplot(2,3,5)
-ax5.plot(r[w],L[w],'k,')
-ax5.set_xlim(rad_min, rad_max)
-ax5.set_xlabel('R')
-ax5.set_ylabel('Likelihood')
-ax5.plot(rm[rmask],Lmr[rmask],'r-')
-smooth_r = smooth(Lmr[rmask])
-ax5.plot(rm[rmask], smooth_r, 'g-')
-ax5.set_title('R vs Likelhood after cut')
+    w, rmask, rm, Lmr = binned_max(r, L, rad_min, rad_max, 350)
+        
+    ax5=fig.add_subplot(2,3,5)
+    ax5.plot(r[w],L[w],'k,')
+    ax5.set_xlim(rad_min, rad_max)
+    ax5.set_xlabel('R')
+    ax5.set_ylabel('Likelihood')
+    ax5.plot(rm[rmask],Lmr[rmask],'r-')
+    smooth_r = smooth(Lmr[rmask])
+    ax5.plot(rm[rmask], smooth_r, 'g-')
+    mins = compute_mins(rm[rmask], smooth_r)
+    maxes = compute_maxes(rm[rmask], smooth_r)
+    plot_segments(ax5, rm[rmask], smooth_r, mins, maxes)
+    ax5.set_title('R vs Likelhood after cut')
 
 
-w, amask, am, Lma = binned_max(a, L, amp_min, amp_max, 350)
+    w, amask, am, Lma = binned_max(a, L, amp_min, amp_max, 350)
 
-ax6=fig.add_subplot(2,3,6)
-ax6.plot(a[w],L[w],'k,')
-ax6.set_xlim(amp_min, amp_max)
-ax6.set_xlabel('A')
-ax6.set_ylabel('Likelihood')
-ax6.plot(am[amask],Lma[amask],'r-')
-smooth_a = smooth(Lma[amask])
-ax6.plot(am[amask], smooth_a, 'g-')
-ax6.set_title('A vs Likelhood after cut')
+    ax6=fig.add_subplot(2,3,6)
+    ax6.plot(a[w],L[w],'k,')
+    ax6.set_xlim(amp_min, amp_max)
+    ax6.set_xlabel('A')
+    ax6.set_ylabel('Likelihood')
+    ax6.plot(am[amask],Lma[amask],'r-')
+    smooth_a = smooth(Lma[amask])
+    ax6.plot(am[amask], smooth_a, 'g-')
+    mins = compute_mins(am[amask], smooth_a)
+    maxes = compute_maxes(am[amask], smooth_a)
+    plot_segments(ax6, am[amask], smooth_a, mins, maxes)
+    ax6.set_title('A vs Likelhood after cut')
 
-plt.savefig('plots/summary.png',bbox_inches='tight')
+    plt.savefig('plots/summary.png',bbox_inches='tight')
 
-"""
+    """
 #second plot of 3d parameters (x,y) vs L
-fig= plt.figure()
+    fig= plt.figure()
 
-proj = fig.add_subplot(111, projection='3d')
-proj.scatter(x[w],y[w],L[w],s=3,marker='.')
-proj.set_xlim(0,width)
-proj.set_ylim(0,height)
-proj.set_xlabel('X')
-proj.set_ylabel('Y')
-proj.set_zlabel('Likelihood')
-proj.set_title('Posteriors in 3D after cut')
-"""
+    proj = fig.add_subplot(111, projection='3d')
+    proj.scatter(x[w],y[w],L[w],s=3,marker='.')
+    proj.set_xlim(0,width)
+    proj.set_ylim(0,height)
+    proj.set_xlabel('X')
+    proj.set_ylabel('Y')
+    proj.set_zlabel('Likelihood')
+    proj.set_title('Posteriors in 3D after cut')
+    """
 
-plt.show()
+    plt.show()
 
 
-"""
+    """
 
 #DBSCAN
 
-XX=zeros((len(w),4))
-XX[:,0]=x[w]
-XX[:,1]=y[w]
+    XX=zeros((len(w),4))
+    XX[:,0]=x[w]
+    XX[:,1]=y[w]
 #XX[:,2]=r[w]
 #XX[:,3]=a[w]
 #XX[:,2]=L[w]
 
-XX = StandardScaler().fit_transform(XX)
+    XX = StandardScaler().fit_transform(XX)
 
-db = DBSCAN(eps=0.07, min_samples=15).fit(XX)
+    db = DBSCAN(eps=0.07, min_samples=15).fit(XX)
 
-core_samples_mask = zeros_like(db.labels_, dtype=bool)
-core_samples_mask[db.core_sample_indices_] = True
-labels = db.labels_
-
-
-n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    core_samples_mask = zeros_like(db.labels_, dtype=bool)
+    core_samples_mask[db.core_sample_indices_] = True
+    labels = db.labels_
 
 
-print n_clusters_ , 'Clusters'
-
-unique_labels = set(labels)
-colors = plt.cm.jet(linspace(0, 1, len(unique_labels)))
-
-plt.figure()
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 
 
-for k, col in zip(unique_labels, colors):
-    if k == -1:
-        # Black used for noise.
-        col = 'k'
-        continue
+    print n_clusters_ , 'Clusters'
 
-    class_member_mask = (labels == k)
+    unique_labels = set(labels)
+    colors = plt.cm.jet(linspace(0, 1, len(unique_labels)))
 
-    xy = XX[class_member_mask & core_samples_mask]
-    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
-             markeredgecolor='k', markersize=3)
-
-    xy = XX[class_member_mask & ~core_samples_mask]
-    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
-             markeredgecolor='k', markersize=3)
+    plt.figure()
 
 
+    for k, col in zip(unique_labels, colors):
+        if k == -1:
+            # Black used for noise.
+            col = 'k'
+            continue
+
+        class_member_mask = (labels == k)
+
+        xy = XX[class_member_mask & core_samples_mask]
+        plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+                 markeredgecolor='k', markersize=3)
+
+        xy = XX[class_member_mask & ~core_samples_mask]
+        plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+                 markeredgecolor='k', markersize=3)
 
 
 
 
 
-"""
+
+
+    """
