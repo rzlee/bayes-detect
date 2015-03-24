@@ -270,8 +270,6 @@ no_noise_location = output_folder + "/" + prefix + "_clean.npy"
 #image parameters
 width = int(parser.get("Sampling","width"))
 height = int(parser.get("Sampling","height"))
-image_location = parser.get("Image", "location")
-no_noise_location = parser.get("Image", "no_noise_location")
 
 #sampling parameters
 noise_lvl = float(parser.get("Sampling", "noise"))
@@ -369,7 +367,7 @@ for i in xrange(Niter):
 stop = timeit.default_timer()
 
 with open(output_folder + "/stats.txt", "wb") as f:
-    f.writelines(["seconds: %d\n"%(stop - start), "Log evaluations: %d"%neval])
+    f.writelines(["seconds,%d\n"%(stop - start), "Log evaluations,%d"%neval])
 
 print stop - start, 'seconds'
 print neval, 'Log evaluations'
