@@ -3,6 +3,7 @@ import numpy as np
 from numpy.random import uniform, randint
 import test_image
 from ConfigParser import SafeConfigParser
+import os
 
 parser = SafeConfigParser()
 parser.read("../config.ini")
@@ -20,7 +21,9 @@ num_sources = int(parser.get("Image", "num_items"))
 noise = float(parser.get("Image", "noise"))
 
 prefix = parser.get("Misc", "prefix")
-output_dir = parser.get("Misc", "location")
+output_dir = parser.get("Misc", "location") + "/" + prefix
+
+os.system('mkdir -p ' + output_dir)
 
 #make a src array [[x,y,a,r], ...]
 src_array = np.zeros((num_sources, 4))

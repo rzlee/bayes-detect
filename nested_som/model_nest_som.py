@@ -259,11 +259,17 @@ def sample_som(jj,active,neval,LLog_min,nt=5,nit=100,create='no',sample='yes',in
     return [M,new,neval]
 
 parser = SafeConfigParser()
-parser.read("config.ini")
+parser.read("../config.ini")
+
+prefix = parser.get("Misc", "prefix")
+location = parser.get("Misc", "location")
+output_folder = location + "/" + prefix 
+image_location = output_folder + "/" + prefix + "_noised.npy"
+no_noise_location = output_folder + "/" + prefix + "_clean.npy"
 
 #image parameters
-width = int(parser.get("Image","width"))
-height = int(parser.get("Image","height"))
+width = int(parser.get("Sampling","width"))
+height = int(parser.get("Sampling","height"))
 image_location = parser.get("Image", "location")
 no_noise_location = parser.get("Image", "no_noise_location")
 
@@ -281,8 +287,7 @@ num_som_iter = int(parser.get("Sampling", "num_som_iter"))
 num_som_points = int(parser.get("Sampling", "num_som_points"))
 
 #output parameters
-output_folder = parser.get("Output", "output_folder")
-output_filename = parser.get("Output", "output_filename")
+output_filename = prefix + "_" + parser.get("Output", "output_filename")
 
 show_plot = parser.getboolean("Output", "plot")
 
@@ -362,6 +367,9 @@ for i in xrange(Niter):
 
 
 stop = timeit.default_timer()
+
+with open(output_folder + "/stats.txt", "wb") as f:
+    f.writelines(["seconds: %d\n"%(stop - start), "Log evaluations: %d"%neval])
 
 print stop - start, 'seconds'
 print neval, 'Log evaluations'
