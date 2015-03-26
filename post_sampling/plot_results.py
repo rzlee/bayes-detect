@@ -20,17 +20,22 @@ except:
     pass
 
 parser = SafeConfigParser()
-parser.read("../nested_som/config.ini")
+parser.read("../config.ini")
 
-width = int(parser.get("Image", "width"))
-height = int(parser.get("Image", "height"))
+width = int(parser.get("Sampling", "width"))
+height = int(parser.get("Sampling", "height"))
 
 amp_min = float(parser.get("Sampling", "amp_min"))
 amp_max = float(parser.get("Sampling", "amp_max"))
 
 rad_min = float(parser.get("Sampling", "rad_min"))
 rad_max = float(parser.get("Sampling", "rad_max"))
-x,y,r,a,L=loadtxt('../nested_som/som/out_points_som.txt',unpack=True)
+
+prefix = parser.get("Misc", "prefix")
+location = parser.get("Misc", "location")
+output_folder = location + "/" + prefix 
+
+x,y,r,a,L = loadtxt(output_folder + "/" + prefix + "_out_points_som.txt", unpack=True)
 
 
 def smooth(values, window_len = 7, window="flat"):
@@ -206,7 +211,9 @@ smooth_a = smooth(Lma[amask])
 ax6.plot(am[amask], smooth_a, 'g-')
 ax6.set_title('A vs Likelhood after cut')
 
-plt.savefig('plots/summary.png',bbox_inches='tight')
+#plt.savefig('plots/summary.png',bbox_inches='tight')
+plt.savefig(output_folder + "/plots/summary.png", bbox_inches="tight")
+
 
 """
 #second plot of 3d parameters (x,y) vs L
