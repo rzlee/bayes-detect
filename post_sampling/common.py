@@ -41,32 +41,38 @@ def compute_maxes(xlocs, yvals, window_size = 10):
     return xlocs[yval_locs]
 
 def compute_intervals(mins, maxes):
-    #tries to compute an array of ranges thta contain a peak
+    #first val indicates its dim
+    minvals = zip([0 for x in xrange(len(mins))], mins)
+    maxvals = zip([1 for x in xrange(len(maxes))], maxes)
+    
+    #merge them
+    all_vals = minvals + maxvals
+    all_vals.sort(key = lambda x: x[-1]) 
+    
     points = []
+    index = 0
     start = None
-    stop = None
-    min_index = 0
-    max_index = 0
-    encountered_peak = False
-    
-    #start and stop should have at least one peak between them
-    #start and stop are the locations of a min
-    
-    while min_index < mins.shape[0] and max_index < maxes.shape[0]:
-        if start is None:
-            start = mins[min_index]
-            min_index += 1
-        if not encountered_peak and maxes[max_index] < start:
-            #the peak we are at is behind our start, so we need to find the next one
-            max_index += 1
-        if not encountered_peak and maxes[max_index] > start:
-            #select the first peak we encounter, then try to find the next min to close off this segment
-            encountered_peak = True
-            max_index += 1
-        if encountered_peak and min_index < mins.shape[0]:
-            stop = mins[min_index]
-            points.append([start, stop])
-            start = None
-            stop = None
-        
+
+    #get the start
+    for x in xrange(len(all_vals)):
+        if all_vals[x][0] == 0:
+            start = all_vals[x][1]
+            break
+
+    seen_max = False
+
+    #each min, max, ..., min is one interval
+    while index < len(all_vals):
+        if seen_max and all_vals[index][0] == 0:
+            #we found the next min
+            points.append([start, all_vals[index][1]])
+            start = all_vals[index][1]
+            seen_max = False
+        elif not seen_max and all_vals[index][0] == 1:
+            #now we have seen a max
+            seen_max = True
+        index += 1
+
     return np.array(points)
+
+        
