@@ -57,6 +57,7 @@ def plot_segments(ax, locs, vals, min_vals, max_vals):
         #color is chosen randomly, so sometimes it makes a bad selection
 
 #first plot of parameter vs L
+print "1"
 fig=plt.figure(figsize=(14,8))
 ax1=fig.add_subplot(2,3,2)
 
@@ -69,6 +70,7 @@ ax1.set_ylim(0,height)
 
 w, xmask, xm, Lmx = binned_max(x, L, 0, width, 350)
 
+print "2"
 ax2=fig.add_subplot(2,3,1)
 ax2.plot(x[w],L[w],'k,')
 ax2.set_xlabel('X')
@@ -87,6 +89,7 @@ plot_segments(ax2, xm[xmask], smoothed_x, mins, maxes)
 ax2.set_title('X vs Likelhood after cut')
 
 
+print "3"
 ax3=fig.add_subplot(2,3,3)
 
 ax3.scatter(x[w],y[w],s=3,marker='.')
@@ -98,6 +101,7 @@ ax3.set_title('posteriors after cut')
 
 w, ymask, ym, Lmy = binned_max(y, L, 0, height, 350)
 
+print "4"
 ax4=fig.add_subplot(2,3,4)
 ax4.plot(y[w],L[w],'k,')
 ax4.set_xlim(0, width)
@@ -119,6 +123,7 @@ ax4.set_title('Y vs Likelhood after cut')
 
 w, rmask, rm, Lmr = binned_max(r, L, rad_min, rad_max, 350)
     
+print "5"
 ax5=fig.add_subplot(2,3,5)
 ax5.plot(r[w],L[w],'k,')
 ax5.set_xlim(rad_min, rad_max)
@@ -132,6 +137,7 @@ ax5.set_title('R vs Likelhood after cut')
 
 w, amask, am, Lma = binned_max(a, L, amp_min, amp_max, 350)
 
+print "6"
 ax6=fig.add_subplot(2,3,6)
 ax6.plot(a[w],L[w],'k,')
 ax6.set_xlim(amp_min, amp_max)
@@ -142,11 +148,11 @@ smooth_a = smooth(Lma[amask])
 ax6.plot(am[amask], smooth_a, 'g-')
 ax6.set_title('A vs Likelhood after cut')
 
+print "save"
 #plt.savefig('plots/summary.png',bbox_inches='tight')
 plt.savefig(output_folder + "/plots/summary.png", bbox_inches="tight")
 
 
-"""
 #second plot of 3d parameters (x,y) vs L
 fig= plt.figure()
 
@@ -157,10 +163,10 @@ proj.set_ylim(0,height)
 proj.set_xlabel('X')
 proj.set_ylabel('Y')
 proj.set_zlabel('Likelihood')
-proj.set_title('Posteriors in 3D after cut')
-"""
+#proj.set_title('Posteriors in 3D after cut')
+plt.savefig(output_folder + "/plots/3dPosterior.png", bbox_inches="tight")
 
-print "written to: " + str(output_folder) + "/plots/summary.png"
+print "display"
 #plt.show()
 
 
