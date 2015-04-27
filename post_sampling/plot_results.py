@@ -153,7 +153,6 @@ print "save"
 plt.savefig(output_folder + "/plots/summary.png", bbox_inches="tight")
 
 
-"""
 #second plot of 3d parameters (x,y) vs L
 fig= plt.figure()
 
@@ -164,8 +163,8 @@ proj.set_ylim(0,height)
 proj.set_xlabel('X')
 proj.set_ylabel('Y')
 proj.set_zlabel('Likelihood')
-proj.set_title('Posteriors in 3D after cut')
-"""
+#proj.set_title('Posteriors in 3D after cut')
+plt.savefig(output_folder + "/plots/3dPosterior.png", bbox_inches="tight")
 
 print "display"
 #plt.show()

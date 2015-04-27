@@ -28,6 +28,50 @@ import matplotlib.image as mpimg
 
 from ConfigParser import SafeConfigParser
 
+from splitter import get_peaks, get_sources, make_source
+
+
+def detect_sources(arr, iteration, detected, detected_count):
+    arr = arr.T
+
+    initial_bounds = array([[0, width], [0, height]])
+    k = get_peaks(arr, initial_bounds)
+    sources = get_sources(k, arr)
+    sources = sources[~all(sources == 0, axis=1)] #remove 0 rows
+
+    for s_idx in xrange(sources.shape[0]):
+        check_temp = (detected == sources[s_idx]).all(axis=1)
+        if any(check_temp):
+            #we already have this value
+            pos = where(check_temp == True)[0]
+            detected_count[pos] += 1 #add to its count of detections
+
+        else:
+            detected = vstack((detected, sources[s_idx]))
+            detected_count.append(1)
+
+    
+    dc = array(detected_count)
+    d = c_[detected, dc]
+    d = d[d[:,-1].argsort()]
+    myindex = array([0,1,-1])
+    print d[:, myindex] #we only want to print x,y,#hits
+
+    return sources[:, 0:4], detected, detected_count
+
+def look_at_results(sources, iteration):
+    img = make_source(sources, height, width)
+    
+    fig = plt.figure()    
+    ax1 = fig.add_subplot(111)
+    ax1.imshow(flipud(img),extent=[0,width,0,height], cmap="jet")
+    ax1.set_title("detected")
+    ax1.set_xlim(0, width)
+    ax1.set_ylim(0, height)
+    ax1.grid(False)
+
+    fname="%05d" % iteration 
+    fig.savefig(output_folder + '/plots/detected/' + fname + '.png',bbox_inches='tight')
 
 def voronoi_plot_2d_local(vor, ax=None):
     ver_all=vor.vertices
@@ -61,7 +105,7 @@ def voronoi_plot_2d_local(vor, ax=None):
 
 def make_plot(points,AC,name):
                   
-    fig=plt.figure(1,figsize=(15,10))
+    fig=plt.figure(1,figsize=(15,10), dpi=100)
     ax1=fig.add_subplot(2,3,1)  
     ax1.plot(points[:name,0],points[:name,1],'k.')
     ax1.set_xlim(0,width)
@@ -100,20 +144,60 @@ def make_plot(points,AC,name):
     ax5.imshow(flipud(data_or),extent=[0,width,0,height])
     ax5.set_title('Original image ')
 
-    name="%05d" % name
+    fname="%05d" % name
 
 
     ax6=fig.add_subplot(2,3,6)
-    img=mpimg.imread(output_folder + '/plots/som_'+name+'.png')
+    img=mpimg.imread(output_folder + '/plots/somplot/som_'+fname+'.png')
     ax6.imshow(img,extent=[0,width,0,height],aspect='normal')
     ax6.set_title('SOM map ')
     #TODO: look at this later
-    os.system('rm -f ' + output_folder + '/plots/som_'+name+'.png')
+    #os.system('rm -f ' + output_folder + '/plots/som_'+fname+'.png')
     #axin.change_geometry(*(2,3,6))
     #axin= fig.axes.append(axin)
 
-    fig.savefig(output_folder + '/plots/all6_'+name+'.png',bbox_inches='tight')
+    fig.savefig(output_folder + '/plots/6plot/all6_'+fname+'.png',bbox_inches='tight')
     fig.clear()
+
+    """
+    ax1 = orig
+    ax2 = orig w/ noise
+    ax3 = posterior
+    ax4 = active
+    """
+    fig=plt.figure(2,figsize=(50,50), dpi=100)
+    
+    ax1 = plt.subplot2grid((2,2), (0,0))
+    ax1.imshow(flipud(data_or),extent=[0,width,0,height])
+    ax1.set_title('Original image')
+    ax1.set_yticks([])
+    ax1.set_xticks([])
+
+    ax2 = plt.subplot2grid((2,2), (0,1))
+    ax2.imshow(flipud(data),extent=[0,width,0,height])
+    ax2.set_title('Original image with noise')
+    ax2.set_yticks([])
+    ax2.set_xticks([])
+
+    ax3 = plt.subplot2grid((2,2), (1,0))
+    ax3.plot(points[:name,0],points[:name,1],'k.')
+    ax3.set_xlim(0,width)
+    ax3.set_ylim(0,height)
+    ax3.set_title('Posterior points')
+    ax3.set_yticks([])
+    ax3.set_xticks([])
+
+    ax4 = plt.subplot2grid((2,2), (1,1))
+    ax4.plot(AC[:,0],AC[:,1],'k.')
+    ax4.set_xlim(0,width)
+    ax4.set_ylim(0,height)
+    ax4.set_yticks([])
+    ax4.set_xticks([])
+    ax4.set_title('Active points')
+
+    fig.savefig(output_folder + '/plots/4plot/4plot'+fname+'.png',bbox_inches='tight')
+    fig.clear()
+
     
 
 def make_source(src_array,height,width):
@@ -225,7 +309,7 @@ def sample_som(jj,active,neval,LLog_min,nt=5,nit=100,create='no',sample='yes',in
             plt.gca().axes.get_yaxis().set_visible(False)
             
             nnn='%05d' % jj
-            figt.savefig(output_folder + '/plots/som_'+nnn+'.png',bbox_inches='tight',pad_inches=0)
+            figt.savefig(output_folder + '/plots/somplot/som_'+nnn+'.png',bbox_inches='tight',pad_inches=0)
             figt.clear()
             M.evaluate_map(inputX=DD,inputY=L)
         
@@ -310,6 +394,10 @@ data=add_gaussian_noise(mean=0,sd=noise,data=data_or)
 #sys.exit(0)
 
 os.system('mkdir -p ' + output_folder + '/plots/')
+os.system('mkdir -p ' + output_folder + '/plots/detected')
+os.system('mkdir -p ' + output_folder + '/plots/6plot')
+os.system('mkdir -p ' + output_folder + '/plots/4plot')
+os.system('mkdir -p ' + output_folder + '/plots/somplot')
 
 data = load(image_location)
 data_or = load(no_noise_location)
@@ -342,6 +430,11 @@ print 'done with active'
 
 Niter=niter
 points=zeros((Niter,5))
+
+detected = zeros((1, 6)) #remember to ignore the first item
+detected_count = [-1]
+
+
 for i in xrange(Niter):
     if i%num_som_iter == 0:
         print i
@@ -350,6 +443,8 @@ for i in xrange(Niter):
     if i%num_som_iter == 0:
         Map,new,neval=sample_som(i,AC,neval,minL,nt=4,nit=150,create='yes',sample='yes')
         make_plot(points,AC,i)
+        sources, detected, detected_count = detect_sources(AC, i, detected, detected_count)
+        look_at_results(sources, i)
     else:
         Map,new,neval=sample_som(i,AC,neval,minL,nt=4,nit=150,create='no',sample='yes',inM=Map)
     #while True:
@@ -374,7 +469,6 @@ print neval, 'Log evaluations'
 
 
 
-
 #savetxt('out_points_som.txt',points,fmt='%.6f')
 savetxt(output_folder + "/" + output_filename, points,fmt='%.6f')
 
@@ -384,7 +478,3 @@ savetxt(output_folder + "/" + output_filename, points,fmt='%.6f')
 #hdulist = pf.HDUList([hdu0])
 #hdulist.writeto('output_nest.fits',clobber=True)
 #plt.show()
-
-
-
-    
