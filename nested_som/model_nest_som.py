@@ -30,48 +30,71 @@ from ConfigParser import SafeConfigParser
 
 from splitter import get_peaks, get_sources, make_source
 
+"""
+Given our array of active points, we now try to detect sources in it.
+arr = active points
+iteration = the iteration
+detected = the numpy array of detected points
+detected_count = how many times this item has been detected
 
+The idea is we can keep track of detected items, and then look at the top K
+deteted items. If they appear many times, it is much more likely that 
+they are real sources and not noise points.
+"""
 def detect_sources(arr, iteration, detected, detected_count):
     arr = arr.T
-
+    
+    #just some setup for running the splitter
     initial_bounds = array([[0, width], [0, height]])
     k = get_peaks(arr, initial_bounds)
+    #run the splitter
     sources = get_sources(k, arr)
     sources = sources[~all(sources == 0, axis=1)] #remove 0 rows
-
+    #the splitter sometimes returns rows of 0s which are meaningless, so we remove them
+    
+    #for each detected source either increment its detections or store it with 1 detection
     for s_idx in xrange(sources.shape[0]):
         check_temp = (detected == sources[s_idx]).all(axis=1)
+        #check the detected source matches a row in our already known sources
         if any(check_temp):
             #we already have this value
-            pos = where(check_temp == True)[0]
+            pos = where(check_temp == True)[0] #get the position of the matching row
             detected_count[pos] += 1 #add to its count of detections
 
         else:
+            #put the new source on the bottom of the detected list
+            #add its detected count with the value 1
             detected = vstack((detected, sources[s_idx]))
             detected_count.append(1)
 
     
     dc = array(detected_count)
-    d = c_[detected, dc]
-    d = d[d[:,-1].argsort()]
-    myindex = array([0,1,-1])
+    d = c_[detected, dc] #concatenate them with dc as the last column
+    d = d[d[:,-1].argsort()] #sort it by detected count (the last column)
+    myindex = array([0,1,-1]) #array slicing thing, 0 = x, 1 = y, -1 = the last col/the counts
     print d[:, myindex] #we only want to print x,y,#hits
 
     return sources[:, 0:4], detected, detected_count
 
+"""
+Given our list of sources and the iteration #
+We make the image for it and store its iteration# in its filename
+"""
 def look_at_results(sources, iteration):
     img = make_source(sources, height, width)
     
     fig = plt.figure()    
     ax1 = fig.add_subplot(111)
+    #we show the image, but we need to flip it because of a difference in how the image is shown
+    #and how the image is stored
     ax1.imshow(flipud(img),extent=[0,width,0,height], cmap="jet")
     ax1.set_title("detected")
     ax1.set_xlim(0, width)
     ax1.set_ylim(0, height)
     ax1.grid(False)
 
-    fname="%05d" % iteration 
-    fig.savefig(output_folder + '/plots/detected/' + fname + '.png',bbox_inches='tight')
+    fname="%05d" % iteration  #getting the 5 digit represetation of the iteraiton number 
+    fig.savefig(output_folder + '/plots/detected/' + fname + '.png',bbox_inches='tight') #store it
 
 def voronoi_plot_2d_local(vor, ax=None):
     ver_all=vor.vertices
@@ -103,6 +126,10 @@ def voronoi_plot_2d_local(vor, ax=None):
             ncurr+=1
     return ver_all
 
+"""
+Given our sampled points (points) and active points (AC) and the iteration number (name)
+We make various plots (more detail in their titles)
+"""
 def make_plot(points,AC,name):
                   
     fig=plt.figure(1,figsize=(15,10), dpi=100)
@@ -113,6 +140,7 @@ def make_plot(points,AC,name):
     ax1.set_title('Posterior points')
     ax1.set_yticks([])
     ax1.set_xticks([])
+    #just plotting the active points
 
 
     
@@ -120,6 +148,8 @@ def make_plot(points,AC,name):
     xt=points[:name,0]
     yt=points[:name,1]
     hh,locx,locy=scipy.histogram2d(xt,yt,bins=[linspace(0,width,width+1),linspace(0,height,height+1)])
+    #x,y histogram
+    #more common points will increase the histogram value and be more intense on the image
     ax3.imshow(flipud(hh.T),extent=[0,width,0,height],aspect='normal')
     ax3.set_title('Pseudo image from posterior')
 
@@ -132,29 +162,30 @@ def make_plot(points,AC,name):
     ax2.set_yticks([])
     ax2.set_xticks([])
     ax2.set_title('Active points')
+    #just plotting the active points
 
 
 
     ax4=fig.add_subplot(2,3,4)
     ax4.imshow(flipud(data),extent=[0,width,0,height])
     ax4.set_title('Original image with noise')
+    #show input noised image
 
 
     ax5=fig.add_subplot(2,3,5)
     ax5.imshow(flipud(data_or),extent=[0,width,0,height])
     ax5.set_title('Original image ')
+    #show the original image
 
     fname="%05d" % name
 
 
     ax6=fig.add_subplot(2,3,6)
     img=mpimg.imread(output_folder + '/plots/somplot/som_'+fname+'.png')
+    #earlier we created the som image. now we read it back in
     ax6.imshow(img,extent=[0,width,0,height],aspect='normal')
+    #and display it as one of the panels in the subplot
     ax6.set_title('SOM map ')
-    #TODO: look at this later
-    #os.system('rm -f ' + output_folder + '/plots/som_'+fname+'.png')
-    #axin.change_geometry(*(2,3,6))
-    #axin= fig.axes.append(axin)
 
     fig.savefig(output_folder + '/plots/6plot/all6_'+fname+'.png',bbox_inches='tight')
     fig.clear()
@@ -197,9 +228,9 @@ def make_plot(points,AC,name):
 
     fig.savefig(output_folder + '/plots/4plot/4plot'+fname+'.png',bbox_inches='tight')
     fig.clear()
-
+    #all these just show various panels which were already shown earlier
     
-
+#make source. this is the same as image_gen's make source
 def make_source(src_array,height,width):
     x = arange(0, width)
     y = arange(0, height)
@@ -209,6 +240,7 @@ def make_source(src_array,height,width):
         z+= i[2]*exp(-1*((xx-i[0])**2+(yy-i[1])**2)/(2*(i[3]**2)))
     return z
 
+#add gaussian noise. this is the same as image_gen's adding of noise
 def add_gaussian_noise(mean, sd, data):
     height = len(data)
     width = len(data[0])
@@ -227,12 +259,14 @@ def lnlike(a,D,nlog=0):
     if Y < 0 or Y > width: return [-inf, nlog]
     if A < amp_min or A > amp_max: return [-inf, nlog]
     if R < rad_min or R > rad_max: return [-inf, nlog]
+    #if any of them are out of the range, we return -inf (log(0)) and the same number of log evaluations
 
     S=A*exp(-(((xx-X)**2+(yy-Y)**2))/(2.*R*R))
     DD=data-S
     DDf=DD.flatten()
     Like=-0.5*linalg.norm(DDf)**2*(1./noise) - (width * height)/2 * log(2*pi) + 4 * log(noise)
-    nlog+=1
+    #evaluation of the log likelihood function. look in literature for the eq
+    nlog+=1 #increment the log evaluation counter
     return [Like,nlog]
 
 
@@ -241,6 +275,7 @@ def sample():
     yt=random.rand()*(height - 1.)
     at=random.rand()*(amp_max - amp_min) + amp_min
     rt=random.rand()*(rad_max - rad_min) + rad_min
+    #random point in the specified ranges
     return array([xt,yt,at,rt])
 
 
@@ -344,6 +379,7 @@ def sample_som(jj,active,neval,LLog_min,nt=5,nit=100,create='no',sample='yes',in
 
 parser = SafeConfigParser()
 parser.read("../config.ini")
+#again, it would be best to replace this relative path with something better
 
 prefix = parser.get("Misc", "prefix")
 location = parser.get("Misc", "location")
@@ -373,6 +409,8 @@ output_filename = prefix + "_" + parser.get("Output", "output_filename")
 
 show_plot = parser.getboolean("Output", "plot")
 
+"""
+#legacy code
 SrcArray = [[43.71, 22.91, 10.54, 3.34],
             [101.62, 40.60, 1.37, 3.40],
             [92.63, 110.56, 1.81, 3.66],
@@ -385,7 +423,9 @@ SrcArray = [[43.71, 22.91, 10.54, 3.34],
 data_or=make_source(src_array = SrcArray,height=height, width=width)
 noise = noise_lvl
 data=add_gaussian_noise(mean=0,sd=noise,data=data_or)
+"""
 
+#more legacy code
 #filee='../bayes-detect-master/simulated_images/multinest_toy_noised'
 #s=open(filee,'r')
 #data=pickle.load(s)
@@ -403,6 +443,7 @@ data = load(image_location)
 data_or = load(no_noise_location)
 
 
+#more legacy code
 #Im=pf.open('ufig_20_g_sub_500_sub_small.fits')
 #data=Im[0].data
 #Im.close()
@@ -416,14 +457,17 @@ start = timeit.default_timer()
 neval=0
 Np=num_active_points
 AC=zeros((Np,5))
+#initially active points is a array of 0s
 
 AC[:,0]=random.rand(Np)*(width - 1.)
 AC[:,1]=random.rand(Np)*(height - 1.)
 AC[:,2]=random.rand(Np)*(amp_max-amp_min) + amp_min
 AC[:,3]=random.rand(Np)*(rad_max-rad_min) + rad_min
+#seed the active points with uniform random numbers in the wanted range
 
 for i in xrange(Np):
     AC[i,4],neval=lnlike(AC[i,0:4],data,nlog=neval)
+    #compute the log likelihood for each of those points
 
 
 print 'done with active'
@@ -442,11 +486,17 @@ for i in xrange(Niter):
     minL=AC[reject,4]
     if i%num_som_iter == 0:
         Map,new,neval=sample_som(i,AC,neval,minL,nt=4,nit=150,create='yes',sample='yes')
+        #create=yes -> make a new som
         make_plot(points,AC,i)
+        #plot things with make_plot
         sources, detected, detected_count = detect_sources(AC, i, detected, detected_count)
+        #run detection on the active points
         look_at_results(sources, i)
+        #plot the detected items
     else:
         Map,new,neval=sample_som(i,AC,neval,minL,nt=4,nit=150,create='no',sample='yes',inM=Map)
+        #sample from the som w/o creating a new one
+#legacy code
     #while True:
       #  new=sample()
 #        newL,neval=lnlike(new,data,nlog=neval)
@@ -461,6 +511,7 @@ for i in xrange(Niter):
 
 stop = timeit.default_timer()
 
+#write some stats to a text file
 with open(output_folder + "/stats.txt", "wb") as f:
     f.writelines(["seconds,%d\n"%(stop - start), "Log evaluations,%d"%neval])
 

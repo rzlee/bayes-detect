@@ -2,13 +2,15 @@ import numpy as np
 import scipy
 import common
 
+#we only look at the x and y dimensions
+#which happen to be 0, and 1 in the array
 def next_dim(dim):
     if dim == 0:
         return 1
     return 0
 
 def get_peaks(all_vals, initial_bounds):
-    bin_amt = 350
+    bin_amt = 350 #we hardcoded the bin amt, but this can be changed
     queue = []
     results = [] #going to store results as (depth, [xmin, xmax, ymin, ymax])
 
@@ -109,6 +111,7 @@ def get_sources(s, all_vals):
     sources = sources[~np.isnan(sources).any(axis=1)]
     return sources
 
+#make sources is taken from image_gen
 def make_source(src_array, height, width):
 
     x = np.arange(0, width)

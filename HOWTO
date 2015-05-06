@@ -1,0 +1,18 @@
+How to use this
+======
+
+Almost every parameter is read from the config.ini file
+Output is currently to the files/0 folder
+
+1. Image Generation
+In the image_generator folder, there is a script image_generator.py
+Running that will read the parameters for the image from config.ini and output it to the specified location
+
+2. Running Sampling
+In the nested_som folder, there is a script model_nest_som.py
+Running this will load the image and run sampling on it.
+This will generate various plots of the sampling and the sample which will all be stored in the output folder specified in config.ini.
+
+3. Post Sampling Object Detection
+In the post_sampling folder there is a ipython notebook splitter2.ipynb.
+This loads the saved samples from part 2 and tries to recursively split on it.

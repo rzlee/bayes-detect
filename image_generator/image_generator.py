@@ -6,6 +6,7 @@ from ConfigParser import SafeConfigParser
 import os
 
 parser = SafeConfigParser()
+#todo: do something about not using the relative path
 parser.read("../config.ini")
 
 #image parameters
@@ -33,10 +34,14 @@ for source in range(src_array.shape[0]):
     src_array[source, 2] = uniform(low = amp_min, high = amp_max)
     src_array[source, 3] = uniform(low = rad_min, high = rad_max)
 
+#we first make a non noisy image with make_source
 non_noisy_sources = test_image.make_source(src_array, height, width)
 
+#then noise is added (obvious from function name)
 noised = test_image.add_gaussian_noise(0, noise, non_noisy_sources)
 
+#these are all stored as numpy binary file
+#http://docs.scipy.org/doc/numpy/reference/generated/numpy.save.html
 normal = output_dir + "/" + prefix + "_noised.npy"
 with open(normal, "wb") as f:
     np.save(f, noised)

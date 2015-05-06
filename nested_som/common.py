@@ -1,6 +1,9 @@
 import numpy as np
 from scipy.signal import argrelextrema
 
+#compute some kind of smoothing of the values
+#default is a window_len moving average
+#based on http://wiki.scipy.org/Cookbook/SignalSmooth
 def smooth(values, window_len = 7, window="flat"):
     #window_len must be odd
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
@@ -14,6 +17,11 @@ def smooth(values, window_len = 7, window="flat"):
     result=np.convolve(w/w.sum(),s,mode='valid')
     return result[:values.shape[0]]
 
+"""
+to take the xvalues and convert them into bins
+we also want the max yvalue within each bin
+we return that and some other things
+"""
 def binned_max(xvalues, yvalues, start, stop, num_points):
     points=np.linspace(start,stop,num_points+1)
     bins=0.5*(points[1:]+points[:-1])
@@ -28,14 +36,16 @@ def binned_max(xvalues, yvalues, start, stop, num_points):
         else:
             Lval[i]=max(yvalues[wi]) #bin's value is the biggest value in the bin
 
-    mask= (Lval != 0.)
-    w=np.where(yvalues > min(Lval))[0]
+    mask= (Lval != 0.) #bool for nonzero bin peaks
+    w=np.where(yvalues > min(Lval))[0] #vector of bools that indicates which items are above the minimum of the bin peaks
     return (w, mask, bins, Lval)
 
+#for each x location, if it is smaller than its neighbors in the neighborhood of (x-window_size, x+window_size) then its a min
 def compute_mins(xlocs, yvals, window_size = 10):
     yval_locs = argrelextrema(yvals, np.less, order = window_size)[0]
     return xlocs[yval_locs]
 
+#for each x location, if it is bigger than its neighbors in the neighborhood of (x-window_size, x+window_size) then its a max
 def compute_maxes(xlocs, yvals, window_size = 10):
     yval_locs = argrelextrema(yvals, np.greater, order = window_size)[0]
     return xlocs[yval_locs]
@@ -74,5 +84,3 @@ def compute_intervals(mins, maxes):
         index += 1
 
     return np.array(points)
-
-        
