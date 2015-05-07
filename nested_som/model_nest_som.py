@@ -30,18 +30,21 @@ from ConfigParser import SafeConfigParser
 
 from splitter import get_peaks, get_sources, make_source
 
+from scipy.spatial import distance
+
 """
 Given our array of active points, we now try to detect sources in it.
 arr = active points
 iteration = the iteration
 detected = the numpy array of detected points
 detected_count = how many times this item has been detected
+n_dist = the maximum distance two points can be from each other before they are considered the same
 
 The idea is we can keep track of detected items, and then look at the top K
 deteted items. If they appear many times, it is much more likely that 
 they are real sources and not noise points.
 """
-def detect_sources(arr, iteration, detected, detected_count):
+def detect_sources(arr, iteration, detected, detected_count, n_dist):
     arr = arr.T
     
     #just some setup for running the splitter
@@ -52,6 +55,33 @@ def detect_sources(arr, iteration, detected, detected_count):
     sources = sources[~all(sources == 0, axis=1)] #remove 0 rows
     #the splitter sometimes returns rows of 0s which are meaningless, so we remove them
     
+    #sources are the items we have found in this iteration
+    #detected are the items we detected earlier
+    xy_index = array([0,1]) #we want to look at the x,y positions only which happen to be col 0 and 1
+    distances = distance.cdist(sources[:,xy_index], detected[:, xy_index]) #cdist is faster than looping over each item
+    """
+    distances is a array of euclidian distances in the format
+    [[s1 to d1, s1 to d2, ..., s1 to dn], [s2 to s1, s2 to d2, ..., s2 to dn], [sk to d1, ..., sk to dn]]
+    where we have k rows/sources in sources and n rows/sources in detected
+    """
+    
+    for s_idx in xrange(distances.shape[0]):
+        #iterate over each "new" source
+        points_within_range = (distances[s_idx] < n_dist) #checks to see if any of the distances are below the n_dist
+        within_range = any(points_within_range) #if any of them are it will evaluate to true
+
+        if within_range:
+            #find which one it is closest to and increment that one's counter
+            relevant_distances = sort(distances[s_idx, points_within_range]) #get the distances within our range and then sort it
+            index_of_closest_value = where(distances[s_idx] == relevant_distances[0])[0] #index (col) of the closest item.
+            #where returns a tuple so we need to extract our value
+            detected_count[index_of_closest_value[0]] += 1 #add to its count of detections
+
+        else:
+            detected = vstack((detected, sources[s_idx])) #put the new item on the bottom of the array
+            detected_count.append(1) #add a counter for it
+    
+    """
     #for each detected source either increment its detections or store it with 1 detection
     for s_idx in xrange(sources.shape[0]):
         check_temp = (detected == sources[s_idx]).all(axis=1)
@@ -66,6 +96,7 @@ def detect_sources(arr, iteration, detected, detected_count):
             #add its detected count with the value 1
             detected = vstack((detected, sources[s_idx]))
             detected_count.append(1)
+    """
 
     
     dc = array(detected_count)
@@ -409,6 +440,13 @@ output_filename = prefix + "_" + parser.get("Output", "output_filename")
 
 show_plot = parser.getboolean("Output", "plot")
 
+#detection parameters
+neighbor_dist = float(parser.get("Detection", "neighbor_dist"))
+cutoff = int(parser.get("Detection", "cutoff"))
+detected_processed_filename = prefix + "_processed_" + parser.get("Detection", "detected_filename")
+detected_all_filename = prefix + "_all_" + parser.get("Detection", "detected_filename")
+
+
 """
 #legacy code
 SrcArray = [[43.71, 22.91, 10.54, 3.34],
@@ -489,7 +527,7 @@ for i in xrange(Niter):
         #create=yes -> make a new som
         make_plot(points,AC,i)
         #plot things with make_plot
-        sources, detected, detected_count = detect_sources(AC, i, detected, detected_count)
+        sources, detected, detected_count = detect_sources(AC, i, detected, detected_count, neighbor_dist)
         #run detection on the active points
         look_at_results(sources, i)
         #plot the detected items
@@ -523,9 +561,16 @@ print neval, 'Log evaluations'
 #savetxt('out_points_som.txt',points,fmt='%.6f')
 savetxt(output_folder + "/" + output_filename, points,fmt='%.6f')
 
+#deal with the cutoff
+dc = array(detected_count)
+d = c_[detected, dc] #concatenate them with dc as the last column
+d = d[d[:,-1].argsort()] #sort it by detected count (the last column). this is actually not necessary
+above_cutoff = where(d[:,-1] >= cutoff)[0]
+filtered_detected = d[above_cutoff]
 
-#daa=hh.T
-#hdu0=pf.PrimaryHDU(daa)
-#hdulist = pf.HDUList([hdu0])
-#hdulist.writeto('output_nest.fits',clobber=True)
-#plt.show()
+
+header = "x,y,a,r,L,detection_count"
+savetxt(output_folder + "/" + detected_processed_filename, filtered_detected, fmt="%.6f", delimiter=",",header=header) 
+print "wrote to file: " + output_folder + "/" + detected_processed_filename
+savetxt(output_folder + "/" + detected_all_filename, d, fmt="%.6f", delimiter=",",header=header) 
+print "wrote to file: " + output_folder + "/" + detected_all_filename

@@ -3,6 +3,7 @@ How to use this
 
 Almost every parameter is read from the config.ini file
 Output is currently to the files/0 folder
+Every file has to be run from the same level the folder is in otherwise the config file might not load correctly.
 
 1. Image Generation
 In the image_generator folder, there is a script image_generator.py
