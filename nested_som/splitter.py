@@ -23,6 +23,8 @@ def get_peaks(all_vals, initial_bounds):
         other_start, other_stop = bounds[next_dim(dim)]
         
         if start == stop or other_start == other_stop:
+            #if one of the bounds is actually one point, then we treat it as a detected source
+            #todo: look into if this is the cause of various false positives
             results.append((depth, bounds.flatten()))
             continue
         
@@ -69,7 +71,6 @@ def get_peaks(all_vals, initial_bounds):
         
         
             if my_binned_L[my_mask].shape[0] == 0:
-                #print "binning failed"
                 continue
         
             my_smoothed = common.smooth(my_binned_L[my_mask])
@@ -84,6 +85,7 @@ def get_peaks(all_vals, initial_bounds):
                 b[dim] = nstart, nstop
                 b[next_dim(dim)] = my_start, my_stop
                 queue.append((depth+1, next_dim(dim), b))
+                #split on the other dimension but increment the depth
                 
     return results
 
@@ -101,6 +103,7 @@ def get_sources(s, all_vals):
         mask = np.where((x >= xlower) & (x <= xupper) & (y >= ylower) & (y <= yupper))[0]
         if L[mask].shape[0] == 0:
             continue
+        #we take the x,y,a,r,L values from the point in the range with the highest likelihood
         maxindex = np.argmax(L[mask])
         sources[i, 0] = x[mask][maxindex]
         sources[i, 1] = y[mask][maxindex]
@@ -109,6 +112,7 @@ def get_sources(s, all_vals):
         sources[i, 4] = depth
         sources[i, 5] = L[mask][maxindex]
     sources = sources[~np.isnan(sources).any(axis=1)]
+    #filter out NaNs
     return sources
 
 #make sources is taken from image_gen
